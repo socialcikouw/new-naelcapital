@@ -4,4 +4,4 @@
  * yang sama persis). Diisi per modul: kalender kantor, rumus akad, jadwal
  * tagih, aturan macet, rumus kas — lihat `docs/skema/`.
  */
-export {};
+export * from "./nomor-hp";

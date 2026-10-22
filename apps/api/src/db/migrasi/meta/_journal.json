@@ -15,6 +15,20 @@
       "when": 1792695674184,
       "tag": "0001_fungsi_dasar",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792696033695,
+      "tag": "0002_perangkat_tarif",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792696034213,
+      "tag": "0003_tidak_mundur_umum",
+      "breakpoints": true
     }
   ]
 }

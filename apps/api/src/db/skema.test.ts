@@ -29,7 +29,7 @@ async function tolak(tx: Tx, constraint: string, jalankan: (sp: Tx) => Promise<u
 }
 
 describe.skipIf(!url)("skema database", () => {
-  test("kantor, pengguna, pekan_kerja menolak data salah", async () => {
+  test("kantor, pengguna, pekan_kerja, tarif_gaji, perangkat menolak data salah", async () => {
     pastikanDatabasePengembangan(url);
     const sql = postgres(url as string, { prepare: false, max: 1, onnotice: () => {} });
     try {
@@ -172,6 +172,81 @@ describe.skipIf(!url)("skema database", () => {
           );
           // Pola hari ini masih boleh ditimpa (salah ketik sebelum berlaku penuh).
           await tx`update pekan_kerja set hari_kerja = 62 where kantor_id = ${k?.id} and berlaku_mulai = ${hariIni}`;
+
+          // ---- tarif_gaji --------------------------------------------------
+          await tx`insert into tarif_gaji (kantor_id, tarif_bp, berlaku_mulai, dibuat_oleh)
+                   values (${k?.id}, 500, ${hariIni}, ${bos?.id})`;
+          await tolak(
+            tx,
+            "uniq_tarif_gaji_kantor",
+            (sp) =>
+              sp`insert into tarif_gaji (kantor_id, tarif_bp, berlaku_mulai, dibuat_oleh)
+               values (${k?.id}, 600, ${hariIni}, ${bos?.id})`,
+          );
+          await tolak(
+            tx,
+            "tarif_gaji_tarif_check",
+            (sp) =>
+              sp`insert into tarif_gaji (kantor_id, tarif_bp, berlaku_mulai, dibuat_oleh)
+               values (${k?.id}, null, ${hariIni}::date + 1, ${bos?.id})`,
+          );
+          await tolak(
+            tx,
+            "tarif_gaji_tarif_check",
+            (sp) =>
+              sp`insert into tarif_gaji (kantor_id, tarif_bp, berlaku_mulai, dibuat_oleh)
+               values (${k?.id}, 10001, ${hariIni}::date + 1, ${bos?.id})`,
+          );
+          await tolak(
+            tx,
+            "tarif_gaji_tidak_mundur",
+            (sp) =>
+              sp`insert into tarif_gaji (kantor_id, tarif_bp, berlaku_mulai, dibuat_oleh)
+               values (${k?.id}, 500, ${hariIni}::date - 1, ${bos?.id})`,
+          );
+          // Tarif khusus kolektor: kosong = kembali ikut tarif kantor.
+          await tx`insert into tarif_gaji (kantor_id, kolektor_id, tarif_bp, berlaku_mulai, dibuat_oleh)
+                   values (${k?.id}, ${kol?.id}, null, ${hariIni}::date + 7, ${bos?.id})`;
+          // Sasaran tarif khusus harus KOLEKTOR kantor itu (bukan bos/kasir).
+          await tolak(
+            tx,
+            "tarif_gaji_kolektor_fk",
+            (sp) =>
+              sp`insert into tarif_gaji (kantor_id, kolektor_id, tarif_bp, berlaku_mulai, dibuat_oleh)
+               values (${k?.id}, ${bos?.id}, 600, ${hariIni}::date + 7, ${bos?.id})`,
+          );
+
+          // ---- perangkat ---------------------------------------------------
+          const [dev] = await tx`
+            insert into perangkat (pengguna_id, kantor_id, kedaluwarsa_at)
+            values (${bos?.id}, ${k?.id}, now() + interval '90 days') returning id`;
+          await tolak(
+            tx,
+            "perangkat_pengguna_fk",
+            (sp) =>
+              sp`insert into perangkat (pengguna_id, kantor_id, kedaluwarsa_at)
+               values (${bos?.id}, ${k2?.id}, now())`,
+          );
+          // Putus selalu beralasan; pelaku wajib untuk alasan orang, kosong untuk sistem.
+          await tolak(
+            tx,
+            "perangkat_putus_check",
+            (sp) => sp`update perangkat set diputus_at = now() where id = ${dev?.id}`,
+          );
+          await tolak(
+            tx,
+            "perangkat_putus_check",
+            (sp) =>
+              sp`update perangkat set diputus_at = now(), alasan_putus = 'diputus' where id = ${dev?.id}`,
+          );
+          await tolak(
+            tx,
+            "perangkat_putus_check",
+            (sp) =>
+              sp`update perangkat set diputus_at = now(), alasan_putus = 'kedaluwarsa', diputus_oleh = ${bos?.id}
+               where id = ${dev?.id}`,
+          );
+          await tx`update perangkat set diputus_at = now(), alasan_putus = 'pakai_ulang' where id = ${dev?.id}`;
 
           throw new Batalkan();
         })

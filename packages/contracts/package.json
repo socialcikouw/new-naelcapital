@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@naelcapital/domain": "workspace:*",
     "zod": "^4.6.7"
   }
 }

@@ -1,6 +1,11 @@
-import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 import { sehatSchema } from "@naelcapital/contracts";
 import { Scalar } from "@scalar/hono-api-reference";
+import type { Db } from "./db/klien";
+import { tanganiGalat } from "./galat";
+import { buatLayananAuth } from "./modul/auth/layanan";
+import { ruteAuth } from "./modul/auth/rute";
+import { buatRouter } from "./router";
 
 const sehat = createRoute({
   method: "get",
@@ -15,17 +20,33 @@ const sehat = createRoute({
   },
 });
 
+export interface AppDeps {
+  db: Db;
+  jwtRahasia: string;
+  sesiRahasia: string;
+  kodeRegistrasi?: string | undefined;
+  /** Jam — diganti di uji. */
+  sekarang?: () => Date;
+}
+
 /**
  * Aplikasi Hono tanpa server — diuji lewat `app.request(...)`, dijalankan
- * `server.ts`. Modul rute (kantor, pengguna, pinjaman, …) dipasang di sini.
+ * `server.ts`. Modul rute dipasang di sini; tipenya (`App`) dipakai klien
+ * RPC `hc` di aplikasi.
  */
-export function buatApp() {
-  const app = new OpenAPIHono();
+export function buatApp(deps: AppDeps) {
+  const auth = buatLayananAuth(deps);
 
-  app.openapi(sehat, (c) =>
-    c.json({ status: "ok" as const, waktu: new Date().toISOString() }, 200),
-  );
+  const app = buatRouter()
+    .openapi(sehat, (c) => c.json({ status: "ok" as const, waktu: new Date().toISOString() }, 200))
+    .route("/", ruteAuth(auth));
 
+  app.onError(tanganiGalat);
+  app.openAPIRegistry.registerComponent("securitySchemes", "bearer", {
+    type: "http",
+    scheme: "bearer",
+    bearerFormat: "JWT",
+  });
   app.doc31("/openapi.json", {
     openapi: "3.1.0",
     info: { title: "Nael Capital API", version: "0.0.0" },

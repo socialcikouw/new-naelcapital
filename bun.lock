@@ -71,6 +71,7 @@
       "name": "@naelcapital/contracts",
       "version": "0.0.0",
       "dependencies": {
+        "@naelcapital/domain": "workspace:*",
         "zod": "^4.6.7",
       },
     },
