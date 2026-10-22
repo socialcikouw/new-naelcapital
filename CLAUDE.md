@@ -168,6 +168,12 @@ isi berkas, ukuran, SHA-256).
 - **Commit lalu push otomatis** ke `origin` (GitHub) setiap selesai satu langkah yang lolos pemeriksaan — keputusan pemilik 23 Okt 2026.
 - Repo lama (`desktop\re-launching\naelcapital` dan `naelcapitalAPI`) masih
   dipakai karyawan di lapangan — **jangan mengubah branch `main` repo lama**.
+- **Aplikasi mobile baru terpisah dari aplikasi lama**: proyek EAS
+  `@socialnael/new-naelcapital` (bukan `NaelCapital`/`d537903a…` milik APK
+  lapangan) dan paket `com.naelcapital.app.dev` untuk development build. Jangan
+  menautkan ke proyek EAS lama atau memakai paket `com.naelcapital.app` —
+  pembaruan OTA bisa nyasar ke HP karyawan. Varian rilis diputuskan saat
+  aplikasi baru menggantikan yang lama.
 
 ## Perintah
 
@@ -187,7 +193,7 @@ Per paket (`cd apps/<nama>`):
 |---|---|
 | `apps/api` | `bun run dev` (server + muat ulang otomatis, port dari `.env`, bawaan 3000); dokumentasi API di `/dokumentasi`, OpenAPI di `/openapi.json`. |
 | `apps/web` | `bun run dev` (Vite, port 5173) bersama `apps/api` `bun run dev` — web memanggil API di `/api/...` yang diteruskan Vite ke port 3000 (di produksi: Nginx `location /api/ { proxy_pass http://127.0.0.1:3000/; }`), satu asal tanpa CORS. `bun run build` = tipe API + typecheck + berkas statis `dist/`. Sesi bos di `localStorage`. |
-| `apps/mobile` | `bun run start` (Metro untuk development build / Expo Go di HP); paket ber-kode native dipasang dengan `bunx expo install <paket>` (versi cocok SDK), bukan `bun add`; `bunx expo-doctor` untuk memeriksa. **Tidak ada skrip & tidak pernah `expo web`.** Rute di `src/app/` (Expo Router); panduan resmi Expo ada di `apps/mobile/AGENTS.md`. Alamat API di `apps/mobile/.env`: `EXPO_PUBLIC_API_URL=http://<IP laptop>:3000` (bukan localhost). Pemeriksaan bundel tanpa HP: `bunx expo export --platform android --output-dir <folder sementara>`. |
+| `apps/mobile` | `bun run start` (Metro untuk development build / Expo Go di HP); paket ber-kode native dipasang dengan `bunx expo install <paket>` (versi cocok SDK), bukan `bun add`; `bunx expo-doctor` untuk memeriksa. **Tidak pernah `expo web`.** Rute di `src/app/` (Expo Router); panduan resmi Expo ada di `apps/mobile/AGENTS.md`. Alamat API di `apps/mobile/.env`: `EXPO_PUBLIC_API_URL=http://<IP laptop>:3000` (bukan localhost). Pemeriksaan bundel tanpa HP: `bunx expo export --platform android --output-dir <folder sementara>`. **Development build** (SDK 58 tidak bisa dibuka Expo Go): `bun run build:dev` membangun APK `Nael Dev` di EAS (profil `development`, `APP_VARIANT=development` → `app.config.ts`); pasang sekali di HP, lalu `bun run start` dan buka proyeknya dari aplikasi itu. Build ulang hanya bila paket native / `app.json` berubah. |
 
 Catatan instalasi: `bunfig.toml` memakai `linker = "hoisted"` — instalasi
 isolated (bawaan Bun 1.3) membuat salinan ganda `expo`/`react-native` yang

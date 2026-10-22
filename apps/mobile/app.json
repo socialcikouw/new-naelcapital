@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Nael Capital",
-    "slug": "naelcapital",
+    "slug": "new-naelcapital",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -29,6 +29,17 @@
       ],
       "expo-secure-store"
     ],
-    "scheme": "naelcapital"
+    "scheme": "naelcapital",
+    "owner": "socialnael",
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "d1db6915-5a25-48c3-8e37-4aeb009a7f5e"
+      }
+    }
   }
 }
