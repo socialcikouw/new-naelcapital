@@ -248,6 +248,77 @@ describe.skipIf(!url)("skema database", () => {
           );
           await tx`update perangkat set diputus_at = now(), alasan_putus = 'pakai_ulang' where id = ${dev?.id}`;
 
+          // ---- tautan ------------------------------------------------------
+          const [tt] = await tx`
+            insert into tautan (kode, hash_klaim, kedaluwarsa_at)
+            values ('K7QM28XD', ${"a".repeat(64)}, now() + interval '2 minutes') returning id`;
+          await tolak(
+            tx,
+            "uniq_tautan_kode",
+            (sp) =>
+              sp`insert into tautan (kode, hash_klaim, kedaluwarsa_at) values ('K7QM28XD', 'x', now())`,
+          );
+          // Persetujuan: keempat kolom bersamaan; dipakai hanya sesudah disetujui.
+          await tolak(
+            tx,
+            "tautan_setuju_check",
+            (sp) => sp`update tautan set disetujui_at = now() where id = ${tt?.id}`,
+          );
+          await tolak(
+            tx,
+            "tautan_pakai_check",
+            (sp) => sp`update tautan set perangkat_id = ${dev?.id} where id = ${tt?.id}`,
+          );
+          await tolak(
+            tx,
+            "tautan_pengguna_fk",
+            (sp) =>
+              sp`update tautan set kantor_id = ${k2?.id}, pengguna_id = ${kol?.id}, disetujui_at = now(),
+                 disetujui_oleh = ${bos2?.id} where id = ${tt?.id}`,
+          );
+
+          // ---- riwayat_perubahan -------------------------------------------
+          const [jejak] = await tx`
+            insert into riwayat_perubahan (kantor_id, tabel, baris_id, aksi, sesudah, pelaku_id)
+            values (${k?.id}, 'pengguna', ${kol?.id}, 'buat_pengguna', '{"nama":"Andi"}', ${bos?.id}) returning id`;
+          await tolak(
+            tx,
+            "riwayat_perubahan_append_only",
+            (sp) => sp`update riwayat_perubahan set aksi = 'lain' where id = ${jejak?.id}`,
+          );
+          await tolak(
+            tx,
+            "riwayat_perubahan_append_only",
+            (sp) => sp`delete from riwayat_perubahan where id = ${jejak?.id}`,
+          );
+          await tolak(
+            tx,
+            "riwayat_perubahan_aksi_check",
+            (sp) =>
+              sp`insert into riwayat_perubahan (kantor_id, tabel, baris_id, aksi, sesudah, pelaku_id)
+               values (${k?.id}, 'pengguna', ${kol?.id}, 'Aksi Salah', '{}', ${bos?.id})`,
+          );
+          await tolak(
+            tx,
+            "riwayat_perubahan_isi_check",
+            (sp) =>
+              sp`insert into riwayat_perubahan (kantor_id, tabel, baris_id, aksi, pelaku_id)
+               values (${k?.id}, 'pengguna', ${kol?.id}, 'kosong', ${bos?.id})`,
+          );
+          await tolak(
+            tx,
+            "riwayat_perubahan_pelaku_fk",
+            (sp) =>
+              sp`insert into riwayat_perubahan (kantor_id, tabel, baris_id, aksi, sesudah, pelaku_id)
+               values (${k?.id}, 'pengguna', ${kol?.id}, 'x', '{}', ${bos2?.id})`,
+          );
+          // Skrip data uji boleh menghapus jejak, hanya di transaksinya sendiri.
+          await tx.savepoint(async (sp) => {
+            await sp`select set_config('nael.hapus_data_uji', 'ya', true)`;
+            await sp`delete from riwayat_perubahan where id = ${jejak?.id}`;
+            await sp`select set_config('nael.hapus_data_uji', '', true)`;
+          });
+
           throw new Batalkan();
         })
         .catch((e) => {

@@ -84,7 +84,7 @@ export function buatLayananAuth(deps: AuthDeps) {
     db: Db,
     akun: { id: string; kantorId: string; peran: Aktor["peran"] },
     info: InfoPerangkat,
-  ): Promise<Sesi> {
+  ): Promise<{ sesi: Sesi; perangkatId: string }> {
     const kini = sekarang();
     const [p] = await db
       .insert(perangkat)
@@ -104,7 +104,8 @@ export function buatLayananAuth(deps: AuthDeps) {
       peran: akun.peran,
       perangkatId: p.id,
     };
-    return { ...(await token(aktor, p.putaran)), pengguna: await profil(db, akun.id) };
+    const sesi = { ...(await token(aktor, p.putaran)), pengguna: await profil(db, akun.id) };
+    return { sesi, perangkatId: p.id };
   }
 
   return {
@@ -150,7 +151,7 @@ export function buatLayananAuth(deps: AuthDeps) {
             berlakuMulai: hariIni,
             dibuatOleh: bos.id,
           });
-          return mulaiSesi(tx, bos, input.perangkat);
+          return (await mulaiSesi(tx, bos, input.perangkat)).sesi;
         });
       } catch (e) {
         if (galatPostgres(e)?.constraint_name === "uniq_pengguna_nomor_hp_bos") {
@@ -187,7 +188,7 @@ export function buatLayananAuth(deps: AuthDeps) {
         throw KREDENSIAL_SALAH();
       }
       if (!(await cocokSandi(input.sandi, akun.hashSandi))) throw KREDENSIAL_SALAH();
-      return mulaiSesi(deps.db, akun, input.perangkat);
+      return (await mulaiSesi(deps.db, akun, input.perangkat)).sesi;
     },
 
     /**
@@ -266,6 +267,9 @@ export function buatLayananAuth(deps: AuthDeps) {
     saya: (a: Aktor) => profil(deps.db, a.penggunaId),
 
     periksaTokenAkses: (tokenAkses: string) => akses.periksa(tokenAkses),
+
+    /** Catat perangkat baru & buka sesinya — dipakai penautan QR. */
+    bukaSesi: mulaiSesi,
   };
 }
 

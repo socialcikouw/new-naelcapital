@@ -6,3 +6,4 @@
 export * from "./auth";
 export * from "./galat";
 export * from "./sehat";
+export * from "./tautan";

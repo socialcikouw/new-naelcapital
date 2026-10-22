@@ -29,6 +29,20 @@
       "when": 1792696034213,
       "tag": "0003_tidak_mundur_umum",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792696837728,
+      "tag": "0004_tautan_riwayat",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792696838165,
+      "tag": "0005_hanya_bertambah",
+      "breakpoints": true
     }
   ]
 }
