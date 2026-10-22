@@ -86,7 +86,7 @@ export default function Tautkan() {
             tokenSegar: hasil.tokenSegar,
             pengguna: hasil.pengguna,
           });
-          router.replace("/beranda");
+          router.replace(hasil.pengguna.peran === "kolektor" ? "/kolektor" : "/beranda");
         } else if (hasil.status === "kedaluwarsa") {
           setStatus("kedaluwarsa");
         }

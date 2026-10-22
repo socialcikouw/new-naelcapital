@@ -1,4 +1,10 @@
-import type { AbsenInput, AkadInput, PinjamanKartu } from "@naelcapital/contracts";
+import type {
+  AbsenInput,
+  AkadInput,
+  KartuTagih,
+  NasabahLama,
+  PinjamanKartu,
+} from "@naelcapital/contracts";
 import {
   angsuranKe,
   hariTagihMingguan,
@@ -9,7 +15,7 @@ import {
   rapikanNamaWilayah,
   syaratAkad,
 } from "@naelcapital/domain";
-import { and, asc, eq, inArray, isNull, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, ne, notExists, or, sql } from "drizzle-orm";
 import type { Db } from "../../db/klien";
 import {
   foto,
@@ -289,10 +295,11 @@ export function buatLayananLapangan(deps: LapanganDeps) {
     },
 
     /** Pinjaman aktif yang dipegang kolektor ini, urut kampung lalu nama. */
-    async daftarPinjaman(aktor: Aktor): Promise<PinjamanKartu[]> {
+    async daftarPinjaman(aktor: Aktor): Promise<KartuTagih[]> {
       wajibPeran(aktor, "kolektor");
+      const { tanggal } = await bacaKalender(deps.db, aktor.kantorId, sekarang());
       const baris = await deps.db
-        .select(kolomKartu)
+        .select({ ...kolomKartu, tabungan: nasabah.saldoTabungan })
         .from(pinjaman)
         .innerJoin(nasabah, eq(nasabah.id, pinjaman.nasabahId))
         .innerJoin(wilayah, eq(wilayah.id, nasabah.wilayahId))
@@ -303,7 +310,94 @@ export function buatLayananLapangan(deps: LapanganDeps) {
           ),
         )
         .orderBy(asc(wilayah.nama), asc(nasabah.nama));
-      return baris.map(keKartu);
+      const ids = baris.map((b) => b.id);
+      if (ids.length === 0) return [];
+
+      // Catatan hari ini (C3): setoran atau libur — paling banyak satu per pinjaman.
+      const setoran = await deps.db
+        .select({ pinjamanId: transaksi.pinjamanId, storting: transaksi.storting })
+        .from(transaksi)
+        .where(
+          and(
+            inArray(transaksi.pinjamanId, ids),
+            eq(transaksi.tanggal, tanggal),
+            isNull(transaksi.dibatalkanAt),
+          ),
+        );
+      const libur = await deps.db
+        .select({ pinjamanId: liburNasabah.pinjamanId, alasan: liburNasabah.alasanLibur })
+        .from(liburNasabah)
+        .where(and(inArray(liburNasabah.pinjamanId, ids), eq(liburNasabah.tanggal, tanggal)));
+      const catatan = new Map<string, KartuTagih["hariIni"]>();
+      for (const t of setoran)
+        catatan.set(t.pinjamanId, { jenis: "angsuran", storting: t.storting });
+      for (const l of libur) catatan.set(l.pinjamanId, { jenis: "libur", alasan: l.alasan });
+      return baris.map(({ tabungan, ...b }) => ({
+        ...keKartu(b),
+        tabungan,
+        hariIni: catatan.get(b.id) ?? null,
+      }));
+    },
+
+    /** Kampung kantor ini untuk formulir akad, urut nama. */
+    async daftarKampung(aktor: Aktor) {
+      wajibPeran(aktor, "kolektor");
+      return deps.db
+        .select({ id: wilayah.id, nama: wilayah.nama })
+        .from(wilayah)
+        .where(eq(wilayah.kantorId, aktor.kantorId))
+        .orderBy(asc(wilayah.nama));
+    },
+
+    /** Pegangan kolektor ini yang tidak diblokir & tanpa pinjaman aktif — calon pinjam lagi. */
+    async daftarNasabahLama(aktor: Aktor): Promise<NasabahLama[]> {
+      wajibPeran(aktor, "kolektor");
+      const aktif = deps.db
+        .select({ id: pinjaman.id })
+        .from(pinjaman)
+        .where(
+          and(eq(pinjaman.nasabahId, nasabah.id), inArray(pinjaman.status, ["berjalan", "macet"])),
+        );
+      const baris = await deps.db
+        .select({
+          id: nasabah.id,
+          nama: nasabah.nama,
+          kampung: wilayah.nama,
+          tabungan: nasabah.saldoTabungan,
+        })
+        .from(nasabah)
+        .innerJoin(wilayah, eq(wilayah.id, nasabah.wilayahId))
+        .where(
+          and(
+            eq(nasabah.kolektorId, aktor.penggunaId),
+            isNull(nasabah.diblokirAt),
+            notExists(aktif),
+          ),
+        )
+        .orderBy(asc(wilayah.nama), asc(nasabah.nama));
+      if (baris.length === 0) return [];
+
+      // Pinjaman terakhir (bukan batal) per nasabah — patokan jenis & pokok pinjam lagi.
+      const riwayat = await deps.db
+        .selectDistinctOn([pinjaman.nasabahId], {
+          nasabahId: pinjaman.nasabahId,
+          pinjamanKe: pinjaman.pinjamanKe,
+          jenis: pinjaman.jenis,
+          pokok: pinjaman.pokok,
+        })
+        .from(pinjaman)
+        .where(
+          and(
+            inArray(
+              pinjaman.nasabahId,
+              baris.map((b) => b.id),
+            ),
+            ne(pinjaman.status, "batal"),
+          ),
+        )
+        .orderBy(pinjaman.nasabahId, desc(pinjaman.pinjamanKe));
+      const terakhir = new Map(riwayat.map(({ nasabahId, ...r }) => [nasabahId, r]));
+      return baris.map((b) => ({ ...b, terakhir: terakhir.get(b.id) ?? null }));
     },
 
     /** Akad baru — orang baru, atau nasabah lama pegangan kolektor ini (A). */

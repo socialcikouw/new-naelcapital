@@ -275,6 +275,27 @@ describe.skipIf(!url)("lapangan kolektor", () => {
         "Tono",
         "Wati",
       ]);
+      // Catatan hari ini: Sari sudah setor, penerus Tono libur, Wati belum.
+      expect(daftar.isi.map((p: { hariIni: unknown }) => p.hariIni)).toEqual([
+        { jenis: "angsuran", storting: 50_000 },
+        { jenis: "libur", alasan: "sakit" },
+        null,
+      ]);
+      expect(daftar.isi[0].tabungan).toBe(50_000);
+      // Budi sudah lunas → calon pinjam lagi; Tono masih punya pinjaman penerus.
+      const lama = await kirim("/lapangan/nasabah-lama", undefined, k);
+      expect(lama.isi).toEqual([
+        {
+          id: budi.isi.nasabah.id,
+          nama: "Budi",
+          kampung: "Pule Barat",
+          tabungan: 0,
+          terakhir: { pinjamanKe: 1, jenis: "harian", pokok: 500_000 },
+        },
+      ]);
+      expect((await kirim("/lapangan/kampung", undefined, k)).isi).toEqual([
+        { id: expect.any(String), nama: "Pule Barat" },
+      ]);
 
       // ---- libur kantor & laporan menghentikan lapangan -----------------------
       const hariIni = await kirim("/lapangan/hari-ini", undefined, k);

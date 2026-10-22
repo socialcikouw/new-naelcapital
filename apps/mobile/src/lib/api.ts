@@ -41,7 +41,10 @@ async function segarkan(): Promise<boolean> {
   return refreshBerjalan;
 }
 
-async function ambilDenganSesi(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+export async function ambilDenganSesi(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> {
   const kirim = () => {
     const headers = new Headers(init?.headers);
     const token = sesi.ambil()?.tokenAkses;

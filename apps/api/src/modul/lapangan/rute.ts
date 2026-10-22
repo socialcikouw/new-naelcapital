@@ -6,9 +6,12 @@ import {
   gulungSchema,
   hariKolektorSchema,
   hasilGulungSchema,
+  kampungPilihanSchema,
+  kartuTagihSchema,
   liburSchema,
   liburTercatatSchema,
   lunasSchema,
+  nasabahLamaSchema,
   pinjamanSchema,
   transaksiSchema,
 } from "@naelcapital/contracts";
@@ -124,7 +127,31 @@ const daftar = createRoute({
   summary: "Pinjaman aktif yang dipegang kolektor ini",
   security: aman,
   responses: {
-    200: { description: "Kartu pinjaman", ...json(z.array(pinjamanSchema)) },
+    200: { description: "Kartu tagih", ...json(z.array(kartuTagihSchema)) },
+    ...galatLapangan,
+  },
+});
+
+const kampung = createRoute({
+  method: "get",
+  path: "/lapangan/kampung",
+  tags: ["lapangan"],
+  summary: "Kampung kantor ini — pilihan di formulir akad",
+  security: aman,
+  responses: {
+    200: { description: "Kampung", ...json(z.array(kampungPilihanSchema)) },
+    ...galatLapangan,
+  },
+});
+
+const nasabahLama = createRoute({
+  method: "get",
+  path: "/lapangan/nasabah-lama",
+  tags: ["lapangan"],
+  summary: "Pegangan tanpa pinjaman aktif — calon pinjam lagi",
+  security: aman,
+  responses: {
+    200: { description: "Nasabah lama", ...json(z.array(nasabahLamaSchema)) },
     ...galatLapangan,
   },
 });
@@ -139,6 +166,10 @@ export function ruteLapangan(lapangan: LayananLapangan, auth: LayananAuth) {
     )
     .openapi(laporan, async (c) => c.json(await lapangan.bukaLaporan(c.get("aktor")), 200))
     .openapi(daftar, async (c) => c.json(await lapangan.daftarPinjaman(c.get("aktor")), 200))
+    .openapi(kampung, async (c) => c.json(await lapangan.daftarKampung(c.get("aktor")), 200))
+    .openapi(nasabahLama, async (c) =>
+      c.json(await lapangan.daftarNasabahLama(c.get("aktor")), 200),
+    )
     .openapi(akad, async (c) =>
       c.json(await lapangan.akad(c.get("aktor"), c.req.valid("json")), 201),
     )

@@ -29,5 +29,6 @@ export default function Pintu() {
       </View>
     );
   }
-  return <Redirect href={s ? "/beranda" : "/tautkan"} />;
+  if (!s) return <Redirect href="/tautkan" />;
+  return <Redirect href={s.pengguna.peran === "kolektor" ? "/kolektor" : "/beranda"} />;
 }

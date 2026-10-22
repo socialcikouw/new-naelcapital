@@ -135,3 +135,34 @@ export const liburTercatatSchema = z.object({
   tanggal: z.string(),
   alasanLibur: z.string().nullable(),
 });
+
+/**
+ * `GET /lapangan/pinjaman` — kartu di daftar tagih kolektor: kartu pinjaman +
+ * tabungan nasabah (pratinjau lunas) + catatan hari ini (C3: satu peristiwa).
+ * Lunas & gulung hari ini tidak tampil — pinjamannya sudah keluar daftar.
+ */
+export const kartuTagihSchema = pinjamanSchema.extend({
+  tabungan: z.number(),
+  hariIni: z
+    .discriminatedUnion("jenis", [
+      z.object({ jenis: z.literal("angsuran"), storting: z.number() }),
+      z.object({ jenis: z.literal("libur"), alasan: z.string().nullable() }),
+    ])
+    .nullable(),
+});
+export type KartuTagih = z.infer<typeof kartuTagihSchema>;
+
+/** `GET /lapangan/kampung` — pilihan kampung di formulir akad. */
+export const kampungPilihanSchema = z.object({ id: z.uuid(), nama: z.string() });
+
+/** `GET /lapangan/nasabah-lama` — pegangan tanpa pinjaman aktif, siap pinjam lagi. */
+export const nasabahLamaSchema = z.object({
+  id: z.uuid(),
+  nama: z.string(),
+  kampung: z.string(),
+  tabungan: z.number(),
+  terakhir: z
+    .object({ pinjamanKe: z.number(), jenis: jenisPinjaman, pokok: z.number() })
+    .nullable(),
+});
+export type NasabahLama = z.infer<typeof nasabahLamaSchema>;
