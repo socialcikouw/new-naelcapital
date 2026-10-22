@@ -23,7 +23,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Nael Capital memakai kamera untuk memindai QR penautan HP dan memotret serah terima.",
+          "cameraPermission": "Nael Capital memakai kamera untuk memotret serah terima pinjaman.",
           "recordAudioAndroid": false
         }
       ],

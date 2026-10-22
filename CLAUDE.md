@@ -153,7 +153,7 @@ isi berkas, ukuran, SHA-256).
   mobile. Verifikasi lewat `tsc`/lint/uji, lalu pemilik mencoba di HP-nya.
 - **Rahasia** (`DATABASE_URL`, kunci JWT, kunci penyimpanan berkas) hanya di
   `.env` — tidak pernah di-commit. Sediakan `.env.example`.
-- **Commit lokal**; push hanya bila pemilik meminta.
+- **Commit lalu push otomatis** ke `origin` (GitHub) setiap selesai satu langkah yang lolos pemeriksaan — keputusan pemilik 23 Okt 2026.
 - Repo lama (`desktop\re-launching\naelcapital` dan `naelcapitalAPI`) masih
   dipakai karyawan di lapangan — **jangan mengubah branch `main` repo lama**.
 

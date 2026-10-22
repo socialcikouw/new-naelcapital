@@ -106,8 +106,8 @@ export default function Tautkan() {
     <Layar>
       <Judul>Tautkan HP ini</Judul>
       <Keterangan>
-        Minta bos memindai QR ini dari HP-nya, atau mengetik kodenya. HP ini masuk otomatis begitu
-        disetujui.
+        Minta bos memindai QR ini dari aplikasi web Nael Capital, atau mengetik kodenya. HP ini
+        masuk otomatis begitu disetujui.
       </Keterangan>
 
       {status === "menunggu" && tautan ? (
@@ -130,7 +130,6 @@ export default function Tautkan() {
       ) : null}
 
       <PesanGalat pesan={galat} />
-      <Tombol judul="Kembali" jenis="kedua" onPress={() => router.back()} />
     </Layar>
   );
 }

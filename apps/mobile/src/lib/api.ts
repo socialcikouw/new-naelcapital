@@ -24,7 +24,7 @@ async function segarkan(): Promise<boolean> {
         body: JSON.stringify({ tokenSegar: s.tokenSegar }),
       });
       if (res.status === 401) {
-        // Sesi dicabut (keluar, HP diganti, kedaluwarsa) → kembali ke layar masuk.
+        // Sesi dicabut (keluar, HP diganti, kedaluwarsa) → kembali ke layar penautan.
         await sesi.hapus();
         return false;
       }

@@ -4,7 +4,10 @@ import { Judul, Keterangan, Layar } from "../komponen/ui";
 import { ALAMAT_API } from "../lib/api";
 import { useSesi } from "../lib/sesi";
 
-/** Pintu masuk: arahkan ke layar masuk atau beranda sesuai sesi di HP ini. */
+/**
+ * Pintu masuk: HP yang belum tertaut langsung ke layar penautan QR — aplikasi
+ * HP khusus kasir, pengawas, kolektor; tidak ada login nomor HP + kata sandi.
+ */
 export default function Pintu() {
   const s = useSesi();
 
@@ -26,5 +29,5 @@ export default function Pintu() {
       </View>
     );
   }
-  return <Redirect href={s ? "/beranda" : "/masuk"} />;
+  return <Redirect href={s ? "/beranda" : "/tautkan"} />;
 }

@@ -12,13 +12,13 @@ const NAMA_PERAN = {
   kolektor: "Kolektor",
 } as const;
 
-/** Beranda sementara: siapa yang masuk; bos bisa menautkan HP karyawan. */
+/** Beranda sementara kasir / pengawas / kolektor: siapa yang masuk, dan keluar. */
 export default function Beranda() {
   const s = useSesi();
   const [keluarBerjalan, setKeluarBerjalan] = useState(false);
 
   if (s === undefined) return null;
-  if (s === null) return <Redirect href="/masuk" />;
+  if (s === null) return <Redirect href="/tautkan" />;
   const { pengguna } = s;
 
   const keluar = async () => {
@@ -26,7 +26,7 @@ export default function Beranda() {
     // Diputus di server bila terjangkau; sesi di HP tetap dihapus walau tidak.
     await api.auth.keluar.$post().catch(() => null);
     await sesi.hapus();
-    router.replace("/masuk");
+    router.replace("/tautkan");
   };
 
   return (
@@ -39,16 +39,7 @@ export default function Beranda() {
         </Text>
       </View>
 
-      {pengguna.peran === "bos" ? (
-        <View className="gap-2">
-          <Keterangan>
-            Tautkan HP kasir, pengawas, atau kolektor dengan memindai QR di HP mereka.
-          </Keterangan>
-          <Tombol judul="Tautkan HP karyawan" onPress={() => router.push("/pindai")} />
-        </View>
-      ) : (
-        <Keterangan>Layar kerja menyusul.</Keterangan>
-      )}
+      <Keterangan>Layar kerja menyusul.</Keterangan>
 
       <View className="flex-1" />
       <Tombol judul="Keluar" jenis="kedua" memuat={keluarBerjalan} onPress={() => void keluar()} />
