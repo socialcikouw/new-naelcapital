@@ -6,14 +6,22 @@
   "scripts": {
     "dev": "bun --watch src/server.ts",
     "start": "bun src/server.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "test": "bun test"
   },
   "dependencies": {
     "@hono/zod-openapi": "^1.6.3",
     "@naelcapital/contracts": "workspace:*",
     "@naelcapital/domain": "workspace:*",
     "@scalar/hono-api-reference": "^0.12.13",
+    "drizzle-orm": "^0.45.4",
     "hono": "^4.13.13",
+    "postgres": "^3.4.9",
     "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.11"
   }
 }

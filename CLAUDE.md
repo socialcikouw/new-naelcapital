@@ -149,7 +149,7 @@ Dari root repo:
 |---|---|
 | `bun install` | Pasang dependensi semua paket (satu `bun.lock`). |
 | `bun run typecheck` | `tsc --noEmit` di setiap paket. |
-| `bun test` | Semua uji di semua paket. |
+| `bun run test` | `bun test` di setiap paket yang punya uji. Uji skema database berjalan ke Supabase dev (`apps/api/.env`) dalam satu transaksi yang dibatalkan; tanpa `DATABASE_URL` dilewati. |
 | `bun run lint` | Biome: lint + cek format (Markdown & `docs/` tidak ikut). |
 | `bun run format` | Biome: rapikan kode & urutkan import. |
 
@@ -166,6 +166,16 @@ isolated (bawaan Bun 1.3) membuat salinan ganda `expo`/`react-native` yang
 ditolak `expo-doctor`. `react`/`react-dom` di `apps/web` disamakan persis
 dengan versi yang dipatok Expo di `apps/mobile`.
 
-Migrasi database ditambahkan bersama skema Drizzle pertama.
+Database (`cd apps/api`, membaca `apps/api/.env`):
 
-Pemeriksaan sebelum commit: `bun run typecheck && bun test && bun run lint`.
+| Perintah | Isi |
+|---|---|
+| `bun run db:generate` | Skema Drizzle (`src/db/skema/`) → berkas SQL baru di `src/db/migrasi/`. Periksa SQL-nya sebelum diterapkan. |
+| `bunx --bun drizzle-kit generate --custom --name <nama>` | Migrasi SQL kustom kosong — untuk fungsi, trigger, `EXCLUDE`. |
+| `bun run db:migrate` | Terapkan migrasi yang belum jalan (dicatat di `drizzle.__drizzle_migrations`). |
+
+Migrasi yang sudah diterapkan **tidak pernah disunting** — perubahan selalu
+lewat migrasi baru. Nama constraint ditulis eksplisit sesuai konvensi #8
+(`foreignKey({ name })`, bukan `.references()` yang memberi nama bawaan).
+
+Pemeriksaan sebelum commit: `bun run typecheck && bun run test && bun run lint`.
