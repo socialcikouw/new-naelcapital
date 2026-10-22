@@ -143,5 +143,24 @@ isi berkas, ukuran, SHA-256).
 
 ## Perintah
 
-Diisi saat kerangka paket dibuat (`bun install`, `bun test`, typecheck,
-migrasi).
+Dari root repo:
+
+| Perintah | Isi |
+|---|---|
+| `bun install` | Pasang dependensi semua paket (satu `bun.lock`). |
+| `bun run typecheck` | `tsc --noEmit` di setiap paket. |
+| `bun test` | Semua uji di semua paket. |
+| `bun run lint` | Biome: lint + cek format (Markdown & `docs/` tidak ikut). |
+| `bun run format` | Biome: rapikan kode & urutkan import. |
+
+Per paket (`cd apps/<nama>`):
+
+| Paket | Perintah |
+|---|---|
+| `apps/api` | `bun run dev` (server + muat ulang otomatis, port dari `.env`, bawaan 3000); dokumentasi API di `/dokumentasi`, OpenAPI di `/openapi.json`. |
+| `apps/web` | `bun run build` (berkas statis ke `dist/`); `bun run dev` untuk pengembangan dasbor. |
+
+Migrasi database ditambahkan bersama skema Drizzle pertama. `apps/mobile`
+menyusul (Expo + Expo Router + NativeWind) — **tanpa `expo web`**.
+
+Pemeriksaan sebelum commit: `bun run typecheck && bun test && bun run lint`.

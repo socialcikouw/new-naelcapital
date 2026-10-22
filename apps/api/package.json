@@ -1,0 +1,19 @@
+{
+  "name": "@naelcapital/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/server.ts",
+    "start": "bun src/server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/zod-openapi": "^1.6.3",
+    "@naelcapital/contracts": "workspace:*",
+    "@naelcapital/domain": "workspace:*",
+    "@scalar/hono-api-reference": "^0.12.13",
+    "hono": "^4.13.13",
+    "zod": "^4.6.7"
+  }
+}
