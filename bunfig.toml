@@ -1,0 +1,5 @@
+[install]
+# Satu salinan setiap paket di node_modules root. Instalasi isolated (bawaan
+# Bun 1.3) membuat salinan ganda expo/react-native per varian peer opsional —
+# berisiko untuk modul native di apps/mobile (expo-doctor menolaknya).
+linker = "hoisted"

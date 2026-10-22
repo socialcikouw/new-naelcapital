@@ -159,8 +159,13 @@ Per paket (`cd apps/<nama>`):
 |---|---|
 | `apps/api` | `bun run dev` (server + muat ulang otomatis, port dari `.env`, bawaan 3000); dokumentasi API di `/dokumentasi`, OpenAPI di `/openapi.json`. |
 | `apps/web` | `bun run build` (berkas statis ke `dist/`); `bun run dev` untuk pengembangan dasbor. |
+| `apps/mobile` | `bun run start` (Metro untuk development build / Expo Go di HP); paket ber-kode native dipasang dengan `bunx expo install <paket>` (versi cocok SDK), bukan `bun add`; `bunx expo-doctor` untuk memeriksa. **Tidak ada skrip & tidak pernah `expo web`.** Rute di `src/app/` (Expo Router); panduan resmi Expo ada di `apps/mobile/AGENTS.md`. |
 
-Migrasi database ditambahkan bersama skema Drizzle pertama. `apps/mobile`
-menyusul (Expo + Expo Router + NativeWind) — **tanpa `expo web`**.
+Catatan instalasi: `bunfig.toml` memakai `linker = "hoisted"` — instalasi
+isolated (bawaan Bun 1.3) membuat salinan ganda `expo`/`react-native` yang
+ditolak `expo-doctor`. `react`/`react-dom` di `apps/web` disamakan persis
+dengan versi yang dipatok Expo di `apps/mobile`.
+
+Migrasi database ditambahkan bersama skema Drizzle pertama.
 
 Pemeriksaan sebelum commit: `bun run typecheck && bun test && bun run lint`.
