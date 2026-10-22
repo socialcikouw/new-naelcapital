@@ -1,0 +1,13 @@
+# Semua berkas teks disimpan LF di repo (VPS Linux, Biome); Git di Windows
+# tidak mengubahnya menjadi CRLF.
+* text=auto eol=lf
+
+# Biner
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.jks binary
