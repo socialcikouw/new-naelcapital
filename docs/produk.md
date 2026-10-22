@@ -6,7 +6,7 @@ lapangan, dan setiap sore uangnya diserahkan ke kantor. Aplikasi ini
 menggantikan buku catatan: setiap rupiah yang keluar dan masuk tercatat, siapa
 yang mencatat, dan kapan.
 
-Rumus & aturan angka ada di `aturan-usaha.md` (menyusul). Rancangan
+Rumus & aturan angka ada di [`aturan-usaha.md`](aturan-usaha.md). Rancangan
 database per tabel ada di [`skema/`](skema/README.md). Alasan di balik
 keputusan besar ada di [`keputusan.md`](keputusan.md).
 

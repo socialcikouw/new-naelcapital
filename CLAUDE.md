@@ -10,6 +10,7 @@ Dokumen yang dibaca lebih dulu:
 | Dokumen | Isi |
 |---|---|
 | [`docs/produk.md`](docs/produk.md) | Peran & aplikasi, alur satu hari, jenis & status pinjaman, **istilah** |
+| [`docs/aturan-usaha.md`](docs/aturan-usaha.md) | Rumus & aturan bernomor dengan contoh angka — acuan `packages/domain` dan ujinya; ubah dokumen ini lebih dulu |
 | [`docs/keputusan.md`](docs/keputusan.md) | Keputusan besar beserta alasan dan yang ditolak — keputusan baru ditambahkan di sini |
 | [`docs/skema/`](docs/skema/README.md) | Rancangan database per tabel + konvensi penamaan |
 
