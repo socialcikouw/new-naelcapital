@@ -22,29 +22,90 @@ Arah ketergantungan: `apps/*` → `packages/*`; `packages/domain` tidak
 bergantung pada apa pun; `packages/contracts` hanya pada `zod` (dan `domain`
 bila perlu tipe).
 
-## Stack
+## Stack (diputuskan 23 Okt 2026)
 
-| Bagian | Pilihan |
+### Pondasi
+
+| Alat | Untuk apa |
 |---|---|
-| Runtime & package manager | Bun (workspaces), TypeScript `strict` di semua paket |
-| API | **Hono** di `Bun.serve` + `@hono/zod-openapi` — validasi, tipe, dan dokumentasi OpenAPI dari satu definisi rute |
-| Klien API | Klien RPC Hono (`hc`) per modul di `apps/mobile` & `apps/web` — tipe permintaan/respons tersambung dari rute |
-| Database | PostgreSQL — **dev: Supabase**, **produksi: Postgres di VPS** |
-| Akses data | Drizzle ORM (driver `postgres`), migrasi `drizzle-kit`; trigger/fungsi/`EXCLUDE` lewat migrasi SQL kustom |
-| Kata sandi | argon2 |
-| Mobile | Expo (React Native) + Expo Router |
-| Web | React + Vite |
-| Data klien | TanStack Query |
-| Uji | `bun test`; rute diuji lewat `app.request(...)` tanpa menyalakan server |
+| **Bun** | Runtime, package manager (workspaces), uji (`bun test`), build. |
+| **TypeScript `strict`** | Semua paket; `tsconfig` dasar bersama di root. |
+| **Biome** | Lint + format semua paket (pengganti ESLint + Prettier). |
 
-Catatan Hono:
+### `apps/api`
+
+| Alat | Untuk apa |
+|---|---|
+| **Hono** di `Bun.serve` | Rute HTTP. |
+| **`@hono/zod-openapi`** + **Zod** | Validasi, tipe, dan OpenAPI dari satu definisi rute; juga validasi `.env` saat server menyala. |
+| **Scalar** (`@scalar/hono-api-reference`) | Halaman dokumentasi API. |
+| **Drizzle ORM** + **drizzle-kit** | Kueri bertipe & migrasi; trigger/fungsi/`EXCLUDE` lewat migrasi SQL kustom. |
+| **postgres.js** | Driver Postgres (Supabase dev & VPS). `bigint` rupiah → `number`. |
+| **`Bun.password`** (argon2id) | Hash kata sandi bos — tanpa paket native. |
+| **`hono/jwt`** | Token akses; token refresh per perangkat sesuai [schema-perangkat.md](docs/skema/schema-perangkat.md). |
+| **hono-rate-limiter** (memori) | Batas permintaan — satu proses, tanpa Redis. |
+| **pino** | Log terstruktur JSON. |
+| **croner** | Jadwal dalam proses: sapuan tengah malam, pembersihan foto sementara. |
+| Penyimpanan berkas: satu antarmuka, dua penggerak | **Disk lokal** (dev & VPS) atau **S3** via `Bun.s3` (mis. Cloudflare R2). |
+
+Sengaja **tidak** dipakai: Redis (kunci idempoten disimpan di Postgres),
+Sharp (HP sudah mengompres & menyimpan ulang foto; server memeriksa tipe dari
+isi berkas, ukuran, SHA-256).
+
+### Paket bersama
+
+| Paket | Isi |
+|---|---|
+| `packages/contracts` | Skema Zod permintaan & respons — dipakai rute Hono dan formulir klien. |
+| `packages/domain` | Aturan usaha murni: rumus akad, jadwal tagih, macet, rumus kas, kalender kantor (tanggal = teks `YYYY-MM-DD`; WIB/WITA/WIT offset tetap, tanpa pustaka tanggal). |
+
+### `apps/mobile`
+
+| Alat | Untuk apa |
+|---|---|
+| **Expo** (SDK terbaru) + **Expo Router** | Aplikasi Android/iOS. |
+| **EAS Build + EAS Update** | APK & pembaruan OTA. |
+| **NativeWind** | Gaya (Tailwind untuk React Native), senada dengan web. |
+| Klien RPC Hono (`hc`) per modul + **TanStack Query** | Data. Kiriman gagal diulang otomatis dengan **kunci idempoten** yang sama — tanpa mode offline penuh (sinyal buruk jarang). |
+| **react-hook-form** + Zod | Formulir dengan skema dari `contracts`. |
+| **expo-camera** | Foto serah terima (kamera saja, bukan galeri) & pemindai QR. |
+| **expo-image-manipulator** | Kompres & simpan ulang foto (±200 KB, EXIF terbuang). |
+| **expo-location** | GPS titik rumah & lokasi foto. |
+| **expo-secure-store** | Token perangkat. |
+
+### `apps/web`
+
+| Alat | Untuk apa |
+|---|---|
+| **React + Vite** | Dasbor bos & pengawas (SPA statis). |
+| **TanStack Router** | Navigasi bertipe. |
+| **TanStack Query** + `hc` | Data. |
+| **TanStack Table** | Tabel besar (nasabah, transaksi, buku kas). |
+| **Tailwind CSS + shadcn/ui** | Tampilan. |
+| **Recharts** | Grafik harian. |
+
+### Uji
+
+- `packages/domain`: uji murni (rumus akad, macet, jadwal, kas).
+- `apps/api`: rute lewat `app.request(...)` tanpa menyalakan server; uji yang
+  menyentuh database **hanya ke Supabase dev** (dijaga pemeriksaan host); uji
+  skema memastikan CHECK, FK, dan trigger menolak data salah.
+
+### Lingkungan
+
+| | Database | Server |
+|---|---|---|
+| Pengembangan | Supabase (Postgres polos) | `bun --watch` |
+| Produksi | PostgreSQL di VPS | `bun build --compile` (satu berkas program) + systemd, di belakang **Nginx** (sudah terpasang; Caddy ditimbang lagi saat rilis) — Nginx juga melayani berkas statis `apps/web`. |
+
+### Catatan Hono
 
 - **Rute dipecah per modul** (`kantor`, `pengguna`, `pinjaman`, …) dan klien
   RPC dibuat per modul — satu tipe gabungan raksasa memperlambat `tsc`.
 - **Bentuk data tetap di `packages/contracts`** (Zod); rute Hono memakainya,
   bukan mendefinisikan ulang.
-- Middleware yang dirangkai sendiri: log terstruktur (JSON), rate limit
-  (`hono-rate-limiter`), penerjemah galat domain → respons HTTP.
+- Middleware yang dirangkai sendiri: log (pino), rate limit, penerjemah galat
+  domain → respons HTTP.
 
 ## Database
 
