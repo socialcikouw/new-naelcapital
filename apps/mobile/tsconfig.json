@@ -6,5 +6,5 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": ["src", "nativewind-env.d.ts", "expo-env.d.ts", ".expo/types/**/*.ts"]
+  "include": ["src", "nativewind-env.d.ts"]
 }

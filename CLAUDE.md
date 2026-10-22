@@ -5,6 +5,14 @@ menerima setoran sore, pengawas memeriksa, bos memegang kendali. Repo ini
 membangun ulang aplikasi lama dari akarnya — **rancangan database di
 `docs/skema/` adalah acuannya**.
 
+Dokumen yang dibaca lebih dulu:
+
+| Dokumen | Isi |
+|---|---|
+| [`docs/produk.md`](docs/produk.md) | Peran & aplikasi, alur satu hari, jenis & status pinjaman, **istilah** |
+| [`docs/keputusan.md`](docs/keputusan.md) | Keputusan besar beserta alasan dan yang ditolak — keputusan baru ditambahkan di sini |
+| [`docs/skema/`](docs/skema/README.md) | Rancangan database per tabel + konvensi penamaan |
+
 Berkomunikasi dengan pemilik dalam **bahasa Indonesia**.
 
 ## Pembagian aplikasi (keputusan pemilik, 23 Okt 2026)
