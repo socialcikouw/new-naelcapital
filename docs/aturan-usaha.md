@@ -163,10 +163,11 @@ lebih dari nol**.
 | Tetap | 0 | pokok lama | 0 |
 | Turun | 0 | pokok baru | pokok lama − pokok baru |
 
-> Contoh: harian pinjaman ke-4, pokok 1.000.000, angsuran ke-12, saldo 400.000,
-> digulung ke pokok 1.500.000. Penerus: admin 75.000, tabungan 75.000,
-> pencairan akad 1.350.000; pencairan bersih 1.350.000 − 400.000 = **950.000**.
-> Gulung naik: drop baru 500.000, drop gulung 1.000.000.
+> Contoh: harian pinjaman ke-4, pokok 1.000.000 (angsuran 50.000), sudah 12
+> angsuran terbayar → saldo 1.200.000 − 600.000 = 600.000; digulung ke pokok
+> 1.500.000. Penerus: admin 75.000, tabungan 75.000, pencairan akad 1.350.000;
+> pencairan bersih 1.350.000 − 600.000 = **750.000**. Gulung naik: drop baru
+> 500.000, drop gulung 1.000.000.
 
 **E8.** Gulung butuh foto serah terima (A7). Saldo lama tercatat sebagai
 transaksi gulung (setoran pelunasan), lalu pinjaman asal berstatus digulung.
@@ -194,7 +195,7 @@ lunas atau gulung.
 
 > Contoh harian: angsuran 50.000 → ambang 250.000. Setoran murni 30 hari
 > terakhir 200.000 → macet; esoknya nasabah membayar 100.000 sehingga jendela
-> berisi 300.000 → pulih.
+> berisi 300.000 (setoran lama belum keluar jendela) → pulih.
 
 **F6. ⚠ Penunggak sebagian yang rutin tidak pernah macet** selama setorannya
 mencapai ambang (mis. harian cukup 5 angsuran per 30 hari). Ini diterima sadar
