@@ -41,5 +41,32 @@
         "organizeImports": "on"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["apps/mobile/**"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noReactNativeRawText": {
+              "level": "error",
+              "options": {
+                "skip": ["Judul", "Keterangan"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/web/**", "apps/api/**", "packages/**"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noReactNativeRawText": "off"
+          }
+        }
+      }
+    }
+  ]
 }

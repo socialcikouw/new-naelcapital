@@ -18,7 +18,17 @@
       },
       "predictiveBackGestureEnabled": false
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Nael Capital memakai kamera untuk memindai QR penautan HP dan memotret serah terima.",
+          "recordAudioAndroid": false
+        }
+      ],
+      "expo-secure-store"
+    ],
     "scheme": "naelcapital"
   }
 }

@@ -104,6 +104,11 @@ isi berkas, ukuran, SHA-256).
   RPC dibuat per modul — satu tipe gabungan raksasa memperlambat `tsc`.
 - **Bentuk data tetap di `packages/contracts`** (Zod); rute Hono memakainya,
   bukan mendefinisikan ulang.
+- **Tipe untuk klien `hc` = berkas deklarasi**: `apps/api` menghasilkan
+  `apps/api/tipe/*.d.ts` (`bun run tipe`, tidak ikut repo); klien mengimpor
+  `import type { App } from "@naelcapital/api/tipe"`. Impor langsung dari
+  `apps/api/src` ikut membawa tipe Bun/`node:crypto` ke pemeriksaan tipe HP.
+  Skrip `typecheck` mobile menghasilkan tipe itu lebih dulu.
 - Middleware yang dirangkai sendiri: log (pino), rate limit, penerjemah galat
   domain → respons HTTP.
 
@@ -159,7 +164,7 @@ Per paket (`cd apps/<nama>`):
 |---|---|
 | `apps/api` | `bun run dev` (server + muat ulang otomatis, port dari `.env`, bawaan 3000); dokumentasi API di `/dokumentasi`, OpenAPI di `/openapi.json`. |
 | `apps/web` | `bun run build` (berkas statis ke `dist/`); `bun run dev` untuk pengembangan dasbor. |
-| `apps/mobile` | `bun run start` (Metro untuk development build / Expo Go di HP); paket ber-kode native dipasang dengan `bunx expo install <paket>` (versi cocok SDK), bukan `bun add`; `bunx expo-doctor` untuk memeriksa. **Tidak ada skrip & tidak pernah `expo web`.** Rute di `src/app/` (Expo Router); panduan resmi Expo ada di `apps/mobile/AGENTS.md`. |
+| `apps/mobile` | `bun run start` (Metro untuk development build / Expo Go di HP); paket ber-kode native dipasang dengan `bunx expo install <paket>` (versi cocok SDK), bukan `bun add`; `bunx expo-doctor` untuk memeriksa. **Tidak ada skrip & tidak pernah `expo web`.** Rute di `src/app/` (Expo Router); panduan resmi Expo ada di `apps/mobile/AGENTS.md`. Alamat API di `apps/mobile/.env`: `EXPO_PUBLIC_API_URL=http://<IP laptop>:3000` (bukan localhost). Pemeriksaan bundel tanpa HP: `bunx expo export --platform android --output-dir <folder sementara>`. |
 
 Catatan instalasi: `bunfig.toml` memakai `linker = "hoisted"` — instalasi
 isolated (bawaan Bun 1.3) membuat salinan ganda `expo`/`react-native` yang

@@ -47,3 +47,6 @@ logs/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Tipe API untuk klien hc — dihasilkan `bun run tipe` di apps/api
+apps/api/tipe/
