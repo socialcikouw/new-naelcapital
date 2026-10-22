@@ -46,6 +46,7 @@ Lapis ditentukan oleh kolom sasaran:
 | `kebijakan_diubah_oleh_fk` | FK | `(diubah_oleh, kantor_id)` → `pengguna(id, kantor_id)` |
 | `kebijakan_sasaran_check` | CHECK | `num_nonnulls(kolektor_id, nasabah_id) <= 1` — satu baris, satu sasaran. |
 | `kebijakan_lapis_nasabah_check` | CHECK | `nasabah_id IS NULL OR pinjaman_baru_dikunci = false` — "nasabah ini tak boleh pinjam lagi" adalah tugas **blokir** di `nasabah`, bukan di sini. |
+| `kebijakan_menyala_check` | CHECK | `pinjaman_baru_dikunci OR naik_pinjaman_dikunci OR gulung_pinjaman_dikunci` — "tanpa baris = terbuka" dijaga database: baris yang semua saklarnya mati harus dihapus, bukan disimpan (ditambahkan saat pembangunan, 23 Okt 2026).
 | `uniq_kebijakan_kantor` | UNIQUE parsial | `(kantor_id) WHERE kolektor_id IS NULL AND nasabah_id IS NULL` |
 | `uniq_kebijakan_kolektor` | UNIQUE parsial | `(kolektor_id) WHERE kolektor_id IS NOT NULL` |
 | `uniq_kebijakan_nasabah` | UNIQUE parsial | `(nasabah_id) WHERE nasabah_id IS NOT NULL` |

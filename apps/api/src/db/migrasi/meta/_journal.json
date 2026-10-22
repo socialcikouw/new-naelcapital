@@ -78,6 +78,20 @@
       "when": 1792703589425,
       "tag": "0010_uang_hanya_batal_turunan",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792703835095,
+      "tag": "0011_gerbang_lapangan",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792703844260,
+      "tag": "0012_gerbang_trigger",
+      "breakpoints": true
     }
   ]
 }
