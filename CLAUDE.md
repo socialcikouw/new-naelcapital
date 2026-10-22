@@ -27,14 +27,24 @@ bila perlu tipe).
 | Bagian | Pilihan |
 |---|---|
 | Runtime & package manager | Bun (workspaces), TypeScript `strict` di semua paket |
-| API | Fastify 5 + `fastify-type-provider-zod`, Zod untuk validasi |
+| API | **Hono** di `Bun.serve` + `@hono/zod-openapi` — validasi, tipe, dan dokumentasi OpenAPI dari satu definisi rute |
+| Klien API | Klien RPC Hono (`hc`) per modul di `apps/mobile` & `apps/web` — tipe permintaan/respons tersambung dari rute |
 | Database | PostgreSQL — **dev: Supabase**, **produksi: Postgres di VPS** |
 | Akses data | Drizzle ORM (driver `postgres`), migrasi `drizzle-kit`; trigger/fungsi/`EXCLUDE` lewat migrasi SQL kustom |
 | Kata sandi | argon2 |
 | Mobile | Expo (React Native) + Expo Router |
 | Web | React + Vite |
 | Data klien | TanStack Query |
-| Uji | `bun test` |
+| Uji | `bun test`; rute diuji lewat `app.request(...)` tanpa menyalakan server |
+
+Catatan Hono:
+
+- **Rute dipecah per modul** (`kantor`, `pengguna`, `pinjaman`, …) dan klien
+  RPC dibuat per modul — satu tipe gabungan raksasa memperlambat `tsc`.
+- **Bentuk data tetap di `packages/contracts`** (Zod); rute Hono memakainya,
+  bukan mendefinisikan ulang.
+- Middleware yang dirangkai sendiri: log terstruktur (JSON), rate limit
+  (`hono-rate-limiter`), penerjemah galat domain → respons HTTP.
 
 ## Database
 
