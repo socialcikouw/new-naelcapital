@@ -7,3 +7,4 @@
 
 export * from "./kode-tautan";
 export * from "./nomor-hp";
+export * from "./wilayah";
