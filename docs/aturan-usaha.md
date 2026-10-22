@@ -1,11 +1,11 @@
 # Aturan usaha
 
-**Status: DRAF — menunggu pemeriksaan pemilik.** Disusun 23 Okt 2026 dari kode
+**Status: FINAL** — diperiksa pemilik 23 Okt 2026. Disusun dari kode
 repo lama (`naelcapitalAPI`: `shared/money/akad.ts`,
 `shared/jadwal/jadwal-tagih.ts`, `modules/pinjaman/domain/evaluasi-macet.ts`,
 `modules/transaksi/domain/hitung-*.ts`, `modules/ringkasan/domain/hitung-kas.ts`)
-dan rancangan di [`skema/`](skema/README.md). Aturan bertanda **⚠** perlu
-keputusan pemilik.
+dan rancangan di [`skema/`](skema/README.md). Keputusan pemilik atas butir
+yang semula ditanyakan ditandai **Keputusan**.
 
 Setiap aturan bernomor (mis. **A3**) dengan contoh angka. `packages/domain`
 menerapkan aturan ini, dan ujinya memakai **contoh yang sama persis** —
@@ -124,9 +124,11 @@ saldo); sisanya dibayar nasabah; **seluruh tabungan keluar**.
 | Tabungan kurang | 300.000 | 100.000 | 200.000 | 100.000 | 100.000 | 200.000 |
 | Tabungan lebih | 300.000 | 500.000 | 0 | 300.000 | 500.000 | **−200.000** |
 
-**D2. ⚠ Tabungan melebihi saldo → kantor mengembalikan selisihnya** (contoh kedua:
-nasabah menerima 200.000). Uang itu keluar dari tangan kolektor di lapangan,
-dan storting hari itu menjadi negatif — lihat J5.
+**D2. Tabungan melebihi saldo → kolektor mengembalikan selisihnya tunai** di
+lapangan (contoh kedua: nasabah menerima 200.000). Storting baris itu negatif
+(−200.000), sehingga **tunai yang diserahkan ke kasir sore hari otomatis
+berkurang** sebesar itu (I1) — tidak ada catatan terpisah. *Keputusan pemilik,
+23 Okt 2026.*
 
 ---
 
@@ -197,9 +199,10 @@ lunas atau gulung.
 > terakhir 200.000 → macet; esoknya nasabah membayar 100.000 sehingga jendela
 > berisi 300.000 (setoran lama belum keluar jendela) → pulih.
 
-**F6. ⚠ Penunggak sebagian yang rutin tidak pernah macet** selama setorannya
-mencapai ambang (mis. harian cukup 5 angsuran per 30 hari). Ini diterima sadar
-di aturan lama — perlu dikonfirmasi.
+**F6. Penunggak sebagian yang rutin tidak pernah macet** selama setorannya
+mencapai ambang (mis. harian cukup 5 angsuran per 30 hari). *Keputusan pemilik,
+23 Okt 2026: dibiarkan dulu* — cara menandai yang lebih canggih (mis. menilai
+tunggakan, bukan hanya setoran) diusulkan dan dikerjakan terpisah kelak.
 
 ---
 
@@ -209,8 +212,9 @@ di aturan lama — perlu dikonfirmasi.
 
 **G2.** Mingguan hanya bisa diliburkan **pada hari tagihnya**.
 
-**G3. ⚠ Angsuran ke-0 dan ke-1 belum boleh libur** — di aturan lama hanya dijaga
-aplikasi kolektor, tidak di server. Perlu diputuskan: dijaga server juga?
+**G3. Pinjaman yang angsuran terbayarnya baru 0 atau 1 belum boleh libur.**
+Dijaga **server** (`LIBUR_BELUM_BOLEH`), bukan hanya aplikasi kolektor seperti
+di aturan lama. *Keputusan pemilik, 23 Okt 2026.*
 
 **G4.** Libur yang salah dihapus bos **pada hari yang sama**; jejaknya tersimpan.
 
@@ -294,9 +298,9 @@ boleh tumpang tindih, dan **tekor melebihi gaji ditolak**.
 > Contoh: periode 1–15 Okt, tarif 5%, storting 12.000.000 → gaji kotor
 > 600.000; tekor 50.000 → gaji bersih **550.000**.
 
-**J5. ⚠ Storting negatif mengurangi gaji.** Hari dengan pelunasan bertabungan
-lebih (D2) punya storting negatif, sehingga gaji kolektor hari itu berkurang.
-Perlu dikonfirmasi: memang begitu, atau storting negatif dihitung nol untuk gaji?
+**J5. Storting negatif ikut dihitung** (tidak dinolkan): hari dengan pelunasan
+bertabungan lebih (D2) punya storting negatif, sehingga gaji kolektor hari itu
+berkurang sebesar tarif × storting. *Keputusan pemilik, 23 Okt 2026.*
 
 ---
 
@@ -337,14 +341,13 @@ dihitung); kas yang sedang dibawa kolektor sudah termasuk saldo tunai buku.
 
 ---
 
-## Ringkasan yang perlu keputusan pemilik
+## Keputusan pemilik (23 Okt 2026)
 
-| # | Pertanyaan |
+| # | Keputusan |
 |---|---|
-| D2 | Tabungan melebihi saldo saat lunas: selisihnya dikembalikan tunai oleh kolektor di lapangan? |
-| F6 | Penunggak sebagian yang rutin (≥ ambang) memang tidak pernah macet? |
-| G3 | Larangan libur pada angsuran ke-0/1 dijaga server juga, bukan hanya aplikasi? |
-| J5 | Storting negatif (D2) mengurangi gaji, atau dihitung nol? |
+| D2 | Selisih tabungan dikembalikan tunai di lapangan; otomatis mengurangi tunai yang diserahkan ke kasir. |
+| F6 | Dibiarkan dulu; deteksi macet yang lebih canggih menyusul. |
+| G3 | Server juga menolak libur pada angsuran terbayar 0 atau 1. |
+| J5 | Storting negatif ikut dihitung dalam gaji. |
 
-Selain keempat itu, setiap angka di dokumen ini (persen, tenor, ambang, kelipatan)
-juga perlu dicocokkan dengan kenyataan di lapangan.
+Usulan kelak: **deteksi macet yang lebih canggih** (F6).

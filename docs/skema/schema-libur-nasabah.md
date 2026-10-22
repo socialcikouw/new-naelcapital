@@ -74,8 +74,10 @@ pencatatan bersamaan tetap dicegah service yang memegang kunci baris pinjaman
 - **Tanpa GPS kolektor** saat menandai — alasan yang sama.
 - **Nama tabel tetap** `libur_nasabah` — istilah lapangan, berpasangan dengan
   [`libur_kantor`](schema-libur-kantor.md).
-- Aturan "angsuran ke-0/1 belum boleh libur" tetap seperti sekarang (hanya di
-  aplikasi kolektor) — bukan urusan skema.
+- Aturan "angsuran terbayar 0 atau 1 belum boleh libur" **dijaga server**
+  (keputusan pemilik 23 Okt 2026; [aturan-usaha.md](../aturan-usaha.md) G3) —
+  dulu hanya di aplikasi kolektor. Bukan urusan skema (dibaca dari
+  `pinjaman.angsuran_ke`).
 
 ## API nantinya
 
@@ -95,7 +97,8 @@ Respons: `bossId` → `kantorId`, `collectorId` → `pencatatId`, `keterangan` �
 - **Menandai** (kolektor): gerbang lapangan (jam kerja, bukan libur kantor,
   sudah absen); kunci baris pinjaman; pinjaman masih ditagih; bukan tempoan
   (`LIBUR_TIDAK_BERLAKU`); mingguan hanya pada hari tagihnya
-  (`LIBUR_BUKAN_HARI_TAGIH`); belum ada peristiwa hari itu.
+  (`LIBUR_BUKAN_HARI_TAGIH`); angsuran terbayar minimal 2
+  (`LIBUR_BELUM_BOLEH`); belum ada peristiwa hari itu.
 - **Menghapus** (bos, hari yang sama, `BATAL_HANYA_HARI_INI`): hapus baris dan
   catat jejak di `riwayat_perubahan` (isi baris + alasan) di transaksi
   database yang sama. Sesudahnya kolektor bisa mencatat setoran.

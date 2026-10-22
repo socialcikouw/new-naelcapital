@@ -22,6 +22,7 @@ barisnya diberi keterangan "diganti oleh …".
 | 23 Okt 2026 | **Pekan kerja bertanggal** (tabel `pekan_kerja`), tidak boleh mundur. | Mengganti hari kerja tak boleh menggeser jadwal & tunggakan hari lampau. | Satu kolom `kantor.hari_kerja` + peringatan. |
 | 23 Okt 2026 | **Aplikasi web khusus bos; aplikasi HP khusus kasir, pengawas, kolektor.** Di HP tidak ada login nomor HP + kata sandi atau registrasi — hanya tautan QR. | Keputusan pemilik: bos bekerja dari web, karyawan dari HP. | Satu aplikasi HP untuk semua peran. |
 | 23 Okt 2026 | **Registrasi kantor baru wajib kode** (`KODE_REGISTRASI` di server). | Tanpa kode siapa pun yang tahu alamat API bisa membuat kantor sendiri. | Registrasi terbuka. |
+| 23 Okt 2026 | **Aturan usaha final** ([`aturan-usaha.md`](aturan-usaha.md)): selisih tabungan saat lunas dikembalikan tunai di lapangan dan mengurangi setoran sore (D2); penunggak sebagian dibiarkan tidak macet dulu (F6); larangan libur pada angsuran 0/1 dijaga server (G3); storting negatif ikut mengurangi gaji (J5). | Diperiksa pemilik butir demi butir. | Storting negatif dinolkan untuk gaji; larangan libur hanya di aplikasi. |
 
 ## Teknik
 
