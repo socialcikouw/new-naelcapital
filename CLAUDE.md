@@ -14,6 +14,9 @@ Dokumen yang dibaca lebih dulu:
 | [`docs/keputusan.md`](docs/keputusan.md) | Keputusan besar beserta alasan dan yang ditolak — keputusan baru ditambahkan di sini |
 | [`docs/skema/`](docs/skema/README.md) | Rancangan database per tabel + konvensi penamaan |
 
+Skill proyek: **`tabel-baru`** (`.claude/skills/tabel-baru/`) — langkah baku
+membangun satu tabel dari `docs/skema/`.
+
 Berkomunikasi dengan pemilik dalam **bahasa Indonesia**.
 
 ## Pembagian aplikasi (keputusan pemilik, 23 Okt 2026)
