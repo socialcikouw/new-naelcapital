@@ -174,7 +174,7 @@ Per paket (`cd apps/<nama>`):
 | Paket | Perintah |
 |---|---|
 | `apps/api` | `bun run dev` (server + muat ulang otomatis, port dari `.env`, bawaan 3000); dokumentasi API di `/dokumentasi`, OpenAPI di `/openapi.json`. |
-| `apps/web` | `bun run build` (berkas statis ke `dist/`); `bun run dev` untuk pengembangan aplikasi bos. |
+| `apps/web` | `bun run dev` (Vite, port 5173) bersama `apps/api` `bun run dev` — web memanggil API di `/api/...` yang diteruskan Vite ke port 3000 (di produksi: Nginx `location /api/ { proxy_pass http://127.0.0.1:3000/; }`), satu asal tanpa CORS. `bun run build` = tipe API + typecheck + berkas statis `dist/`. Sesi bos di `localStorage`. |
 | `apps/mobile` | `bun run start` (Metro untuk development build / Expo Go di HP); paket ber-kode native dipasang dengan `bunx expo install <paket>` (versi cocok SDK), bukan `bun add`; `bunx expo-doctor` untuk memeriksa. **Tidak ada skrip & tidak pernah `expo web`.** Rute di `src/app/` (Expo Router); panduan resmi Expo ada di `apps/mobile/AGENTS.md`. Alamat API di `apps/mobile/.env`: `EXPO_PUBLIC_API_URL=http://<IP laptop>:3000` (bukan localhost). Pemeriksaan bundel tanpa HP: `bunx expo export --platform android --output-dir <folder sementara>`. |
 
 Catatan instalasi: `bunfig.toml` memakai `linker = "hoisted"` — instalasi

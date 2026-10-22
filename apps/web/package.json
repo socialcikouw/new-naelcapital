@@ -5,19 +5,26 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "typecheck": "tsc --noEmit"
+    "build": "bun run --cwd ../api tipe && tsc --noEmit && vite build",
+    "typecheck": "bun run --cwd ../api tipe && tsc --noEmit"
   },
   "dependencies": {
     "@naelcapital/contracts": "workspace:*",
     "@naelcapital/domain": "workspace:*",
+    "@tanstack/react-query": "^5.104.5",
+    "@tanstack/react-router": "^1.170.45",
+    "hono": "^4.13.13",
+    "qr-scanner": "^1.4.2",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@naelcapital/api": "workspace:*",
+    "@tailwindcss/vite": "^4.3.3",
     "@types/react": "~19.3.0",
     "@types/react-dom": "~19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "tailwindcss": "^4.3.3",
     "vite": "^8.3.5"
   }
 }
