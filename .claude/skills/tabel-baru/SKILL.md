@@ -54,6 +54,8 @@ Di `apps/api`:
    - `kantor_hari_ini(kantor_id)`, `nael_jalan_pintas()`.
    Tabel uang yang hanya boleh ditandai batal butuh fungsi `uang_hanya_batal()`
    — buat sekali bila belum ada.
+   Ingat: di trigger **BEFORE**, kolom turunan (`GENERATED`) masih NULL di
+   `NEW` — jangan membandingkan atau membacanya di sana.
 3. **Migrasi yang sudah diterapkan tidak pernah disunting** — perubahan selalu
    lewat migrasi baru.
 4. `bun run db:migrate` (Supabase dev; `.env` di `apps/api`).

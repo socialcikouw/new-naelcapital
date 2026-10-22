@@ -5,6 +5,10 @@
  * tagih, aturan macet, rumus kas — lihat `docs/skema/`.
  */
 
+export * from "./akad";
+export * from "./galat";
+export * from "./gulung";
 export * from "./kode-tautan";
 export * from "./nomor-hp";
+export * from "./setoran";
 export * from "./wilayah";
