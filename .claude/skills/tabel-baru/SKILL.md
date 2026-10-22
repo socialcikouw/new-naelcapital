@@ -43,7 +43,7 @@ Ikuti pola berkas yang sudah ada (`pengguna.ts`, `tarif-gaji.ts`, `tautan.ts`):
 
 Di `apps/api`:
 
-1. `bun run db:generate -- --name <nama_singkat>` → periksa SQL di
+1. `bun run db:generate --name <nama_singkat>` → periksa SQL di
    `src/db/migrasi/`: nama constraint, `IS NOT NULL`, urutan FK.
 2. Trigger, fungsi, `EXCLUDE`, ekstensi → migrasi kustom:
    `bunx --bun drizzle-kit generate --custom --name <nama>`, lalu isi SQL-nya.
