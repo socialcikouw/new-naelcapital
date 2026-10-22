@@ -10,12 +10,16 @@ dibaca dengan cara yang sama.
 
 Empat peran:
 
-| Peran | Siapa (Nael Capital) | Masuk dengan |
-|---|---|---|
-| `bos` | pemilik | nomor HP + kata sandi |
-| `kasir` | menerima setoran sore | tautan QR yang disetujui bos |
-| `pengawas` | membaca semua data | tautan QR yang disetujui bos |
-| `kolektor` | penagih lapangan | tautan QR yang disetujui bos |
+| Peran | Siapa (Nael Capital) | Aplikasi | Masuk dengan |
+|---|---|---|---|
+| `bos` | pemilik | **web** | nomor HP + kata sandi |
+| `kasir` | menerima setoran sore | **HP** | tautan QR yang disetujui bos (dari web) |
+| `pengawas` | membaca semua data | **HP** | tautan QR yang disetujui bos (dari web) |
+| `kolektor` | penagih lapangan | **HP** | tautan QR yang disetujui bos (dari web) |
+
+**Pembagian aplikasi (keputusan pemilik, 23 Okt 2026):** aplikasi web khusus
+bos; aplikasi HP khusus kasir, pengawas, dan kolektor. Di aplikasi HP tidak ada
+login nomor HP + kata sandi maupun registrasi.
 
 Akun tidak pernah dihapus — data uang merujuknya. Karyawan yang keluar
 **dinonaktifkan**.

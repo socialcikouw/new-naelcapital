@@ -14,7 +14,7 @@ Alur:
 1. **HP yang belum login meminta kode** → server membuat kode (`K7QM-28XD`)
    dan **kunci klaim** rahasia; kunci dikembalikan **sekali** ke HP itu, yang
    disimpan di sini hanya hash-nya. Kunci tidak ikut ke QR.
-2. **Bos memindai QR / mengetik kode**, lalu memilih atau membuat akunnya →
+2. **Bos — di aplikasi web — memindai QR (kamera laptop/HP) atau mengetik kode**, lalu memilih atau membuat akunnya →
    baris disetujui, waktunya diperpanjang 10 menit.
 3. **HP yang sama menukar kunci klaim dengan sesi** → perangkat dibuat dan
    dicatat di baris ini, **sekali saja**; perangkat lama akun itu diputus di

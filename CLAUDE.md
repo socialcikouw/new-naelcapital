@@ -7,13 +7,24 @@ membangun ulang aplikasi lama dari akarnya — **rancangan database di
 
 Berkomunikasi dengan pemilik dalam **bahasa Indonesia**.
 
+## Pembagian aplikasi (keputusan pemilik, 23 Okt 2026)
+
+| Aplikasi | Untuk | Cara masuk |
+|---|---|---|
+| **`apps/web`** | **Bos saja** | Nomor HP + kata sandi; registrasi kantor baru (berkode). Bos juga **menyetujui tautan HP** karyawan dari web (memindai QR dengan kamera atau mengetik kodenya). |
+| **`apps/mobile`** | **Kasir, pengawas, kolektor saja** | **Hanya tautan QR** yang disetujui bos. |
+
+Di aplikasi mobile **tidak ada** layar login nomor HP + kata sandi, registrasi,
+atau layar khusus bos — istilah "login/daftar" milik web. Sebaliknya web
+tidak dipakai kasir, pengawas, atau kolektor.
+
 ## Struktur monorepo (Bun workspaces)
 
 | Folder | Isi |
 |---|---|
 | `apps/api` | Server HTTP + database (satu-satunya yang menyentuh Postgres). |
-| `apps/mobile` | Aplikasi Android/iOS untuk kolektor, kasir, pengawas, bos. |
-| `apps/web` | Dasbor web bos/pengawas. |
+| `apps/mobile` | Aplikasi Android/iOS untuk **kasir, pengawas, kolektor** — masuk hanya lewat tautan QR. |
+| `apps/web` | Aplikasi web **bos** — masuk nomor HP + kata sandi, registrasi kantor, persetujuan tautan HP, dan seluruh pekerjaan bos. |
 | `packages/contracts` | Skema Zod bentuk permintaan & respons API — dipakai bersama server dan klien. |
 | `packages/domain` | Aturan usaha murni tanpa I/O: rumus akad, jadwal tagih, aturan macet, rumus kas. Dipakai server dan aplikasi (pratinjau di HP). |
 | `docs/skema` | Rancangan database final, satu dokumen per tabel. |
@@ -77,7 +88,7 @@ isi berkas, ukuran, SHA-256).
 
 | Alat | Untuk apa |
 |---|---|
-| **React + Vite** | Dasbor bos & pengawas (SPA statis). |
+| **React + Vite** | Aplikasi bos (SPA statis). |
 | **TanStack Router** | Navigasi bertipe. |
 | **TanStack Query** + `hc` | Data. |
 | **TanStack Table** | Tabel besar (nasabah, transaksi, buku kas). |
@@ -163,7 +174,7 @@ Per paket (`cd apps/<nama>`):
 | Paket | Perintah |
 |---|---|
 | `apps/api` | `bun run dev` (server + muat ulang otomatis, port dari `.env`, bawaan 3000); dokumentasi API di `/dokumentasi`, OpenAPI di `/openapi.json`. |
-| `apps/web` | `bun run build` (berkas statis ke `dist/`); `bun run dev` untuk pengembangan dasbor. |
+| `apps/web` | `bun run build` (berkas statis ke `dist/`); `bun run dev` untuk pengembangan aplikasi bos. |
 | `apps/mobile` | `bun run start` (Metro untuk development build / Expo Go di HP); paket ber-kode native dipasang dengan `bunx expo install <paket>` (versi cocok SDK), bukan `bun add`; `bunx expo-doctor` untuk memeriksa. **Tidak ada skrip & tidak pernah `expo web`.** Rute di `src/app/` (Expo Router); panduan resmi Expo ada di `apps/mobile/AGENTS.md`. Alamat API di `apps/mobile/.env`: `EXPO_PUBLIC_API_URL=http://<IP laptop>:3000` (bukan localhost). Pemeriksaan bundel tanpa HP: `bunx expo export --platform android --output-dir <folder sementara>`. |
 
 Catatan instalasi: `bunfig.toml` memakai `linker = "hoisted"` — instalasi

@@ -1,4 +1,4 @@
-/** Dasbor bos & pengawas — kerangka; layar diisi per modul. */
+/** Aplikasi bos (web) — kerangka; layar diisi per modul. */
 export function App() {
   return (
     <main>

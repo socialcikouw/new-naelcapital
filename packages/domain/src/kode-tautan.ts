@@ -1,6 +1,6 @@
 /**
  * Kode penautan HP (QR) — bentuk & pembakuan, tanpa keacakan (pembuatan kode
- * ada di server). Dipakai server, pemindai QR di HP bos, dan layar HP yang
+ * ada di server). Dipakai server, pemindai QR bos (aplikasi web), dan layar HP yang
  * meminta tautan.
  *
  * 8 karakter dari 31 huruf/angka yang tak mirip satu sama lain (tanpa 0/O,
