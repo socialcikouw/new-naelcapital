@@ -1,0 +1,137 @@
+import { z } from "zod";
+import { nomorHpSchema } from "./auth";
+
+/**
+ * OPERASI LAPANGAN KOLEKTOR (aplikasi HP) — absen, akad, setoran, lunas,
+ * gulung, libur. Aturan angka: docs/aturan-usaha.md.
+ */
+
+const rupiah = z.number().int().min(0);
+const jenisPinjaman = z.enum(["harian", "mingguan", "tempoan"]);
+
+/** `POST /lapangan/absen` — sekali sehari. */
+export const absenSchema = z.discriminatedUnion("absensi", [
+  z.object({
+    absensi: z.literal("masuk_kerja"),
+    /** Modal tunai yang diberikan bos untuk dibawa ke lapangan. */
+    kasLapangan: rupiah,
+    uangJalan: rupiah,
+  }),
+  z.object({
+    absensi: z.literal("tidak_kerja"),
+    alasan: z.string().trim().min(1).max(100),
+  }),
+]);
+export type AbsenInput = z.infer<typeof absenSchema>;
+
+export const hariKolektorSchema = z.object({
+  tanggal: z.string(),
+  absensi: z.enum(["masuk_kerja", "tidak_kerja"]),
+  kasLapangan: z.number(),
+  uangJalan: z.number(),
+  alasanTidakKerja: z.string().nullable(),
+  /** Terisi = laporan dibuka, operasi lapangan berhenti hari ini. */
+  laporanDibukaAt: z.string().nullable(),
+});
+
+/** Kampung nasabah baru: dipilih dari daftar, atau diketik (dibuat bila belum ada). */
+const kampungSchema = z.union([
+  z.object({ wilayahId: z.uuid() }),
+  z.object({ nama: z.string().trim().min(1).max(50) }),
+]);
+
+/** `POST /lapangan/akad` — orang baru atau nasabah lama yang meminjam lagi. */
+export const akadSchema = z.object({
+  nasabah: z.union([
+    z.object({ nasabahId: z.uuid() }),
+    z.object({
+      nama: z.string().trim().min(1).max(50),
+      kampung: kampungSchema,
+      nik: z
+        .string()
+        .regex(/^[0-9]{16}$/, "NIK 16 digit")
+        .optional(),
+      nomorHp: nomorHpSchema.optional(),
+    }),
+  ]),
+  jenis: jenisPinjaman,
+  pokok: z.number().int().positive(),
+  tenor: z.number().int().positive(),
+  /** Foto nasabah memegang uang pencairan — diunggah lebih dulu (`POST /foto`). */
+  fotoSerahTerimaId: z.uuid(),
+});
+export type AkadInput = z.infer<typeof akadSchema>;
+
+/** Kartu pinjaman untuk layar kolektor. */
+export const pinjamanSchema = z.object({
+  id: z.uuid(),
+  nasabah: z.object({ id: z.uuid(), nama: z.string(), kampung: z.string() }),
+  pinjamanKe: z.number(),
+  jenis: jenisPinjaman,
+  tenor: z.number(),
+  asal: z.enum(["baru", "gulung", "migrasi"]),
+  status: z.enum(["berjalan", "macet", "lunas", "digulung", "batal", "diputihkan"]),
+  tanggalAkad: z.string(),
+  jatuhTempo: z.string().nullable(),
+  pokok: z.number(),
+  potonganAdmin: z.number(),
+  tabunganMasuk: z.number(),
+  /** Tunai yang diterima nasabah saat akad (gulung: bersih sesudah saldo lama). */
+  pencairan: z.number(),
+  totalKembali: z.number(),
+  angsuran: z.number(),
+  saldo: z.number(),
+  /** Angsuran yang sudah lunas — nomor di kartu. */
+  angsuranKe: z.number(),
+});
+export type PinjamanKartu = z.infer<typeof pinjamanSchema>;
+
+/** `POST /lapangan/bayar` — setoran angsuran. */
+export const bayarSchema = z.object({
+  pinjamanId: z.uuid(),
+  setoranMurni: rupiah,
+  /** Uang lebih untuk melunasi sebagian (bawaan 0). */
+  setoranPelunasan: rupiah.default(0),
+});
+
+/** `POST /lapangan/lunas` — nominal dihitung server (tabungan menutup saldo lebih dulu). */
+export const lunasSchema = z.object({ pinjamanId: z.uuid() });
+
+/** `POST /lapangan/gulung` — pinjaman lama dilunasi pinjaman baru berjenis sama. */
+export const gulungSchema = z.object({
+  pinjamanId: z.uuid(),
+  pokok: z.number().int().positive(),
+  tenor: z.number().int().positive(),
+  fotoSerahTerimaId: z.uuid(),
+});
+
+/** `POST /lapangan/libur` — pinjaman tidak ditagih hari ini. */
+export const liburSchema = z.object({
+  pinjamanId: z.uuid(),
+  alasan: z.string().trim().min(1).max(100).optional(),
+});
+
+export const transaksiSchema = z.object({
+  id: z.uuid(),
+  pinjamanId: z.uuid(),
+  tanggal: z.string(),
+  jenis: z.enum(["angsuran", "pelunasan", "gulung"]),
+  setoranMurni: z.number(),
+  setoranPelunasan: z.number(),
+  tabunganKeluar: z.number(),
+  /** Uang setoran yang masuk; negatif bila tabungan melebihi saldo saat lunas. */
+  storting: z.number(),
+  saldoSesudah: z.number(),
+});
+
+export const hasilGulungSchema = z.object({
+  transaksi: transaksiSchema,
+  pinjamanBaru: pinjamanSchema,
+});
+
+export const liburTercatatSchema = z.object({
+  id: z.uuid(),
+  pinjamanId: z.uuid(),
+  tanggal: z.string(),
+  alasanLibur: z.string().nullable(),
+});

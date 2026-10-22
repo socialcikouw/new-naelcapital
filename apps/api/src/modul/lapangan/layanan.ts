@@ -1,0 +1,657 @@
+import type { AbsenInput, AkadInput, PinjamanKartu } from "@naelcapital/contracts";
+import {
+  angsuranKe,
+  hariTagihMingguan,
+  hitungBayar,
+  hitungGulung,
+  hitungLunas,
+  kunciWilayah,
+  rapikanNamaWilayah,
+  syaratAkad,
+} from "@naelcapital/domain";
+import { and, asc, eq, inArray, isNull, ne, or, sql } from "drizzle-orm";
+import type { Db } from "../../db/klien";
+import {
+  foto,
+  hariKolektor,
+  kebijakan,
+  liburNasabah,
+  nasabah,
+  pinjaman,
+  transaksi,
+  wilayah,
+} from "../../db/skema";
+import { bentrok, dilarang, melanggar, tidakDitemukan } from "../../galat";
+import { wajibPeran } from "../../peran";
+import type { Aktor } from "../auth/token";
+import { bacaKalender, bukaGerbang } from "./gerbang";
+
+/** Foto serah terima hanya sah bila diambil kurang dari 1 jam sebelum akad (A7). */
+const UMUR_FOTO_MS = 60 * 60 * 1000;
+
+export interface LapanganDeps {
+  db: Db;
+  sekarang?: () => Date;
+}
+
+type Tx = Db;
+
+const kolomKartu = {
+  id: pinjaman.id,
+  nasabahId: nasabah.id,
+  nasabahNama: nasabah.nama,
+  kampung: wilayah.nama,
+  pinjamanKe: pinjaman.pinjamanKe,
+  jenis: pinjaman.jenis,
+  tenor: pinjaman.tenor,
+  asal: pinjaman.asal,
+  status: pinjaman.status,
+  tanggalAkad: pinjaman.tanggalAkad,
+  jatuhTempo: pinjaman.jatuhTempo,
+  pokok: pinjaman.pokok,
+  potonganAdmin: pinjaman.potonganAdmin,
+  tabunganMasuk: pinjaman.tabunganMasuk,
+  pencairan: pinjaman.pencairan,
+  totalKembali: pinjaman.totalKembali,
+  angsuran: pinjaman.angsuran,
+  saldo: pinjaman.saldo,
+  angsuranKe: pinjaman.angsuranKe,
+};
+
+/** Baris hasil `select(kolomKartu)` → bentuk kartu di kontrak. */
+function keKartu<T extends { nasabahId: string; nasabahNama: string; kampung: string }>(
+  b: T,
+): PinjamanKartu {
+  const { nasabahId, nasabahNama, kampung, ...p } = b;
+  return {
+    ...(p as unknown as Omit<PinjamanKartu, "nasabah">),
+    nasabah: { id: nasabahId, nama: nasabahNama, kampung },
+  };
+}
+
+async function kartu(db: Db, pinjamanId: string): Promise<PinjamanKartu> {
+  const [b] = await db
+    .select(kolomKartu)
+    .from(pinjaman)
+    .innerJoin(nasabah, eq(nasabah.id, pinjaman.nasabahId))
+    .innerJoin(wilayah, eq(wilayah.id, nasabah.wilayahId))
+    .where(eq(pinjaman.id, pinjamanId))
+    .limit(1);
+  if (!b) throw new Error("pinjaman tidak ditemukan");
+  return keKartu(b);
+}
+
+/** Rem bos yang berlaku untuk kolektor (& nasabah) ini — lapis paling spesifik menang untuk alasan. */
+async function remBerlaku(db: Db, aktor: Aktor, nasabahId: string | null) {
+  const baris = await db
+    .select({
+      kolektorId: kebijakan.kolektorId,
+      nasabahId: kebijakan.nasabahId,
+      pinjamanBaru: kebijakan.pinjamanBaruDikunci,
+      naik: kebijakan.naikPinjamanDikunci,
+      gulung: kebijakan.gulungPinjamanDikunci,
+      alasan: kebijakan.alasanKunci,
+    })
+    .from(kebijakan)
+    .where(
+      and(
+        eq(kebijakan.kantorId, aktor.kantorId),
+        or(
+          and(isNull(kebijakan.kolektorId), isNull(kebijakan.nasabahId)),
+          eq(kebijakan.kolektorId, aktor.penggunaId),
+          nasabahId ? eq(kebijakan.nasabahId, nasabahId) : sql`false`,
+        ),
+      ),
+    );
+  // Urut paling spesifik dulu: nasabah, kolektor, kantor.
+  const tingkat = (r: (typeof baris)[number]) => (r.nasabahId ? 2 : r.kolektorId ? 1 : 0);
+  const urut = [...baris].sort((a, b) => tingkat(b) - tingkat(a));
+  const alasanUntuk = (saklar: "pinjamanBaru" | "naik" | "gulung") =>
+    urut.find((r) => r[saklar])?.alasan ?? null;
+  return {
+    // Lapis nasabah tak punya saklar pinjaman baru (blokir yang mengurusnya).
+    pinjamanBaru: baris.some((r) => r.pinjamanBaru && !r.nasabahId),
+    naik: baris.some((r) => r.naik),
+    gulung: baris.some((r) => r.gulung),
+    alasan: alasanUntuk,
+  };
+}
+
+/** Foto serah terima sah untuk akad/gulung oleh kolektor ini, saat ini (A7). */
+async function pastikanFoto(tx: Tx, aktor: Aktor, fotoId: string, kini: Date) {
+  const [f] = await tx
+    .select({ jenis: foto.jenis, oleh: foto.diunggahOleh, dibuatAt: foto.dibuatAt })
+    .from(foto)
+    .where(and(eq(foto.id, fotoId), eq(foto.kantorId, aktor.kantorId)))
+    .limit(1);
+  if (!f) throw melanggar("FOTO_TIDAK_DITEMUKAN", "Foto serah terima tidak ditemukan");
+  if (f.jenis !== "serah_terima")
+    throw melanggar("FOTO_BUKAN_SERAH_TERIMA", "Foto ini bukan foto serah terima");
+  if (f.oleh !== aktor.penggunaId) {
+    throw melanggar(
+      "FOTO_BUKAN_MILIK_ANDA",
+      "Foto serah terima harus diambil dari HP Anda sendiri",
+    );
+  }
+  if (kini.getTime() - f.dibuatAt.getTime() > UMUR_FOTO_MS) {
+    throw melanggar("FOTO_KEDALUWARSA", "Foto serah terima lebih dari 1 jam — potret ulang");
+  }
+  const [dipakai] = await tx
+    .select({ id: pinjaman.id })
+    .from(pinjaman)
+    .where(eq(pinjaman.fotoSerahTerimaId, fotoId))
+    .limit(1);
+  if (dipakai) throw bentrok("FOTO_SUDAH_DIPAKAI", "Foto ini sudah dipakai akad lain");
+}
+
+/** Kunci baris pinjaman aktif milik pegangan kolektor ini (`FOR UPDATE`). */
+async function kunciPinjaman(tx: Tx, aktor: Aktor, pinjamanId: string) {
+  const [p] = await tx
+    .select({
+      id: pinjaman.id,
+      nasabahId: pinjaman.nasabahId,
+      pemegang: nasabah.kolektorId,
+      jenis: pinjaman.jenis,
+      status: pinjaman.status,
+      pokok: pinjaman.pokok,
+      saldo: pinjaman.saldo,
+      totalKembali: pinjaman.totalKembali,
+      angsuran: pinjaman.angsuran,
+      pinjamanKe: pinjaman.pinjamanKe,
+      tanggalAkad: pinjaman.tanggalAkad,
+      tabungan: nasabah.saldoTabungan,
+    })
+    .from(pinjaman)
+    .innerJoin(nasabah, eq(nasabah.id, pinjaman.nasabahId))
+    .where(and(eq(pinjaman.id, pinjamanId), eq(pinjaman.kantorId, aktor.kantorId)))
+    .for("update")
+    .limit(1);
+  if (!p) throw tidakDitemukan("PINJAMAN_TIDAK_DITEMUKAN", "Pinjaman tidak ditemukan");
+  if (p.pemegang !== aktor.penggunaId) {
+    throw dilarang("BUKAN_PEGANGAN_ANDA", "Nasabah ini dipegang kolektor lain");
+  }
+  if (p.status !== "berjalan" && p.status !== "macet") {
+    throw melanggar("PINJAMAN_SUDAH_SELESAI", "Pinjaman ini sudah selesai");
+  }
+  return p;
+}
+
+/** C3. Satu peristiwa per pinjaman per hari. */
+async function pastikanBelumAdaPeristiwa(tx: Tx, pinjamanId: string, tanggal: string) {
+  const [t] = await tx
+    .select({ id: transaksi.id })
+    .from(transaksi)
+    .where(
+      and(
+        eq(transaksi.pinjamanId, pinjamanId),
+        eq(transaksi.tanggal, tanggal),
+        isNull(transaksi.dibatalkanAt),
+      ),
+    )
+    .limit(1);
+  const [l] = await tx
+    .select({ id: liburNasabah.id })
+    .from(liburNasabah)
+    .where(and(eq(liburNasabah.pinjamanId, pinjamanId), eq(liburNasabah.tanggal, tanggal)))
+    .limit(1);
+  if (t || l) throw bentrok("PERISTIWA_SUDAH_ADA", "Pinjaman ini sudah punya catatan hari ini");
+}
+
+async function pinjamanKeBerikut(tx: Tx, nasabahId: string): Promise<number> {
+  const [r] = await tx
+    .select({ maks: sql<number>`coalesce(max(${pinjaman.pinjamanKe}), 0)::int` })
+    .from(pinjaman)
+    .where(and(eq(pinjaman.nasabahId, nasabahId), ne(pinjaman.status, "batal")));
+  return (r?.maks ?? 0) + 1;
+}
+
+const kolomTransaksi = {
+  id: transaksi.id,
+  pinjamanId: transaksi.pinjamanId,
+  tanggal: transaksi.tanggal,
+  jenis: transaksi.jenis,
+  setoranMurni: transaksi.setoranMurni,
+  setoranPelunasan: transaksi.setoranPelunasan,
+  tabunganKeluar: transaksi.tabunganKeluar,
+  storting: transaksi.storting,
+  saldoSesudah: transaksi.saldoSesudah,
+};
+
+export function buatLayananLapangan(deps: LapanganDeps) {
+  const sekarang = deps.sekarang ?? (() => new Date());
+
+  async function hariIni(aktor: Aktor, tanggal: string, db: Db = deps.db) {
+    const [h] = await db
+      .select({
+        tanggal: hariKolektor.tanggal,
+        absensi: hariKolektor.absensi,
+        kasLapangan: hariKolektor.kasLapangan,
+        uangJalan: hariKolektor.uangJalan,
+        alasanTidakKerja: hariKolektor.alasanTidakKerja,
+        laporanDibukaAt: hariKolektor.laporanDibukaAt,
+      })
+      .from(hariKolektor)
+      .where(and(eq(hariKolektor.kolektorId, aktor.penggunaId), eq(hariKolektor.tanggal, tanggal)))
+      .limit(1);
+    return h ? { ...h, laporanDibukaAt: h.laporanDibukaAt?.toISOString() ?? null } : null;
+  }
+
+  return {
+    /** Absen pagi — sekali sehari. */
+    async absen(aktor: Aktor, input: AbsenInput) {
+      const { tanggal } = await bukaGerbang(deps.db, aktor, sekarang(), { perluAbsen: false });
+      // Transaksi sendiri: absen ganda ditolak UNIQUE tanpa merusak transaksi pemanggil.
+      await deps.db.transaction(async (tx) => {
+        await tx.insert(hariKolektor).values({
+          kantorId: aktor.kantorId,
+          kolektorId: aktor.penggunaId,
+          tanggal,
+          absensi: input.absensi,
+          ...(input.absensi === "masuk_kerja"
+            ? { kasLapangan: input.kasLapangan, uangJalan: input.uangJalan }
+            : { alasanTidakKerja: input.alasan }),
+        });
+      });
+      const h = await hariIni(aktor, tanggal);
+      if (!h) throw new Error("absen tak tersimpan");
+      return h;
+    },
+
+    /** Keadaan hari ini kolektor (null = belum absen). */
+    async keadaanHariIni(aktor: Aktor) {
+      wajibPeran(aktor, "kolektor");
+      const kal = await bacaKalender(deps.db, aktor.kantorId, sekarang());
+      return { kalender: kal, hari: await hariIni(aktor, kal.tanggal) };
+    },
+
+    /** Buka laporan — operasi lapangan berhenti hari ini. Mengulang = jawaban sama. */
+    async bukaLaporan(aktor: Aktor) {
+      wajibPeran(aktor, "kolektor");
+      const { tanggal } = await bacaKalender(deps.db, aktor.kantorId, sekarang());
+      const h = await hariIni(aktor, tanggal);
+      if (!h) throw melanggar("BELUM_ABSEN", "Isi absensi hari ini lebih dulu");
+      if (h.absensi !== "masuk_kerja") {
+        throw melanggar("TIDAK_KERJA_HARI_INI", "Anda tercatat tidak kerja hari ini");
+      }
+      await deps.db
+        .update(hariKolektor)
+        .set({ laporanDibukaAt: sekarang() })
+        .where(
+          and(
+            eq(hariKolektor.kolektorId, aktor.penggunaId),
+            eq(hariKolektor.tanggal, tanggal),
+            isNull(hariKolektor.laporanDibukaAt),
+          ),
+        );
+      const sesudah = await hariIni(aktor, tanggal);
+      if (!sesudah) throw new Error("hari kolektor hilang");
+      return sesudah;
+    },
+
+    /** Pinjaman aktif yang dipegang kolektor ini, urut kampung lalu nama. */
+    async daftarPinjaman(aktor: Aktor): Promise<PinjamanKartu[]> {
+      wajibPeran(aktor, "kolektor");
+      const baris = await deps.db
+        .select(kolomKartu)
+        .from(pinjaman)
+        .innerJoin(nasabah, eq(nasabah.id, pinjaman.nasabahId))
+        .innerJoin(wilayah, eq(wilayah.id, nasabah.wilayahId))
+        .where(
+          and(
+            eq(nasabah.kolektorId, aktor.penggunaId),
+            inArray(pinjaman.status, ["berjalan", "macet"]),
+          ),
+        )
+        .orderBy(asc(wilayah.nama), asc(nasabah.nama));
+      return baris.map(keKartu);
+    },
+
+    /** Akad baru — orang baru, atau nasabah lama pegangan kolektor ini (A). */
+    async akad(aktor: Aktor, input: AkadInput): Promise<PinjamanKartu> {
+      const { tanggal } = await bukaGerbang(deps.db, aktor, sekarang(), { perluAbsen: true });
+      const kini = sekarang();
+      const syarat = syaratAkad(input.jenis, input.pokok, input.tenor);
+
+      return deps.db.transaction(async (tx) => {
+        const rem = await remBerlaku(
+          tx,
+          aktor,
+          "nasabahId" in input.nasabah ? input.nasabah.nasabahId : null,
+        );
+        if (rem.pinjamanBaru) {
+          const alasan = rem.alasan("pinjamanBaru");
+          throw melanggar(
+            "PINJAMAN_BARU_DIKUNCI",
+            alasan ? `Akad baru dikunci bos: ${alasan}` : "Akad baru sedang dikunci bos",
+          );
+        }
+
+        let nasabahId: string;
+        if ("nasabahId" in input.nasabah) {
+          const [n] = await tx
+            .select({
+              id: nasabah.id,
+              pemegang: nasabah.kolektorId,
+              diblokirAt: nasabah.diblokirAt,
+            })
+            .from(nasabah)
+            .where(
+              and(eq(nasabah.id, input.nasabah.nasabahId), eq(nasabah.kantorId, aktor.kantorId)),
+            )
+            .for("update")
+            .limit(1);
+          if (!n) throw tidakDitemukan("NASABAH_TIDAK_DITEMUKAN", "Nasabah tidak ditemukan");
+          if (n.pemegang !== aktor.penggunaId) {
+            throw dilarang("BUKAN_PEGANGAN_ANDA", "Nasabah ini dipegang kolektor lain");
+          }
+          if (n.diblokirAt) throw melanggar("NASABAH_DIBLOKIR", "Nasabah ini diblokir");
+          nasabahId = n.id;
+        } else {
+          const baru = input.nasabah;
+          if (baru.nik) {
+            const [sama] = await tx
+              .select({ diblokirAt: nasabah.diblokirAt })
+              .from(nasabah)
+              .where(and(eq(nasabah.kantorId, aktor.kantorId), eq(nasabah.nik, baru.nik)))
+              .limit(1);
+            if (sama) {
+              throw sama.diblokirAt
+                ? melanggar("NASABAH_DIBLOKIR", "Pemilik NIK ini nasabah yang diblokir")
+                : bentrok("NIK_SUDAH_TERDAFTAR", "NIK ini sudah terdaftar — pilih nasabah lamanya");
+            }
+          }
+          const wilayahId = await pastikanWilayah(tx, aktor, baru.kampung);
+          // A8: nama + kampung sama dengan nasabah yang diblokir (kecuali keduanya ber-NIK dan berbeda).
+          const kunciNama = kunciWilayah(baru.nama);
+          const [mirip] = await tx
+            .select({ nik: nasabah.nik })
+            .from(nasabah)
+            .where(
+              and(
+                eq(nasabah.kantorId, aktor.kantorId),
+                eq(nasabah.wilayahId, wilayahId),
+                sql`lower(btrim(regexp_replace(${nasabah.nama}, '\\s+', ' ', 'g'))) = ${kunciNama}`,
+                sql`${nasabah.diblokirAt} IS NOT NULL`,
+              ),
+            )
+            .limit(1);
+          if (mirip && !(baru.nik && mirip.nik && mirip.nik !== baru.nik)) {
+            throw melanggar(
+              "NASABAH_MIRIP_DIBLOKIR",
+              "Ada nasabah diblokir dengan nama & kampung yang sama — hubungi bos",
+            );
+          }
+          const [n] = await tx
+            .insert(nasabah)
+            .values({
+              kantorId: aktor.kantorId,
+              kolektorId: aktor.penggunaId,
+              nama: baru.nama,
+              wilayahId,
+              nik: baru.nik ?? null,
+              nomorHp: baru.nomorHp ?? null,
+            })
+            .returning({ id: nasabah.id });
+          if (!n) throw new Error("gagal mencatat nasabah");
+          nasabahId = n.id;
+        }
+
+        const [aktif] = await tx
+          .select({ id: pinjaman.id })
+          .from(pinjaman)
+          .where(
+            and(eq(pinjaman.nasabahId, nasabahId), inArray(pinjaman.status, ["berjalan", "macet"])),
+          )
+          .limit(1);
+        if (aktif) throw bentrok("PINJAMAN_MASIH_AKTIF", "Nasabah ini masih punya pinjaman aktif");
+
+        await pastikanFoto(tx, aktor, input.fotoSerahTerimaId, kini);
+
+        const [p] = await tx
+          .insert(pinjaman)
+          .values({
+            kantorId: aktor.kantorId,
+            pencairId: aktor.penggunaId,
+            dibuatOleh: aktor.penggunaId,
+            nasabahId,
+            pinjamanKe: await pinjamanKeBerikut(tx, nasabahId),
+            jenis: syarat.jenis,
+            tenor: syarat.tenor,
+            asal: "baru",
+            fotoSerahTerimaId: input.fotoSerahTerimaId,
+            tanggalAkad: tanggal,
+            pokok: syarat.pokok,
+            potonganAdmin: syarat.potonganAdmin,
+            tabunganMasuk: syarat.tabunganMasuk,
+            pencairan: syarat.pencairan,
+            totalKembali: syarat.totalKembali,
+            angsuran: syarat.angsuran,
+            saldoAwal: syarat.totalKembali,
+            dropBaru: syarat.pokok,
+            saldo: syarat.totalKembali,
+          })
+          .returning({ id: pinjaman.id });
+        if (!p) throw new Error("gagal mencatat akad");
+        await tx
+          .update(nasabah)
+          .set({ saldoTabungan: sql`${nasabah.saldoTabungan} + ${syarat.tabunganMasuk}` })
+          .where(eq(nasabah.id, nasabahId));
+        return kartu(tx, p.id);
+      });
+    },
+
+    /** Setoran angsuran (C). */
+    async bayar(
+      aktor: Aktor,
+      input: { pinjamanId: string; setoranMurni: number; setoranPelunasan: number },
+    ) {
+      const { tanggal } = await bukaGerbang(deps.db, aktor, sekarang(), { perluAbsen: true });
+      return deps.db.transaction(async (tx) => {
+        const p = await kunciPinjaman(tx, aktor, input.pinjamanId);
+        await pastikanBelumAdaPeristiwa(tx, p.id, tanggal);
+        const { sisaSaldo } = hitungBayar(p, input.setoranMurni, input.setoranPelunasan);
+        const [t] = await tx
+          .insert(transaksi)
+          .values({
+            kantorId: aktor.kantorId,
+            pencatatId: aktor.penggunaId,
+            pinjamanId: p.id,
+            tanggal,
+            jenis: "angsuran",
+            setoranMurni: input.setoranMurni,
+            setoranPelunasan: input.setoranPelunasan,
+            saldoSesudah: sisaSaldo,
+          })
+          .returning(kolomTransaksi);
+        await tx.update(pinjaman).set({ saldo: sisaSaldo }).where(eq(pinjaman.id, p.id));
+        if (!t) throw new Error("gagal mencatat setoran");
+        return t;
+      });
+    },
+
+    /** Pelunasan (D): tabungan menutup saldo lebih dulu; seluruh tabungan keluar. */
+    async lunas(aktor: Aktor, input: { pinjamanId: string }) {
+      const { tanggal } = await bukaGerbang(deps.db, aktor, sekarang(), { perluAbsen: true });
+      return deps.db.transaction(async (tx) => {
+        const p = await kunciPinjaman(tx, aktor, input.pinjamanId);
+        await pastikanBelumAdaPeristiwa(tx, p.id, tanggal);
+        const l = hitungLunas(p.saldo, p.tabungan);
+        const [t] = await tx
+          .insert(transaksi)
+          .values({
+            kantorId: aktor.kantorId,
+            pencatatId: aktor.penggunaId,
+            pinjamanId: p.id,
+            tanggal,
+            jenis: "pelunasan",
+            setoranMurni: l.setoranMurni,
+            setoranPelunasan: l.setoranPelunasan,
+            tabunganKeluar: l.tabunganKeluar,
+            saldoSesudah: 0,
+          })
+          .returning(kolomTransaksi);
+        await tx
+          .update(pinjaman)
+          .set({ saldo: 0, status: "lunas", tanggalSelesai: tanggal, tanggalMacet: null })
+          .where(eq(pinjaman.id, p.id));
+        await tx
+          .update(nasabah)
+          .set({ saldoTabungan: sql`${nasabah.saldoTabungan} - ${l.tabunganKeluar}` })
+          .where(eq(nasabah.id, p.nasabahId));
+        if (!t) throw new Error("gagal mencatat pelunasan");
+        return t;
+      });
+    },
+
+    /** Gulung (E): asal dilunasi penerus berjenis sama; sisanya dicairkan. */
+    async gulung(
+      aktor: Aktor,
+      input: { pinjamanId: string; pokok: number; tenor: number; fotoSerahTerimaId: string },
+    ) {
+      const { tanggal } = await bukaGerbang(deps.db, aktor, sekarang(), { perluAbsen: true });
+      const kini = sekarang();
+      return deps.db.transaction(async (tx) => {
+        const asal = await kunciPinjaman(tx, aktor, input.pinjamanId);
+        await pastikanBelumAdaPeristiwa(tx, asal.id, tanggal);
+        const rem = await remBerlaku(tx, aktor, asal.nasabahId);
+        const rencana = hitungGulung(
+          { ...asal, angsuranKe: angsuranKe(asal) },
+          input.pokok,
+          input.tenor,
+          {
+            gulungDikunci: rem.gulung,
+            naikDikunci: rem.naik,
+            alasan: rem.gulung ? rem.alasan("gulung") : rem.alasan("naik"),
+          },
+        );
+        await pastikanFoto(tx, aktor, input.fotoSerahTerimaId, kini);
+
+        const [t] = await tx
+          .insert(transaksi)
+          .values({
+            kantorId: aktor.kantorId,
+            pencatatId: aktor.penggunaId,
+            pinjamanId: asal.id,
+            tanggal,
+            jenis: "gulung",
+            setoranPelunasan: asal.saldo,
+            saldoSesudah: 0,
+          })
+          .returning(kolomTransaksi);
+        // Asal ditutup lebih dulu: satu pinjaman aktif per nasabah.
+        await tx
+          .update(pinjaman)
+          .set({ saldo: 0, status: "digulung", tanggalSelesai: tanggal, tanggalMacet: null })
+          .where(eq(pinjaman.id, asal.id));
+        const s = rencana.syarat;
+        const [baru] = await tx
+          .insert(pinjaman)
+          .values({
+            kantorId: aktor.kantorId,
+            pencairId: aktor.penggunaId,
+            dibuatOleh: aktor.penggunaId,
+            nasabahId: asal.nasabahId,
+            pinjamanKe: await pinjamanKeBerikut(tx, asal.nasabahId),
+            jenis: s.jenis,
+            tenor: s.tenor,
+            asal: "gulung",
+            pinjamanAsalId: asal.id,
+            jenisGulung: rencana.jenisGulung,
+            fotoSerahTerimaId: input.fotoSerahTerimaId,
+            tanggalAkad: tanggal,
+            pokok: s.pokok,
+            potonganAdmin: s.potonganAdmin,
+            tabunganMasuk: s.tabunganMasuk,
+            saldoLama: rencana.saldoLama,
+            pencairan: rencana.pencairan,
+            totalKembali: s.totalKembali,
+            angsuran: s.angsuran,
+            saldoAwal: s.totalKembali,
+            dropBaru: rencana.dropBaru,
+            dropGulung: rencana.dropGulung,
+            pokokBerkurang: rencana.pokokBerkurang,
+            saldo: s.totalKembali,
+          })
+          .returning({ id: pinjaman.id });
+        if (!t || !baru) throw new Error("gagal mencatat gulung");
+        await tx
+          .update(nasabah)
+          .set({ saldoTabungan: sql`${nasabah.saldoTabungan} + ${s.tabunganMasuk}` })
+          .where(eq(nasabah.id, asal.nasabahId));
+        return { transaksi: t, pinjamanBaru: await kartu(tx, baru.id) };
+      });
+    },
+
+    /** Libur nasabah (G): pinjaman tidak ditagih hari ini. */
+    async libur(aktor: Aktor, input: { pinjamanId: string; alasan?: string | undefined }) {
+      const { tanggal } = await bukaGerbang(deps.db, aktor, sekarang(), { perluAbsen: true });
+      return deps.db.transaction(async (tx) => {
+        const p = await kunciPinjaman(tx, aktor, input.pinjamanId);
+        await pastikanBelumAdaPeristiwa(tx, p.id, tanggal);
+        if (p.jenis === "tempoan") {
+          throw melanggar("LIBUR_TIDAK_BERLAKU", "Pinjaman tempoan tidak punya hari libur");
+        }
+        if (p.jenis === "mingguan" && !hariTagihMingguan(p.tanggalAkad, tanggal)) {
+          throw melanggar(
+            "LIBUR_BUKAN_HARI_TAGIH",
+            "Hari ini bukan hari tagih pinjaman mingguan ini",
+          );
+        }
+        if (angsuranKe(p) < 2) {
+          throw melanggar(
+            "LIBUR_BELUM_BOLEH",
+            "Pinjaman yang baru terbayar 0–1 angsuran belum boleh libur",
+          );
+        }
+        const [l] = await tx
+          .insert(liburNasabah)
+          .values({
+            kantorId: aktor.kantorId,
+            pencatatId: aktor.penggunaId,
+            pinjamanId: p.id,
+            tanggal,
+            alasanLibur: input.alasan ?? null,
+          })
+          .returning({
+            id: liburNasabah.id,
+            pinjamanId: liburNasabah.pinjamanId,
+            tanggal: liburNasabah.tanggal,
+            alasanLibur: liburNasabah.alasanLibur,
+          });
+        if (!l) throw new Error("gagal mencatat libur");
+        return l;
+      });
+    },
+  };
+}
+
+/** Kampung dipilih (harus milik kantor) atau diketik (dibuat bila belum ada). */
+async function pastikanWilayah(
+  tx: Tx,
+  aktor: Aktor,
+  kampung: { wilayahId: string } | { nama: string },
+): Promise<string> {
+  if ("wilayahId" in kampung) {
+    const [w] = await tx
+      .select({ id: wilayah.id })
+      .from(wilayah)
+      .where(and(eq(wilayah.id, kampung.wilayahId), eq(wilayah.kantorId, aktor.kantorId)))
+      .limit(1);
+    if (!w) throw tidakDitemukan("KAMPUNG_TIDAK_DITEMUKAN", "Kampung tidak ditemukan");
+    return w.id;
+  }
+  const nama = rapikanNamaWilayah(kampung.nama);
+  await tx
+    .insert(wilayah)
+    .values({ kantorId: aktor.kantorId, nama, dibuatOleh: aktor.penggunaId })
+    .onConflictDoNothing({ target: [wilayah.kantorId, wilayah.kunci] });
+  const [w] = await tx
+    .select({ id: wilayah.id })
+    .from(wilayah)
+    .where(and(eq(wilayah.kantorId, aktor.kantorId), eq(wilayah.kunci, kunciWilayah(nama))))
+    .limit(1);
+  if (!w) throw new Error("gagal memastikan kampung");
+  return w.id;
+}
+
+export type LayananLapangan = ReturnType<typeof buatLayananLapangan>;

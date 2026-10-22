@@ -6,6 +6,8 @@ import type { Db } from "./db/klien";
 import { tanganiGalat } from "./galat";
 import { buatLayananAuth } from "./modul/auth/layanan";
 import { ruteAuth } from "./modul/auth/rute";
+import { buatLayananLapangan } from "./modul/lapangan/layanan";
+import { ruteLapangan } from "./modul/lapangan/rute";
 import { buatLayananTautan } from "./modul/tautan/layanan";
 import { ruteTautan } from "./modul/tautan/rute";
 import { buatRouter } from "./router";
@@ -44,12 +46,14 @@ export interface AppDeps {
 export function buatApp(deps: AppDeps) {
   const auth = buatLayananAuth(deps);
   const tautan = buatLayananTautan({ db: deps.db, auth, sekarang: deps.sekarang });
+  const lapangan = buatLayananLapangan({ db: deps.db, sekarang: deps.sekarang });
   const opsi = { batas: deps.batas ?? BATAS_BAWAAN, percayaProxy: deps.percayaProxy ?? false };
 
   const app = buatRouter()
     .openapi(sehat, (c) => c.json({ status: "ok" as const, waktu: new Date().toISOString() }, 200))
     .route("/", ruteAuth(auth, opsi))
-    .route("/", ruteTautan(tautan, auth, opsi));
+    .route("/", ruteTautan(tautan, auth, opsi))
+    .route("/", ruteLapangan(lapangan, auth));
 
   app.onError(tanganiGalat);
   app.openAPIRegistry.registerComponent("securitySchemes", "bearer", {

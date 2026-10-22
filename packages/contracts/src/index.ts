@@ -5,5 +5,6 @@
  */
 export * from "./auth";
 export * from "./galat";
+export * from "./lapangan";
 export * from "./sehat";
 export * from "./tautan";
