@@ -1,6 +1,7 @@
 import { createRoute } from "@hono/zod-openapi";
 import { sehatSchema } from "@naelcapital/contracts";
 import { Scalar } from "@scalar/hono-api-reference";
+import { BATAS_BAWAAN, type BatasPercobaan } from "./batas";
 import type { Db } from "./db/klien";
 import { tanganiGalat } from "./galat";
 import { buatLayananAuth } from "./modul/auth/layanan";
@@ -27,6 +28,10 @@ export interface AppDeps {
   kodeRegistrasi?: string | undefined;
   /** Jam — diganti di uji. */
   sekarang?: () => Date;
+  /** Di belakang Nginx: alamat klien dibaca dari header proxy. */
+  percayaProxy?: boolean;
+  /** Batas percobaan masuk — bawaan `BATAS_BAWAAN`. */
+  batas?: BatasPercobaan;
 }
 
 /**
@@ -39,7 +44,13 @@ export function buatApp(deps: AppDeps) {
 
   const app = buatRouter()
     .openapi(sehat, (c) => c.json({ status: "ok" as const, waktu: new Date().toISOString() }, 200))
-    .route("/", ruteAuth(auth));
+    .route(
+      "/",
+      ruteAuth(auth, {
+        batas: deps.batas ?? BATAS_BAWAAN,
+        percayaProxy: deps.percayaProxy ?? false,
+      }),
+    );
 
   app.onError(tanganiGalat);
   app.openAPIRegistry.registerComponent("securitySchemes", "bearer", {

@@ -9,6 +9,7 @@ const app = buatApp({
   jwtRahasia: env.JWT_RAHASIA,
   sesiRahasia: env.SESI_RAHASIA,
   kodeRegistrasi: env.KODE_REGISTRASI,
+  percayaProxy: env.PERCAYA_PROXY,
 });
 
 const server = Bun.serve({ port: env.PORT, fetch: app.fetch });

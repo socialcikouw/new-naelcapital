@@ -171,3 +171,61 @@ describe.skipIf(!url)("auth", () => {
     });
   }, 60_000);
 });
+
+describe("pembatas percobaan", () => {
+  const batas = { jendelaMs: 60_000, perIp: 3, gagalPerNomor: 2 };
+
+  test("per IP: permintaan ke-4 dalam jendela ditolak 429; IP lain tidak terpengaruh", async () => {
+    // Refresh dengan token palsu dijawab tanpa menyentuh database.
+    const app = buatApp({ db: {} as Db, ...RAHASIA, batas, percayaProxy: true });
+    const coba = (ip: string) =>
+      app.request("/auth/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Real-IP": ip },
+        body: JSON.stringify({ tokenSegar: "palsu" }),
+      });
+    for (let i = 0; i < 3; i++) expect((await coba("10.0.0.1")).status).toBe(401);
+    const ditolak = await coba("10.0.0.1");
+    expect(ditolak.status).toBe(429);
+    expect(((await ditolak.json()) as { kode: string }).kode).toBe("TERLALU_BANYAK_PERCOBAAN");
+    expect((await coba("10.0.0.2")).status).toBe(401);
+  });
+
+  test.skipIf(!url)(
+    "per nomor HP: hanya login gagal yang dihitung",
+    async () => {
+      await dalamTransaksi(async (tx) => {
+        const app = buatApp({
+          db: tx,
+          ...RAHASIA,
+          kodeRegistrasi: KODE,
+          batas: { ...batas, perIp: 100 },
+        });
+        const kirim = pengirim(app);
+        expect((await kirim("/auth/register", daftar)).status).toBe(201);
+
+        // Berhasil masuk berkali-kali tidak menghabiskan jatah.
+        for (let i = 0; i < 3; i++) {
+          expect(
+            (await kirim("/auth/login", { nomorHp: daftar.nomorHp, sandi: daftar.sandi })).status,
+          ).toBe(200);
+        }
+        // Dua kali salah, lalu ketiga kalinya ditolak — walau sandinya kini benar.
+        for (let i = 0; i < 2; i++) {
+          expect(
+            (await kirim("/auth/login", { nomorHp: daftar.nomorHp, sandi: "salah-sandi" })).status,
+          ).toBe(401);
+        }
+        // Bentuk nomor lain untuk akun yang sama tetap terhitung (dibakukan).
+        expect(
+          (await kirim("/auth/login", { nomorHp: "+6281299990001", sandi: daftar.sandi })).status,
+        ).toBe(429);
+        // Nomor lain tidak terpengaruh.
+        expect((await kirim("/auth/login", { nomorHp: "081200000000", sandi: "x" })).status).toBe(
+          401,
+        );
+      });
+    },
+    60_000,
+  );
+});

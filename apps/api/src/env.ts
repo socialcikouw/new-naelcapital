@@ -21,6 +21,8 @@ const envSchema = z.object({
    * registrasi ditutup: tanpa ini siapa pun yang tahu alamat API bisa membuat
    * "kantor" sendiri di server ini.
    */
+  /** `true` bila server di belakang Nginx — alamat klien dari `X-Real-IP`. */
+  PERCAYA_PROXY: z.stringbool().default(false),
   KODE_REGISTRASI: z.preprocess((v) => (v === "" ? undefined : v), z.string().min(16).optional()),
 });
 

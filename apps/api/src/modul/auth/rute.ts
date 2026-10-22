@@ -7,6 +7,7 @@ import {
   sesiSchema,
   tokenSchema,
 } from "@naelcapital/contracts";
+import { type BatasPercobaan, pembatasLoginPerNomor, pembatasPerIp } from "../../batas";
 import { buatRouter, jawabanGalat } from "../../router";
 import type { LayananAuth } from "./layanan";
 import { wajibMasuk } from "./wajib-masuk";
@@ -38,7 +39,11 @@ const login = createRoute({
   request: { body: { ...json(loginSchema), required: true } },
   responses: {
     200: { description: "Berhasil masuk", ...json(sesiSchema) },
-    ...jawabanGalat([400, "Data tidak sah"], [401, "Nomor HP atau kata sandi salah"]),
+    ...jawabanGalat(
+      [400, "Data tidak sah"],
+      [401, "Nomor HP atau kata sandi salah"],
+      [429, "Terlalu banyak percobaan"],
+    ),
   },
 });
 
@@ -78,9 +83,17 @@ const saya = createRoute({
   },
 });
 
-export function ruteAuth(auth: LayananAuth) {
+export function ruteAuth(
+  auth: LayananAuth,
+  opsi: { batas: BatasPercobaan; percayaProxy: boolean },
+) {
   const masuk = wajibMasuk(auth);
   const router = buatRouter();
+  const perIp = pembatasPerIp(opsi.batas, opsi.percayaProxy);
+  router.use("/auth/register", perIp);
+  router.use("/auth/login", perIp);
+  router.use("/auth/refresh", perIp);
+  router.use("/auth/login", pembatasLoginPerNomor(opsi.batas));
   router.use("/auth/keluar", masuk);
   router.use("/auth/me", masuk);
   return router
