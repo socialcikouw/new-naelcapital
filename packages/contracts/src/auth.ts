@@ -27,7 +27,8 @@ export const infoPerangkatSchema = z.object({
 
 /** `POST /auth/register` — bos membuka kantor baru (berkode). */
 export const registrasiSchema = z.object({
-  kodeRegistrasi: z.string().min(1),
+  /** Spasi yang ikut tersalin di awal/akhir diabaikan. */
+  kodeRegistrasi: z.string().trim().min(1),
   namaKantor: z.string().trim().min(1).max(100),
   zonaWaktu: z.enum(["WIB", "WITA", "WIT"]).default("WIB"),
   nama: z.string().trim().min(1).max(50),

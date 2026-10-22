@@ -73,7 +73,9 @@ describe.skipIf(!url)("auth", () => {
       expect(galatValidasi.kode).toBe("VALIDASI");
       expect(galatValidasi.rincian.map((r) => r.jalur)).toContain("nomorHp");
 
-      const res = await kirim("/auth/register", daftar);
+      // Kode yang tersalin bersama spasi tetap diterima.
+      const res = await kirim("/auth/register", { ...daftar, kodeRegistrasi: `  ${KODE}
+` });
       expect(res.status).toBe(201);
       const sesi = (await res.json()) as Sesi;
       expect(sesi.pengguna.peran).toBe("bos");
