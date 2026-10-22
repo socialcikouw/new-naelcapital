@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { createRoute } from "@hono/zod-openapi";
 import { sehatSchema } from "@naelcapital/contracts";
 import { Scalar } from "@scalar/hono-api-reference";
@@ -6,10 +7,13 @@ import type { Db } from "./db/klien";
 import { tanganiGalat } from "./galat";
 import { buatLayananAuth } from "./modul/auth/layanan";
 import { ruteAuth } from "./modul/auth/rute";
+import { buatLayananFoto } from "./modul/foto/layanan";
+import { ruteFoto } from "./modul/foto/rute";
 import { buatLayananLapangan } from "./modul/lapangan/layanan";
 import { ruteLapangan } from "./modul/lapangan/rute";
 import { buatLayananTautan } from "./modul/tautan/layanan";
 import { ruteTautan } from "./modul/tautan/rute";
+import { type Penyimpanan, penyimpananDisk } from "./penyimpanan";
 import { buatRouter } from "./router";
 
 const sehat = createRoute({
@@ -36,6 +40,8 @@ export interface AppDeps {
   percayaProxy?: boolean;
   /** Batas percobaan masuk — bawaan `BATAS_BAWAAN`. */
   batas?: BatasPercobaan;
+  /** Penyimpanan berkas foto — bawaan disk `apps/api/.berkas/`. */
+  penyimpanan?: Penyimpanan;
 }
 
 /**
@@ -47,13 +53,20 @@ export function buatApp(deps: AppDeps) {
   const auth = buatLayananAuth(deps);
   const tautan = buatLayananTautan({ db: deps.db, auth, sekarang: deps.sekarang });
   const lapangan = buatLayananLapangan({ db: deps.db, sekarang: deps.sekarang });
+  const foto = buatLayananFoto({
+    db: deps.db,
+    penyimpanan:
+      deps.penyimpanan ?? penyimpananDisk(fileURLToPath(new URL("../.berkas", import.meta.url))),
+    sekarang: deps.sekarang,
+  });
   const opsi = { batas: deps.batas ?? BATAS_BAWAAN, percayaProxy: deps.percayaProxy ?? false };
 
   const app = buatRouter()
     .openapi(sehat, (c) => c.json({ status: "ok" as const, waktu: new Date().toISOString() }, 200))
     .route("/", ruteAuth(auth, opsi))
     .route("/", ruteTautan(tautan, auth, opsi))
-    .route("/", ruteLapangan(lapangan, auth));
+    .route("/", ruteLapangan(lapangan, auth))
+    .route("/", ruteFoto(foto, auth));
 
   app.onError(tanganiGalat);
   app.openAPIRegistry.registerComponent("securitySchemes", "bearer", {

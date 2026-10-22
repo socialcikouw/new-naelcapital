@@ -46,6 +46,10 @@ const CONSTRAINT_BENTROK: Record<string, [kode: string, pesan: string]> = {
   uniq_pinjaman_foto: ["FOTO_SUDAH_DIPAKAI", "Foto ini sudah dipakai akad lain"],
   uniq_hari_kolektor_kolektor_tanggal: ["SUDAH_ABSEN", "Anda sudah mengisi absensi hari ini"],
   uniq_nasabah_kantor_nik: ["NIK_SUDAH_TERDAFTAR", "NIK ini sudah terdaftar"],
+  uniq_foto_kantor_sha256: [
+    "FOTO_SUDAH_DIPAKAI",
+    "Foto yang sama sudah pernah diunggah — potret ulang",
+  ],
 };
 
 /** `app.onError` — satu tempat penerjemah galat → jawaban HTTP. */

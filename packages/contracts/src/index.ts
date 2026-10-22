@@ -4,6 +4,7 @@
  * `apps/mobile` / `apps/web` memvalidasi dengan skema yang sama.
  */
 export * from "./auth";
+export * from "./foto";
 export * from "./galat";
 export * from "./lapangan";
 export * from "./sehat";
