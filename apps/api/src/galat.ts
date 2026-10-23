@@ -57,6 +57,7 @@ const CONSTRAINT_BENTROK: Record<string, [kode: string, pesan: string]> = {
   uniq_pinjaman_aktif_nasabah: ["PINJAMAN_MASIH_AKTIF", "Nasabah ini masih punya pinjaman aktif"],
   uniq_pinjaman_foto: ["FOTO_SUDAH_DIPAKAI", "Foto ini sudah dipakai akad lain"],
   uniq_hari_kolektor_kolektor_tanggal: ["SUDAH_ABSEN", "Anda sudah mengisi absensi hari ini"],
+  uniq_pengguna_nomor_hp_bos: ["NOMOR_HP_DIPAKAI", "Nomor HP ini sudah dipakai akun bos lain"],
   uniq_nasabah_kantor_nik: ["NIK_SUDAH_TERDAFTAR", "NIK ini sudah terdaftar"],
   // Setoran sore: hari terkunci sesudah kas diterima (aturan-usaha I4).
   uniq_serah_terima_kas_hari: ["KAS_SUDAH_DITERIMA", KAS_DITERIMA],

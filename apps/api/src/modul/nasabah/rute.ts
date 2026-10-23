@@ -1,0 +1,88 @@
+import { createRoute, z } from "@hono/zod-openapi";
+import {
+  lokasiRumahSchema,
+  nasabahSchema,
+  pindahPemegangSchema,
+  saringNasabahSchema,
+  ubahNasabahSchema,
+} from "@naelcapital/contracts";
+import { buatRouter, jawabanGalat } from "../../router";
+import type { LayananAuth } from "../auth/layanan";
+import { wajibMasuk } from "../auth/wajib-masuk";
+import type { LayananNasabah } from "./layanan";
+
+const json = <T>(schema: T) => ({ content: { "application/json": { schema } } });
+const aman = [{ bearer: [] }];
+const tag = ["nasabah"];
+const idParam = z.object({ id: z.uuid() });
+const galat = jawabanGalat(
+  [400, "Data tidak sah"],
+  [401, "Belum masuk"],
+  [403, "Peran tidak boleh / bukan pegangan Anda"],
+  [404, "Tidak ditemukan"],
+  [409, "NIK sudah terdaftar"],
+  [422, "Melanggar aturan (kolektor nonaktif, tak ada perubahan)"],
+);
+const berhasil = { 200: { description: "Berhasil", ...json(nasabahSchema) }, ...galat };
+
+const daftar = createRoute({
+  method: "get",
+  path: "/nasabah",
+  tags: tag,
+  summary: "Daftar & cari nasabah — kolektor: pegangannya; kasir: nama & kampung",
+  security: aman,
+  request: { query: saringNasabahSchema },
+  responses: { 200: { description: "Daftar", ...json(z.array(nasabahSchema)) }, ...galat },
+});
+const ubah = createRoute({
+  method: "patch",
+  path: "/nasabah/{id}",
+  tags: tag,
+  summary: "Sunting identitas nasabah (bos)",
+  security: aman,
+  request: { params: idParam, body: { ...json(ubahNasabahSchema), required: true } },
+  responses: berhasil,
+});
+const pindah = createRoute({
+  method: "post",
+  path: "/nasabah/{id}/pindah",
+  tags: tag,
+  summary: "Pindah pemegang (bos)",
+  security: aman,
+  request: { params: idParam, body: { ...json(pindahPemegangSchema), required: true } },
+  responses: berhasil,
+});
+const lokasi = createRoute({
+  method: "put",
+  path: "/nasabah/{id}/lokasi",
+  tags: tag,
+  summary: "Rekam titik rumah (bos / kolektor pemegang)",
+  security: aman,
+  request: { params: idParam, body: { ...json(lokasiRumahSchema), required: true } },
+  responses: berhasil,
+});
+
+export function ruteNasabah(layanan: LayananNasabah, auth: LayananAuth) {
+  const router = buatRouter();
+  router.use("/nasabah", wajibMasuk(auth));
+  router.use("/nasabah/*", wajibMasuk(auth));
+  return router
+    .openapi(daftar, async (c) =>
+      c.json(await layanan.daftar(c.get("aktor"), c.req.valid("query")), 200),
+    )
+    .openapi(ubah, async (c) =>
+      c.json(await layanan.ubah(c.get("aktor"), c.req.valid("param").id, c.req.valid("json")), 200),
+    )
+    .openapi(pindah, async (c) =>
+      c.json(
+        await layanan.pindah(c.get("aktor"), c.req.valid("param").id, c.req.valid("json")),
+        200,
+      ),
+    )
+    .openapi(lokasi, async (c) =>
+      c.json(
+        await layanan.rekamLokasi(c.get("aktor"), c.req.valid("param").id, c.req.valid("json")),
+        200,
+      ),
+    );
+}

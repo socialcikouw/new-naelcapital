@@ -35,7 +35,7 @@ export const hariKolektorSchema = z.object({
 });
 
 /** Kampung nasabah baru: dipilih dari daftar, atau diketik (dibuat bila belum ada). */
-const kampungSchema = z.union([
+export const kampungSchema = z.union([
   z.object({ wilayahId: z.uuid() }),
   z.object({ nama: z.string().trim().min(1).max(50) }),
 ]);

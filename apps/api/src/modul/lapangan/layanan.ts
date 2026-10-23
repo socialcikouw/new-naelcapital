@@ -720,7 +720,7 @@ export function buatLayananLapangan(deps: LapanganDeps) {
 }
 
 /** Kampung dipilih (harus milik kantor) atau diketik (dibuat bila belum ada). */
-async function pastikanWilayah(
+export async function pastikanWilayah(
   tx: Tx,
   aktor: Aktor,
   kampung: { wilayahId: string } | { nama: string },

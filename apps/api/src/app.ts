@@ -15,10 +15,14 @@ import { buatLayananKas } from "./modul/kas/layanan";
 import { ruteKas } from "./modul/kas/rute";
 import { buatLayananLapangan } from "./modul/lapangan/layanan";
 import { ruteLapangan } from "./modul/lapangan/rute";
+import { buatLayananNasabah } from "./modul/nasabah/layanan";
+import { ruteNasabah } from "./modul/nasabah/rute";
 import { buatLayananPembatalan } from "./modul/pembatalan/layanan";
 import { rutePembatalan } from "./modul/pembatalan/rute";
 import { buatLayananPemutihan } from "./modul/pemutihan/layanan";
 import { rutePemutihan } from "./modul/pemutihan/rute";
+import { buatLayananPengguna } from "./modul/pengguna/layanan";
+import { rutePengguna } from "./modul/pengguna/rute";
 import { buatLayananSetoranSore } from "./modul/setoran-sore/layanan";
 import { ruteSetoranSore } from "./modul/setoran-sore/rute";
 import { buatLayananTabungan } from "./modul/tabungan/layanan";
@@ -70,6 +74,8 @@ export function buatApp(deps: AppDeps) {
   const gaji = buatLayananGaji({ db: deps.db, sekarang: deps.sekarang });
   const pembatalan = buatLayananPembatalan({ db: deps.db, sekarang: deps.sekarang });
   const pemutihan = buatLayananPemutihan({ db: deps.db, sekarang: deps.sekarang });
+  const penggunaKantor = buatLayananPengguna({ db: deps.db, sekarang: deps.sekarang });
+  const nasabahKantor = buatLayananNasabah({ db: deps.db });
   const tabungan = buatLayananTabungan({ db: deps.db, sekarang: deps.sekarang });
   const foto = buatLayananFoto({
     db: deps.db,
@@ -90,7 +96,9 @@ export function buatApp(deps: AppDeps) {
     .route("/", ruteKas(kas, auth))
     .route("/", ruteTabungan(tabungan, auth))
     .route("/", rutePembatalan(pembatalan, auth))
-    .route("/", rutePemutihan(pemutihan, auth));
+    .route("/", rutePemutihan(pemutihan, auth))
+    .route("/", rutePengguna(penggunaKantor, auth))
+    .route("/", ruteNasabah(nasabahKantor, auth));
 
   app.onError(tanganiGalat);
   app.openAPIRegistry.registerComponent("securitySchemes", "bearer", {
