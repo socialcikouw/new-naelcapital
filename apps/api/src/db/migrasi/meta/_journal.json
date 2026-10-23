@@ -113,6 +113,20 @@
       "when": 1792779503236,
       "tag": "0015_posisi_harian",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792781161571,
+      "tag": "0016_kas_kantor",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792781171554,
+      "tag": "0017_kas_kantor_trigger",
+      "breakpoints": true
     }
   ]
 }
