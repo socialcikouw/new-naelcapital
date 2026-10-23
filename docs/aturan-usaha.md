@@ -341,6 +341,30 @@ dihitung); kas yang sedang dibawa kolektor sudah termasuk saldo tunai buku.
 
 ---
 
+## N. Performa penagihan harian
+
+*(Ditambahkan 24 Okt 2026 — rumus yang sama dengan layar persentase aplikasi
+lama.)* Hanya pinjaman **harian** — kewajiban mingguan & tempoan tidak jatuh
+setiap hari.
+
+**N1.** Untuk satu hari D:
+
+```
+patokan(D)    = angsuran berjalan harian akhir hari D−1   (potret posisi_harian D−1)
+              − angsuran mati harian hari D               (pinjaman harian yang lunas,
+                                                           digulung, atau diputihkan pada D)
+persentase(D) = setoran murni harian hari D ÷ patokan(D) × 100
+```
+
+**N2.** Belum ada potret D−1 → patokan & persentase **kosong** (bukan nol).
+Patokan ≤ 0 → persentase kosong (pembagian tak bermakna).
+
+> Contoh: akhir kemarin 40 pinjaman harian berjalan, angsuran 50.000 → 2.000.000.
+> Hari ini 2 di antaranya lunas (mati 100.000) → patokan 1.900.000. Setoran murni
+> harian hari ini 1.710.000 → **90%**.
+
+---
+
 ## Keputusan pemilik (23 Okt 2026)
 
 | # | Keputusan |

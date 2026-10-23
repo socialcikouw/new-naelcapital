@@ -1,9 +1,9 @@
 import type { LokasiRumahInput, NasabahJawaban, UbahNasabahInput } from "@naelcapital/contracts";
-import { samarkanNik } from "@naelcapital/domain";
-import { and, asc, eq, ilike, inArray, isNull } from "drizzle-orm";
+import { kunciWilayah, samarkanNik } from "@naelcapital/domain";
+import { and, asc, eq, ilike, inArray, isNull, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { Db } from "../../db/klien";
-import { nasabah, pengguna, pinjaman, wilayah } from "../../db/skema";
+import { nasabah, penarikanTabungan, pengguna, pinjaman, transaksi, wilayah } from "../../db/skema";
 import { dilarang, melanggar, tidakDitemukan } from "../../galat";
 import { wajibPeran } from "../../peran";
 import { catatRiwayat } from "../../riwayat";
@@ -22,6 +22,7 @@ export interface NasabahDeps {
 }
 
 const BATAS_DAFTAR = 200;
+const BATAS_SERUPA = 10;
 const kolektor = alias(pengguna, "pemegang");
 const aktif = alias(pinjaman, "pinjaman_aktif");
 
@@ -245,6 +246,129 @@ export function buatLayananNasabah(deps: NasabahDeps) {
         });
         return keJawaban(aktor, await satu(tx, aktor, id));
       });
+    },
+
+    /**
+     * "Mungkin nasabah lama?" sebelum akad (bos, kolektor): NIK sama, atau
+     * nama mirip (di kampung yang sama bila disebut). Paling banyak 10.
+     */
+    async serupa(aktor: Aktor, saring: { nama: string; kampung?: string; nik?: string }) {
+      wajibPeran(aktor, "bos", "kolektor");
+      const kolom = {
+        id: nasabah.id,
+        nama: nasabah.nama,
+        kampung: wilayah.nama,
+        kolektorId: kolektor.id,
+        kolektorNama: kolektor.nama,
+        diblokirAt: nasabah.diblokirAt,
+        pinjamanId: aktif.id,
+      };
+      const dasar = () =>
+        deps.db
+          .select(kolom)
+          .from(nasabah)
+          .innerJoin(wilayah, eq(wilayah.id, nasabah.wilayahId))
+          .innerJoin(kolektor, eq(kolektor.id, nasabah.kolektorId))
+          .leftJoin(
+            aktif,
+            and(eq(aktif.nasabahId, nasabah.id), inArray(aktif.status, ["berjalan", "macet"])),
+          );
+      const lewatNik = saring.nik
+        ? await dasar().where(
+            and(eq(nasabah.kantorId, aktor.kantorId), eq(nasabah.nik, saring.nik)),
+          )
+        : [];
+      const cari = saring.nama.replace(/[\\%_]/g, (c) => `\\${c}`);
+      const lewatNama = await dasar()
+        .where(
+          and(
+            eq(nasabah.kantorId, aktor.kantorId),
+            ilike(nasabah.nama, `%${cari}%`),
+            saring.kampung ? eq(wilayah.kunci, kunciWilayah(saring.kampung)) : undefined,
+          ),
+        )
+        .orderBy(asc(nasabah.nama))
+        .limit(BATAS_SERUPA);
+      const ke = (b: (typeof lewatNama)[number], cocok: "nik" | "nama") => ({
+        id: b.id,
+        nama: b.nama,
+        kampung: b.kampung,
+        kolektor: { id: b.kolektorId, nama: b.kolektorNama },
+        cocok,
+        diblokir: b.diblokirAt !== null,
+        punyaPinjamanAktif: b.pinjamanId !== null,
+      });
+      const hasil = lewatNik.map((b) => ke(b, "nik"));
+      for (const b of lewatNama) {
+        if (!hasil.some((h) => h.id === b.id)) hasil.push(ke(b, "nama"));
+      }
+      return hasil.slice(0, BATAS_SERUPA);
+    },
+
+    /**
+     * Neraca nasabah (bos, pengawas) — bahan menimbang pemutihan: uang keluar
+     * ke nasabah vs uang dari kantongnya, tabungan, piutang.
+     */
+    async neraca(aktor: Aktor, id: string) {
+      wajibPeran(aktor, "bos", "pengawas");
+      const n = await satu(deps.db, aktor, id);
+      const [p] = await deps.db
+        .select({
+          jumlah: sql<number>`count(*) filter (where ${pinjaman.status} <> 'batal')`.mapWith(
+            Number,
+          ),
+          pencairan:
+            sql<number>`coalesce(sum(${pinjaman.pencairan}) filter (where ${pinjaman.status} <> 'batal'), 0)`.mapWith(
+              Number,
+            ),
+          aktif:
+            sql<number>`coalesce(sum(${pinjaman.saldo}) filter (where ${pinjaman.status} in ('berjalan', 'macet')), 0)`.mapWith(
+              Number,
+            ),
+          diputihkan:
+            sql<number>`coalesce(sum(${pinjaman.saldo}) filter (where ${pinjaman.status} = 'diputihkan'), 0)`.mapWith(
+              Number,
+            ),
+        })
+        .from(pinjaman)
+        .where(eq(pinjaman.nasabahId, id));
+      const [t] = await deps.db
+        .select({
+          // Uang lebih pada angsuran dibayar nasabah; pada pelunasan & gulung tidak.
+          setoran: sql<number>`coalesce(sum(${transaksi.setoranMurni}
+            + CASE WHEN ${transaksi.jenis} = 'angsuran' THEN ${transaksi.setoranPelunasan} ELSE 0 END), 0)`.mapWith(
+            Number,
+          ),
+          // D2: tabungan melebihi saldo saat lunas diserahkan tunai.
+          sisaTabungan:
+            sql<number>`coalesce(sum(greatest(${transaksi.tabunganKeluar} - ${transaksi.setoranPelunasan}, 0))
+            filter (where ${transaksi.jenis} = 'pelunasan'), 0)`.mapWith(Number),
+        })
+        .from(transaksi)
+        .innerJoin(pinjaman, eq(pinjaman.id, transaksi.pinjamanId))
+        .where(and(eq(pinjaman.nasabahId, id), isNull(transaksi.dibatalkanAt)));
+      const [tarik] = await deps.db
+        .select({
+          nominal: sql<number>`coalesce(sum(${penarikanTabungan.nominal}), 0)`.mapWith(Number),
+        })
+        .from(penarikanTabungan)
+        .where(and(eq(penarikanTabungan.nasabahId, id), isNull(penarikanTabungan.dibatalkanAt)));
+      const totalPencairan = p?.pencairan ?? 0;
+      const totalSetoran = t?.setoran ?? 0;
+      const tabunganDikembalikan = (t?.sisaTabungan ?? 0) + (tarik?.nominal ?? 0);
+      const piutangAktif = p?.aktif ?? 0;
+      return {
+        nasabah: { id: n.id, nama: n.nama },
+        jumlahPinjaman: p?.jumlah ?? 0,
+        totalPencairan,
+        tabunganDikembalikan,
+        totalSetoran,
+        arusKas: totalSetoran - totalPencairan - tabunganDikembalikan,
+        tabungan: n.saldoTabungan,
+        piutangAktif,
+        piutangDiputihkan: p?.diputihkan ?? 0,
+        neraca: n.saldoTabungan - piutangAktif,
+      };
     },
   };
 }

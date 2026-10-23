@@ -137,3 +137,26 @@ export const pencocokanSchema = z.object({
   dibatalkanAt: z.string().nullable(),
   alasanBatal: z.string().nullable(),
 });
+
+// ---- posisi modal (bos) ------------------------------------------------------
+
+/** `GET /kas/posisi-modal?tanggal=` — tanpa tanggal = hari ini. */
+export const saringPosisiModalSchema = z.object({ tanggal: tanggal.optional() });
+
+/**
+ * Posisi modal pada akhir tanggal itu (aturan-usaha M). null = belum bisa
+ * dihitung: buku kas belum dibuka, atau tanggal lampau tanpa potret piutang.
+ */
+export const posisiModalSchema = z.object({
+  tanggal: z.string(),
+  saldoTunai: z.number().nullable(),
+  /** Rincian saldo tunai: yang sedang dibawa kolektor & yang di brankas. */
+  kasDiLapangan: z.number().nullable(),
+  diBrankas: z.number().nullable(),
+  saldoBank: z.number().nullable(),
+  piutangBerjalan: z.number().nullable(),
+  /** Bagian berisiko, ditampilkan terpisah; yang diputihkan tak dihitung. */
+  piutangMacet: z.number().nullable(),
+  tabunganNasabah: z.number(),
+  posisiModal: z.number().nullable(),
+});

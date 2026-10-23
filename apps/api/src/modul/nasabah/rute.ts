@@ -2,8 +2,11 @@ import { createRoute, z } from "@hono/zod-openapi";
 import {
   lokasiRumahSchema,
   nasabahSchema,
+  nasabahSerupaSchema,
+  neracaNasabahSchema,
   pindahPemegangSchema,
   saringNasabahSchema,
+  saringNasabahSerupaSchema,
   ubahNasabahSchema,
 } from "@naelcapital/contracts";
 import { buatRouter, jawabanGalat } from "../../router";
@@ -33,6 +36,24 @@ const daftar = createRoute({
   security: aman,
   request: { query: saringNasabahSchema },
   responses: { 200: { description: "Daftar", ...json(z.array(nasabahSchema)) }, ...galat },
+});
+const serupa = createRoute({
+  method: "get",
+  path: "/nasabah/serupa",
+  tags: tag,
+  summary: "Mungkin nasabah lama? — NIK sama / nama mirip, sebelum akad (bos, kolektor)",
+  security: aman,
+  request: { query: saringNasabahSerupaSchema },
+  responses: { 200: { description: "Kandidat", ...json(z.array(nasabahSerupaSchema)) }, ...galat },
+});
+const neraca = createRoute({
+  method: "get",
+  path: "/nasabah/{id}/neraca",
+  tags: tag,
+  summary: "Neraca nasabah — bahan menimbang pemutihan (bos, pengawas)",
+  security: aman,
+  request: { params: idParam },
+  responses: { 200: { description: "Neraca", ...json(neracaNasabahSchema) }, ...galat },
 });
 const ubah = createRoute({
   method: "patch",
@@ -69,6 +90,12 @@ export function ruteNasabah(layanan: LayananNasabah, auth: LayananAuth) {
   return router
     .openapi(daftar, async (c) =>
       c.json(await layanan.daftar(c.get("aktor"), c.req.valid("query")), 200),
+    )
+    .openapi(serupa, async (c) =>
+      c.json(await layanan.serupa(c.get("aktor"), c.req.valid("query")), 200),
+    )
+    .openapi(neraca, async (c) =>
+      c.json(await layanan.neraca(c.get("aktor"), c.req.valid("param").id), 200),
     )
     .openapi(ubah, async (c) =>
       c.json(await layanan.ubah(c.get("aktor"), c.req.valid("param").id, c.req.valid("json")), 200),

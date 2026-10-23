@@ -14,6 +14,7 @@ export * from "./pembatalan";
 export * from "./pemutihan";
 export * from "./pengaturan";
 export * from "./pengguna";
+export * from "./ringkasan";
 export * from "./rute";
 export * from "./sehat";
 export * from "./setoran-sore";

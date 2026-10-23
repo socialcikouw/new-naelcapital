@@ -138,3 +138,24 @@ export async function kasDiLapangan(db: Db, buku: Buku): Promise<number> {
   }[];
   return Number(b?.jumlah ?? 0);
 }
+
+/**
+ * Tabungan nasabah sekantor di akhir `sampai` (aturan-usaha H1), dari catatan
+ * berlaku — bukan dari cache `nasabah.saldo_tabungan`, supaya tanggal lampau
+ * pun bisa dihitung. Salinan migrasi masuk pada hari disalin.
+ */
+export async function tabunganNasabah(db: Db, kantorId: string, sampai: string): Promise<number> {
+  const [b] = (await db.execute(sql`
+    SELECT
+      (SELECT coalesce(sum(tabungan_masuk), 0) FROM pinjaman
+        WHERE kantor_id = ${kantorId} AND dibatalkan_at IS NULL
+          AND coalesce(tanggal_disalin, tanggal_akad) <= ${sampai})
+    - (SELECT coalesce(sum(tabungan_keluar), 0) FROM transaksi
+        WHERE kantor_id = ${kantorId} AND dibatalkan_at IS NULL AND tanggal <= ${sampai})
+    - (SELECT coalesce(sum(nominal), 0) FROM penarikan_tabungan
+        WHERE kantor_id = ${kantorId} AND dibatalkan_at IS NULL AND tanggal <= ${sampai})
+    + (SELECT coalesce(sum(selisih), 0) FROM koreksi_tabungan
+        WHERE kantor_id = ${kantorId} AND tanggal <= ${sampai})
+    AS jumlah`)) as unknown as { jumlah: string }[];
+  return Number(b?.jumlah ?? 0);
+}

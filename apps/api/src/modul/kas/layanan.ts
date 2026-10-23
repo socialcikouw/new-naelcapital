@@ -6,9 +6,16 @@ import type {
   UbahKasAwalInput,
 } from "@naelcapital/contracts";
 import { geserTanggal, syaratAkunMutasi } from "@naelcapital/domain";
-import { and, asc, between, eq } from "drizzle-orm";
+import { and, asc, between, eq, sql } from "drizzle-orm";
 import type { Db } from "../../db/klien";
-import { bukuKas, mutasiKasKantor, pencocokanKas, pengguna } from "../../db/skema";
+import {
+  bukuKas,
+  mutasiKasKantor,
+  pencocokanKas,
+  pengguna,
+  pinjaman,
+  posisiHarian,
+} from "../../db/skema";
 import {
   batalHanyaHariIni,
   bentrok,
@@ -21,7 +28,7 @@ import { wajibPeran } from "../../peran";
 import { catatRiwayat } from "../../riwayat";
 import type { Aktor } from "../auth/token";
 import { bacaKalender } from "../lapangan/gerbang";
-import { daftarGerakan, kasDiLapangan, saldoAkun } from "./saldo";
+import { daftarGerakan, kasDiLapangan, saldoAkun, tabunganNasabah } from "./saldo";
 
 /**
  * KAS KANTOR — buku kas (titik nol), mutasi tangan bos, laporan kas (bos),
@@ -265,6 +272,68 @@ export function buatLayananKas(deps: KasDeps) {
         if (!baru) throw new Error("mutasi hilang");
         return keMutasi(baru);
       });
+    },
+
+    // ---- posisi modal ----------------------------------------------------------
+
+    /**
+     * Posisi modal di akhir satu tanggal (bos saja — memuat saldo buku):
+     * saldo tunai + bank + piutang aktif − tabungan nasabah (aturan-usaha M).
+     * Piutang hari ini dibaca langsung dari pinjaman; tanggal lampau dari
+     * potret `posisi_harian` (tanpa potret → null). Kas di lapangan hanya
+     * untuk hari ini.
+     */
+    async posisiModal(aktor: Aktor, saring: { tanggal?: string }) {
+      wajibPeran(aktor, "bos");
+      const hari = await hariIni(aktor);
+      const tanggal = saring.tanggal ?? hari;
+      if (tanggal > hari) throw melanggar("TANGGAL_DEPAN", "Posisi modal hanya sampai hari ini");
+      const buku = await bacaBuku(deps.db, aktor.kantorId);
+      const saldo = buku ? await saldoAkun(deps.db, buku, tanggal) : null;
+      const lapangan = buku && tanggal === hari ? await kasDiLapangan(deps.db, buku) : null;
+
+      let piutang: { berjalan: number; macet: number } | null;
+      if (tanggal === hari) {
+        const [p] = await deps.db
+          .select({
+            berjalan:
+              sql<number>`coalesce(sum(${pinjaman.saldo}) filter (where ${pinjaman.status} = 'berjalan'), 0)`.mapWith(
+                Number,
+              ),
+            macet:
+              sql<number>`coalesce(sum(${pinjaman.saldo}) filter (where ${pinjaman.status} = 'macet'), 0)`.mapWith(
+                Number,
+              ),
+          })
+          .from(pinjaman)
+          .where(eq(pinjaman.kantorId, aktor.kantorId));
+        piutang = p ?? { berjalan: 0, macet: 0 };
+      } else {
+        const [p] = await deps.db
+          .select({
+            baris: sql<number>`count(*)`.mapWith(Number),
+            berjalan: sql<number>`coalesce(sum(${posisiHarian.saldoBerjalan}), 0)`.mapWith(Number),
+            macet: sql<number>`coalesce(sum(${posisiHarian.saldoMacet}), 0)`.mapWith(Number),
+          })
+          .from(posisiHarian)
+          .where(and(eq(posisiHarian.kantorId, aktor.kantorId), eq(posisiHarian.tanggal, tanggal)));
+        piutang = p && p.baris > 0 ? { berjalan: p.berjalan, macet: p.macet } : null;
+      }
+      const tabungan = await tabunganNasabah(deps.db, aktor.kantorId, tanggal);
+      return {
+        tanggal,
+        saldoTunai: saldo?.tunai ?? null,
+        kasDiLapangan: lapangan,
+        diBrankas: saldo && lapangan !== null ? saldo.tunai - lapangan : null,
+        saldoBank: saldo?.bank ?? null,
+        piutangBerjalan: piutang?.berjalan ?? null,
+        piutangMacet: piutang?.macet ?? null,
+        tabunganNasabah: tabungan,
+        posisiModal:
+          saldo && piutang
+            ? saldo.tunai + saldo.bank + piutang.berjalan + piutang.macet - tabungan
+            : null,
+      };
     },
 
     // ---- pencocokan kas --------------------------------------------------------

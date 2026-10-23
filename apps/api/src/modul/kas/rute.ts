@@ -8,6 +8,8 @@ import {
   mutasiSchema,
   pencocokanInputSchema,
   pencocokanSchema,
+  posisiModalSchema,
+  saringPosisiModalSchema,
   saringRentangSchema,
   ubahKasAwalSchema,
 } from "@naelcapital/contracts";
@@ -84,6 +86,15 @@ const laporan = createRoute({
   request: { query: saringRentangSchema },
   responses: { 200: { description: "Laporan", ...json(laporanKasSchema) }, ...galat },
 });
+const posisiModal = createRoute({
+  method: "get",
+  path: "/kas/posisi-modal",
+  tags: tag,
+  summary: "Posisi modal di akhir satu tanggal (bos saja)",
+  security: aman,
+  request: { query: saringPosisiModalSchema },
+  responses: { 200: { description: "Posisi modal", ...json(posisiModalSchema) }, ...galat },
+});
 const catatMutasi = tulis(
   "post",
   "/kas/mutasi",
@@ -131,6 +142,9 @@ export function ruteKas(kas: LayananKas, auth: LayananAuth) {
     )
     .openapi(laporan, async (c) =>
       c.json(await kas.laporan(c.get("aktor"), c.req.valid("query")), 200),
+    )
+    .openapi(posisiModal, async (c) =>
+      c.json(await kas.posisiModal(c.get("aktor"), c.req.valid("query")), 200),
     )
     .openapi(catatMutasi, async (c) =>
       c.json(await kas.catatMutasi(c.get("aktor"), c.req.valid("json")), 200),

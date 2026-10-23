@@ -61,3 +61,43 @@ export type UbahNasabahInput = z.infer<typeof ubahNasabahSchema>;
 
 /** `POST /nasabah/:id/pindah` — pindah pemegang. */
 export const pindahPemegangSchema = z.object({ kolektorId: z.uuid() });
+
+/** `GET /nasabah/serupa` — "mungkin nasabah lama?" sebelum akad (bos, kolektor). */
+export const saringNasabahSerupaSchema = z.object({
+  nama: z.string().trim().min(2).max(50),
+  kampung: z.string().trim().min(1).max(50).optional(),
+  nik: z
+    .string()
+    .regex(/^[0-9]{16}$/)
+    .optional(),
+});
+
+export const nasabahSerupaSchema = z.object({
+  id: z.uuid(),
+  nama: z.string(),
+  kampung: z.string(),
+  kolektor: orang,
+  /** Alasan muncul: NIK sama, atau nama mirip (di kampung yang sama bila disebut). */
+  cocok: z.enum(["nik", "nama"]),
+  diblokir: z.boolean(),
+  punyaPinjamanAktif: z.boolean(),
+});
+
+/** `GET /nasabah/:id/neraca` — bahan menimbang pemutihan (bos, pengawas). */
+export const neracaNasabahSchema = z.object({
+  nasabah: orang,
+  jumlahPinjaman: z.number(),
+  /** Σ uang yang diterima nasabah saat akad (gulung: pencairan bersihnya). */
+  totalPencairan: z.number(),
+  /** Σ tabungan yang diserahkan tunai: penarikan + sisa tabungan saat lunas (D2). */
+  tabunganDikembalikan: z.number(),
+  /** Σ uang dari kantong nasabah: setoran murni + uang lebih pada angsuran. */
+  totalSetoran: z.number(),
+  /** totalSetoran − totalPencairan − tabunganDikembalikan: plus = kantor sudah balik modal. */
+  arusKas: z.number(),
+  tabungan: z.number(),
+  piutangAktif: z.number(),
+  piutangDiputihkan: z.number(),
+  /** tabungan − piutang aktif: minus = utang bersih nasabah. */
+  neraca: z.number(),
+});
