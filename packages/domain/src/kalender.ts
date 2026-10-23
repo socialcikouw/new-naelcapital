@@ -107,3 +107,13 @@ export function hariPerluDitutup(
   const kemarin = geserTanggal(waktuKantor(sekarang, zona).tanggal, -1);
   return tanggalTutupTerakhir === null || tanggalTutupTerakhir < kemarin ? kemarin : null;
 }
+
+/** Daftar hari kerja (0 = Minggu … 6 = Sabtu) → bitmask `pekan_kerja.hari_kerja`. */
+export function hariKeBitmask(hari: readonly number[]): number {
+  return hari.reduce((m, h) => m | (1 << h), 0);
+}
+
+/** Bitmask pekan kerja → daftar hari kerja urut (0 = Minggu … 6 = Sabtu). */
+export function bitmaskKeHari(bitmask: number): number[] {
+  return [0, 1, 2, 3, 4, 5, 6].filter((h) => hariKerjaPekan(bitmask, h));
+}

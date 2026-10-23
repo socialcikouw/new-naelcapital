@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import {
+  bitmaskKeHari,
   dalamJamKerja,
   geserTanggal,
+  hariKeBitmask,
   hariKerjaPekan,
   hariPekanDari,
   hariTagihMingguan,
@@ -49,4 +51,10 @@ describe("kalender kantor", () => {
     expect(hariTagihMingguan("2026-10-01", "2026-10-09")).toBe(false);
     expect(hariTagihMingguan("2026-10-01", "2026-10-29")).toBe(true);
   });
+});
+
+test("hari kerja ↔ bitmask: Senin–Sabtu = 126", () => {
+  expect(hariKeBitmask([1, 2, 3, 4, 5, 6])).toBe(126);
+  expect(bitmaskKeHari(126)).toEqual([1, 2, 3, 4, 5, 6]);
+  expect(bitmaskKeHari(hariKeBitmask([0, 6]))).toEqual([0, 6]);
 });

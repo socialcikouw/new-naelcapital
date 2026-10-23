@@ -12,6 +12,7 @@ export * from "./lapangan";
 export * from "./nasabah";
 export * from "./pembatalan";
 export * from "./pemutihan";
+export * from "./pengaturan";
 export * from "./pengguna";
 export * from "./sehat";
 export * from "./setoran-sore";
