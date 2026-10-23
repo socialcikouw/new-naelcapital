@@ -1,3 +1,4 @@
+export * from "./biaya-tak-terduga";
 export * from "./foto";
 export * from "./hari-kolektor";
 export * from "./kantor";
@@ -10,7 +11,9 @@ export * from "./perangkat";
 export * from "./pinjaman";
 export * from "./riwayat-perubahan";
 export * from "./riwayat-status-pinjaman";
+export * from "./serah-terima-kas";
 export * from "./tarif-gaji";
 export * from "./tautan";
 export * from "./transaksi";
+export * from "./transfer-setoran";
 export * from "./wilayah";

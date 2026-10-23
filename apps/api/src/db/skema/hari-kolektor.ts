@@ -22,7 +22,7 @@ const rupiah = () => bigint({ mode: "number" });
 /**
  * HARI KOLEKTOR — satu kolektor pada satu hari: absensi pagi, dana yang
  * dibawa ke lapangan, dan penanda laporan dibuka (operasi lapangan berhenti).
- * Serah terima kas sore ada di tabel `serah_terima_kas` (menyusul).
+ * Serah terima kas sore ada di tabel `serah_terima_kas`.
  * Lihat docs/skema/schema-hari-kolektor.md.
  */
 export const hariKolektor = pgTable(

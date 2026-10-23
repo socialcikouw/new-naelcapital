@@ -92,6 +92,20 @@
       "when": 1792703844260,
       "tag": "0012_gerbang_trigger",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792778170321,
+      "tag": "0013_setoran_sore",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792778187854,
+      "tag": "0014_setoran_sore_trigger",
+      "breakpoints": true
     }
   ]
 }

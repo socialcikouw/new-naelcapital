@@ -52,7 +52,16 @@ Contoh Andi hari ini:
 | `serah_terima_kas_append_only` | TRIGGER | UPDATE hanya boleh menandai batal; DELETE ditolak (fungsi `uang_hanya_batal()`). |
 
 Pasangannya di `hari_kolektor`: trigger `hari_kolektor_terkunci` menolak
-perubahan angka hari & laporan selama ada serah terima berlaku.
+perubahan angka hari & laporan selama ada serah terima berlaku. Di
+`transfer_setoran` dan `biaya_tak_terduga`: trigger `*_terkunci`.
+
+**Kirim bersamaan** (ditambahkan saat pembangunan, 24 Okt 2026): trigger
+`serah_terima_kas_syarat` mengunci baris `hari_kolektor` (`FOR UPDATE`),
+trigger `*_terkunci` di transfer & biaya menguncinya bersama (`FOR SHARE`).
+Serah terima dan transfer/biaya yang dikirim pada detik yang sama jadi
+berurutan — yang belakangan melihat yang lebih dulu, tidak sama-sama lolos.
+Service menerima kas mengunci baris yang sama **sebelum** menghitung tunai
+seharusnya, supaya angka yang dibekukan memuat semua transfer & biaya.
 
 ## Keputusan & timbangan
 

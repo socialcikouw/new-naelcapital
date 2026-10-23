@@ -50,6 +50,7 @@ serahkan, dan masuk ke akun **bank** di buku kas kantor.
 | `transfer_setoran_nominal_check` | CHECK | `nominal > 0` |
 | `transfer_setoran_batal_check` | CHECK | `dibatalkan_at`, `dibatalkan_oleh`, `alasan_batal` terisi bersamaan atau kosong bersamaan. |
 | `transfer_setoran_batas` | TRIGGER (BEFORE INSERT) | Nominal ≤ uang yang benar-benar dibayar nasabah di transaksi itu — lihat tabel batas. Transaksi `gulung` atau yang sudah batal ditolak. |
+| `transfer_setoran_terkunci` | TRIGGER (BEFORE INSERT OR UPDATE) | Tolak mencatat atau membatalkan bila hari kolektor pencatat transaksi itu (`transaksi.pencatat_id`, `transaksi.tanggal`) sudah punya `serah_terima_kas` berlaku (`KAS_SUDAH_DITERIMA`). Jaring pengaman, sama dengan `biaya_tak_terduga_terkunci`; service memeriksanya lebih dulu. *(Ditambahkan saat pembangunan, 24 Okt 2026 — aturan I4 sudah ada, kini dijaga database juga.)* |
 | `transfer_setoran_append_only` | TRIGGER | Hanya bertambah: UPDATE hanya boleh menandai batal; DELETE ditolak (fungsi `uang_hanya_batal()`, sama dengan buku kas & gaji). |
 
 Batas nominal:
