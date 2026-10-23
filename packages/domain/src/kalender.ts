@@ -92,3 +92,18 @@ export function hariTagihKantor(
   }
   return berlaku ? hariKerjaPekan(berlaku.hariKerja, hariPekanDari(tanggal)) : false;
 }
+
+/**
+ * Tutup hari: hari yang perlu ditutup kantor pada saat `sekarang` — kemarin
+ * menurut zona kantor — atau null bila sudah ditutup. Hari yang terlewat
+ * (server mati beberapa malam) tidak disusul: potret dihitung dari keadaan
+ * sekarang, jadi hanya kemarin yang jujur diberi label.
+ */
+export function hariPerluDitutup(
+  sekarang: Date,
+  zona: ZonaWaktu,
+  tanggalTutupTerakhir: string | null,
+): string | null {
+  const kemarin = geserTanggal(waktuKantor(sekarang, zona).tanggal, -1);
+  return tanggalTutupTerakhir === null || tanggalTutupTerakhir < kemarin ? kemarin : null;
+}

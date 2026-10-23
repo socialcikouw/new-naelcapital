@@ -17,6 +17,7 @@
     "@naelcapital/contracts": "workspace:*",
     "@naelcapital/domain": "workspace:*",
     "@scalar/hono-api-reference": "^0.12.13",
+    "croner": "^10.0.1",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.13",
     "hono-rate-limiter": "^0.5.4",

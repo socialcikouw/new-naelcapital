@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { hariTagihKantor } from "./kalender";
+import { hariPerluDitutup, hariTagihKantor } from "./kalender";
 import { awalJendelaMacet, mulaiDitagih, nilaiMacet } from "./macet";
 
 const harian = {
@@ -81,5 +81,19 @@ describe("hari tagih kantor (B2)", () => {
     expect(hariTagihKantor("2026-11-01", pola, libur)).toBe(true); // Minggu, pola baru
     expect(hariTagihKantor("2026-10-20", pola, libur)).toBe(false);
     expect(hariTagihKantor("2026-09-30", pola, libur)).toBe(false);
+  });
+});
+
+describe("hari yang perlu ditutup", () => {
+  // 23 Okt 2026 17:30 UTC = 24 Okt 00:30 WIB = 24 Okt 01:30 WITA; masih 23 Okt di UTC.
+  const sekarang = new Date("2026-10-23T17:30:00Z");
+  test("kemarin menurut zona kantor; tidak mundur; sekali saja", () => {
+    expect(hariPerluDitutup(sekarang, "WIB", null)).toBe("2026-10-23");
+    expect(hariPerluDitutup(sekarang, "WIB", "2026-10-20")).toBe("2026-10-23");
+    expect(hariPerluDitutup(sekarang, "WIB", "2026-10-23")).toBeNull();
+    // 16:30 UTC = 23:30 WIB (belum tengah malam) tetapi 00:30 WITA.
+    const malam = new Date("2026-10-23T16:30:00Z");
+    expect(hariPerluDitutup(malam, "WIB", "2026-10-22")).toBeNull();
+    expect(hariPerluDitutup(malam, "WITA", "2026-10-22")).toBe("2026-10-23");
   });
 });

@@ -115,6 +115,14 @@ posisi modal (tanggal X) = saldo tunai buku + saldo bank buku   (rumus buku kas 
   `tanggal_tutup_terakhir` — satu transaksi database.
 - Pembaca yang menemukan **tanpa baris** untuk suatu tanggal membedakan "belum
   ada potret" (`null`) dari nol.
+- *(Ditetapkan saat pembangunan, 24 Okt 2026.)* **Hari yang terlewat tidak
+  disusul** — bila server mati beberapa malam, sapuan berikutnya hanya
+  menutup **kemarin**; hari di antaranya tanpa potret (dibaca `null`), dan
+  pinjaman yang seharusnya macet di hari itu tercatat macet pada kemarin.
+  Pinjaman yang masuk pembukuan **sesudah** hari yang ditutup (akad lewat
+  tengah malam sebelum sapuan) tidak ikut dinilai maupun dipotret.
+  Penjadwal berdetak tiap jam (menit ke-5) dan sekali saat server menyala
+  (`modul/tutup-hari/jadwal.ts`).
 
 ## Catatan migrasi (tidak dijalankan di sesi desain)
 
