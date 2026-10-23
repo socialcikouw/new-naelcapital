@@ -11,6 +11,7 @@ export * from "./gulung";
 export * from "./kalender";
 export * from "./kas";
 export * from "./kode-tautan";
+export * from "./macet";
 export * from "./nomor-hp";
 export * from "./setoran";
 export * from "./wilayah";

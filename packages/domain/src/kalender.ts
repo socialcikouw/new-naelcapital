@@ -65,3 +65,30 @@ export function hariTagihMingguan(tanggalAkad: string, tanggal: string): boolean
   const selisih = selisihHari(tanggalAkad, tanggal);
   return selisih > 0 && selisih % 7 === 0;
 }
+
+/** Pola pekan kerja bertanggal (tabel `pekan_kerja`). */
+export interface PolaPekan {
+  berlakuMulai: string;
+  /** Bitmask hari kerja (bit 0 = Minggu … bit 6 = Sabtu). */
+  hariKerja: number;
+}
+
+/**
+ * B2. Hari tagih harian: hari kerja menurut pola pekan yang berlaku pada
+ * tanggal itu (pola terbaru dengan `berlakuMulai` ≤ tanggal) dan bukan libur
+ * kantor. Tanggal sebelum pola pertama bukan hari tagih.
+ */
+export function hariTagihKantor(
+  tanggal: string,
+  pola: readonly PolaPekan[],
+  liburKantor: ReadonlySet<string>,
+): boolean {
+  if (liburKantor.has(tanggal)) return false;
+  let berlaku: PolaPekan | undefined;
+  for (const p of pola) {
+    if (p.berlakuMulai <= tanggal && (!berlaku || p.berlakuMulai > berlaku.berlakuMulai)) {
+      berlaku = p;
+    }
+  }
+  return berlaku ? hariKerjaPekan(berlaku.hariKerja, hariPekanDari(tanggal)) : false;
+}

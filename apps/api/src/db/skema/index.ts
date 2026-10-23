@@ -9,6 +9,7 @@ export * from "./pekan-kerja";
 export * from "./pengguna";
 export * from "./perangkat";
 export * from "./pinjaman";
+export * from "./posisi-harian";
 export * from "./riwayat-perubahan";
 export * from "./riwayat-status-pinjaman";
 export * from "./serah-terima-kas";
