@@ -8,6 +8,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "build:dev": "bunx eas-cli build --profile development --platform android",
+    "build:preview": "bunx eas-cli build --profile preview --platform android",
+    "update:preview": "APP_VARIANT=preview bunx eas-cli update --channel preview --environment preview --platform android",
     "typecheck": "bun run --cwd ../api tipe && tsc --noEmit"
   },
   "dependencies": {
@@ -24,6 +26,7 @@
     "expo-router": "~58.0.25",
     "expo-secure-store": "~58.0.2",
     "expo-status-bar": "~58.0.4",
+    "expo-updates": "~58.0.18",
     "hono": "^4.13.13",
     "nativewind": "^4.2.7",
     "react": "19.3.0",

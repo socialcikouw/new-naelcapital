@@ -31,6 +31,12 @@
     ],
     "scheme": "naelcapital",
     "owner": "socialnael",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/d1db6915-5a25-48c3-8e37-4aeb009a7f5e"
+    },
     "extra": {
       "router": {
         "asyncRoutes": {

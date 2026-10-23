@@ -175,6 +175,30 @@ isi berkas, ukuran, SHA-256).
   pembaruan OTA bisa nyasar ke HP karyawan. Varian rilis diputuskan saat
   aplikasi baru menggantikan yang lama.
 
+## Jalur rilis aplikasi HP (keputusan pemilik, 24 Okt 2026)
+
+Satu nama jalur di semua tempat: **profil EAS = `APP_VARIANT` = channel =
+branch EAS Update**.
+
+| Jalur | Git | Aplikasi / paket | JS dari |
+|---|---|---|---|
+| `development` | branch apa saja | Nael Dev / `com.naelcapital.app.dev` | Metro di laptop |
+| `preview` | `main` | Nael Uji / `com.naelcapital.app.preview` | EAS Update channel `preview` (manual: `bun run update:preview`) |
+| `production` | `production` (dibuat saat rilis pertama) + tag `mobile-vX.Y.Z` | diputuskan saat menggantikan aplikasi lama | EAS Update channel `production` |
+
+- `runtimeVersion` = **fingerprint**: perubahan JS boleh lewat OTA; perubahan
+  native (paket ber-kode native, `app.json`, plugin) wajib build ulang — OTA ke
+  APK lama otomatis tidak masuk. `eas update` wajib memakai `APP_VARIANT` yang
+  sama dengan build-nya (skrip `update:<jalur>` sudah menyetelnya).
+- Ke produksi: **`eas update:republish`** grup yang sudah diuji di `preview`,
+  bukan bundle ulang. Perbaikan darurat: branch dari `production`, kirim,
+  lalu gabung balik ke `main`. Update rusak: `eas update:rollback`.
+- **API kompatibel mundur** terhadap versi HP yang masih beredar (HP baru
+  menerima OTA saat aplikasi dibuka ulang).
+- Alamat API `preview` = variabel EAS `EXPO_PUBLIC_API_URL` lingkungan
+  `preview` (`https://`, dijaga `app.config.ts` agar IP laptop dari `.env`
+  tidak ikut terbundel).
+
 ## Perintah
 
 Dari root repo:
@@ -193,7 +217,7 @@ Per paket (`cd apps/<nama>`):
 |---|---|
 | `apps/api` | `bun run dev` (server + muat ulang otomatis, port dari `.env`, bawaan 3000); dokumentasi API di `/dokumentasi`, OpenAPI di `/openapi.json`. |
 | `apps/web` | `bun run dev` (Vite, port 5173) bersama `apps/api` `bun run dev` — web memanggil API di `/api/...` yang diteruskan Vite ke port 3000 (di produksi: Nginx `location /api/ { proxy_pass http://127.0.0.1:3000/; }`), satu asal tanpa CORS. `bun run build` = tipe API + typecheck + berkas statis `dist/`. Sesi bos di `localStorage`. |
-| `apps/mobile` | `bun run start` (Metro untuk development build / Expo Go di HP); paket ber-kode native dipasang dengan `bunx expo install <paket>` (versi cocok SDK), bukan `bun add`; `bunx expo-doctor` untuk memeriksa. **Tidak pernah `expo web`.** Rute di `src/app/` (Expo Router); panduan resmi Expo ada di `apps/mobile/AGENTS.md`. Alamat API di `apps/mobile/.env`: `EXPO_PUBLIC_API_URL=http://<IP laptop>:3000` (bukan localhost). Pemeriksaan bundel tanpa HP: `bunx expo export --platform android --output-dir <folder sementara>`. **Development build** (SDK 58 tidak bisa dibuka Expo Go): `bun run build:dev` membangun APK `Nael Dev` di EAS (profil `development`, `APP_VARIANT=development` → `app.config.ts`); pasang sekali di HP, lalu `bun run start` dan buka proyeknya dari aplikasi itu. Build ulang hanya bila paket native / `app.json` berubah. |
+| `apps/mobile` | `bun run start` (Metro untuk development build / Expo Go di HP); paket ber-kode native dipasang dengan `bunx expo install <paket>` (versi cocok SDK), bukan `bun add`; `bunx expo-doctor` untuk memeriksa. **Tidak pernah `expo web`.** Rute di `src/app/` (Expo Router); panduan resmi Expo ada di `apps/mobile/AGENTS.md`. Alamat API di `apps/mobile/.env`: `EXPO_PUBLIC_API_URL=http://<IP laptop>:3000` (bukan localhost). Pemeriksaan bundel tanpa HP: `bunx expo export --platform android --output-dir <folder sementara>`. **Development build** (SDK 58 tidak bisa dibuka Expo Go): `bun run build:dev` membangun APK `Nael Dev` di EAS (profil `development`, `APP_VARIANT=development` → `app.config.ts`); pasang sekali di HP, lalu `bun run start` dan buka proyeknya dari aplikasi itu. Build ulang hanya bila paket native / `app.json` berubah. **Preview**: `bun run build:preview` (APK Nael Uji, channel `preview`), `bun run update:preview --message "<isi>"` (OTA ke Nael Uji). |
 
 Catatan instalasi: `bunfig.toml` memakai `linker = "hoisted"` — instalasi
 isolated (bawaan Bun 1.3) membuat salinan ganda `expo`/`react-native` yang
