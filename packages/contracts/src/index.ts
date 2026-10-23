@@ -10,6 +10,7 @@ export * from "./galat";
 export * from "./kas";
 export * from "./lapangan";
 export * from "./pembatalan";
+export * from "./pemutihan";
 export * from "./sehat";
 export * from "./setoran-sore";
 export * from "./tabungan";
