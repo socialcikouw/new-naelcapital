@@ -24,6 +24,7 @@ import {
   liburNasabah,
   nasabah,
   pinjaman,
+  ruteWilayah,
   transaksi,
   wilayah,
 } from "../../db/skema";
@@ -294,7 +295,10 @@ export function buatLayananLapangan(deps: LapanganDeps) {
       return sesudah;
     },
 
-    /** Pinjaman aktif yang dipegang kolektor ini, urut kampung lalu nama. */
+    /**
+     * Pinjaman aktif yang dipegang kolektor ini, urut RUTE-nya (Rute 1 lebih
+     * dulu), lalu kampung di luar rute menurut abjad, lalu nama nasabah.
+     */
     async daftarPinjaman(aktor: Aktor): Promise<KartuTagih[]> {
       wajibPeran(aktor, "kolektor");
       const { tanggal } = await bacaKalender(deps.db, aktor.kantorId, sekarang());
@@ -303,13 +307,20 @@ export function buatLayananLapangan(deps: LapanganDeps) {
         .from(pinjaman)
         .innerJoin(nasabah, eq(nasabah.id, pinjaman.nasabahId))
         .innerJoin(wilayah, eq(wilayah.id, nasabah.wilayahId))
+        .leftJoin(
+          ruteWilayah,
+          and(
+            eq(ruteWilayah.kolektorId, aktor.penggunaId),
+            eq(ruteWilayah.wilayahId, nasabah.wilayahId),
+          ),
+        )
         .where(
           and(
             eq(nasabah.kolektorId, aktor.penggunaId),
             inArray(pinjaman.status, ["berjalan", "macet"]),
           ),
         )
-        .orderBy(asc(wilayah.nama), asc(nasabah.nama));
+        .orderBy(sql`${ruteWilayah.urutan} ASC NULLS LAST`, asc(wilayah.nama), asc(nasabah.nama));
       const ids = baris.map((b) => b.id);
       if (ids.length === 0) return [];
 

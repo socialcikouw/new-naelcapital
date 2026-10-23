@@ -1,0 +1,47 @@
+import { createRoute } from "@hono/zod-openapi";
+import { ruteSchema, saringRuteSchema, simpanRuteSchema } from "@naelcapital/contracts";
+import { buatRouter, jawabanGalat } from "../../router";
+import type { LayananAuth } from "../auth/layanan";
+import { wajibMasuk } from "../auth/wajib-masuk";
+import type { LayananRute } from "./layanan";
+
+const json = <T>(schema: T) => ({ content: { "application/json": { schema } } });
+const galat = jawabanGalat(
+  [400, "Data tidak sah"],
+  [401, "Belum masuk"],
+  [403, "Peran tidak boleh / bukan milik Anda"],
+  [404, "Tidak ditemukan"],
+  [409, "Rute baru saja diubah orang lain (versi basi)"],
+  [422, "Kolektor wajib disebut"],
+);
+
+const baca = createRoute({
+  method: "get",
+  path: "/rute-kolektor",
+  tags: ["rute kolektor"],
+  summary: "Rute kolektor — kolektor: miliknya; bos & pengawas: sebut kolektornya",
+  security: [{ bearer: [] }],
+  request: { query: saringRuteSchema },
+  responses: { 200: { description: "Rute", ...json(ruteSchema) }, ...galat },
+});
+const simpan = createRoute({
+  method: "put",
+  path: "/rute-kolektor",
+  tags: ["rute kolektor"],
+  summary: "Simpan rute utuh dengan versi terakhir dibaca (kolektor: miliknya; bos)",
+  security: [{ bearer: [] }],
+  request: { body: { ...json(simpanRuteSchema), required: true } },
+  responses: { 200: { description: "Tersimpan", ...json(ruteSchema) }, ...galat },
+});
+
+export function ruteRuteKolektor(layanan: LayananRute, auth: LayananAuth) {
+  const router = buatRouter();
+  router.use("/rute-kolektor", wajibMasuk(auth));
+  return router
+    .openapi(baca, async (c) =>
+      c.json(await layanan.baca(c.get("aktor"), c.req.valid("query")), 200),
+    )
+    .openapi(simpan, async (c) =>
+      c.json(await layanan.simpan(c.get("aktor"), c.req.valid("json")), 200),
+    );
+}
