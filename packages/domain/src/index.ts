@@ -6,6 +6,7 @@
  */
 
 export * from "./akad";
+export * from "./gaji";
 export * from "./galat";
 export * from "./gulung";
 export * from "./kalender";

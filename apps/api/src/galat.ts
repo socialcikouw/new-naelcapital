@@ -70,6 +70,8 @@ const CONSTRAINT_BENTROK: Record<string, [kode: string, pesan: string]> = {
   mutasi_kas_kantor_kantor_fk: ["BUKU_KAS_BELUM_DIBUKA", "Buku kas kantor belum dibuka"],
   pencocokan_kas_kantor_fk: ["BUKU_KAS_BELUM_DIBUKA", "Buku kas kantor belum dibuka"],
   penarikan_tabungan_kantor_fk: ["BUKU_KAS_BELUM_DIBUKA", "Buku kas kantor belum dibuka"],
+  pembayaran_gaji_periode_excl: ["PERIODE_SUDAH_DIBAYAR", "Sebagian periode ini sudah dibayar"],
+  pembayaran_gaji_kantor_fk: ["BUKU_KAS_BELUM_DIBUKA", "Buku kas kantor belum dibuka"],
   nasabah_saldo_tabungan_check: ["TABUNGAN_TIDAK_CUKUP", "Saldo tabungan tidak cukup"],
   uniq_foto_kantor_sha256: [
     "FOTO_SUDAH_DIPAKAI",

@@ -9,6 +9,8 @@ import { buatLayananAuth } from "./modul/auth/layanan";
 import { ruteAuth } from "./modul/auth/rute";
 import { buatLayananFoto } from "./modul/foto/layanan";
 import { ruteFoto } from "./modul/foto/rute";
+import { buatLayananGaji } from "./modul/gaji/layanan";
+import { ruteGaji } from "./modul/gaji/rute";
 import { buatLayananKas } from "./modul/kas/layanan";
 import { ruteKas } from "./modul/kas/rute";
 import { buatLayananLapangan } from "./modul/lapangan/layanan";
@@ -61,6 +63,7 @@ export function buatApp(deps: AppDeps) {
   const lapangan = buatLayananLapangan({ db: deps.db, sekarang: deps.sekarang });
   const setoranSore = buatLayananSetoranSore({ db: deps.db, sekarang: deps.sekarang });
   const kas = buatLayananKas({ db: deps.db, sekarang: deps.sekarang });
+  const gaji = buatLayananGaji({ db: deps.db, sekarang: deps.sekarang });
   const tabungan = buatLayananTabungan({ db: deps.db, sekarang: deps.sekarang });
   const foto = buatLayananFoto({
     db: deps.db,
@@ -77,6 +80,7 @@ export function buatApp(deps: AppDeps) {
     .route("/", ruteLapangan(lapangan, auth))
     .route("/", ruteFoto(foto, auth))
     .route("/", ruteSetoranSore(setoranSore, auth))
+    .route("/", ruteGaji(gaji, auth))
     .route("/", ruteKas(kas, auth))
     .route("/", ruteTabungan(tabungan, auth));
 

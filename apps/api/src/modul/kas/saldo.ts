@@ -7,18 +7,17 @@ import type { Db } from "../../db/klien";
  * (docs/skema/schema-buku-kas.md#rumus-saldo-akun). Yang batal tidak dihitung.
  *
  *   tunai : mutasi, serah terima (tunai diterima − kas lapangan − uang jalan),
- *           penarikan tabungan
+ *           penarikan tabungan, gaji
  *   bank  : mutasi, transfer setoran (sejak dicatat kasir), transfer lama
- *           (arsip), penarikan tabungan
- *
- * Gaji (`pembayaran_gaji`) menyusul bersama tabelnya (Tahap 7).
+ *           (arsip), penarikan tabungan, gaji
  */
 export type SumberGerakan =
   | "mutasi"
   | "serah_terima"
   | "transfer_setoran"
   | "transfer_lama"
-  | "penarikan_tabungan";
+  | "penarikan_tabungan"
+  | "pembayaran_gaji";
 
 export interface GerakanKas {
   tanggal: string;
@@ -69,7 +68,13 @@ function gerakan(kantorId: string, tanggalBuka: string) {
            'penarikan_tabungan', pt.id::text, NULL, n.nama
       FROM penarikan_tabungan pt
       JOIN nasabah n ON n.id = pt.nasabah_id
-     WHERE pt.kantor_id = ${kantorId} AND pt.dibatalkan_at IS NULL`;
+     WHERE pt.kantor_id = ${kantorId} AND pt.dibatalkan_at IS NULL
+    UNION ALL
+    SELECT g.tanggal_bayar::text, g.dari_akun::text, -g.gaji_bersih,
+           'pembayaran_gaji', g.id::text, NULL, k.nama
+      FROM pembayaran_gaji g
+      JOIN pengguna k ON k.id = g.kolektor_id
+     WHERE g.kantor_id = ${kantorId} AND g.dibatalkan_at IS NULL`;
 }
 
 type Buku = { kantorId: string; tanggalBuka: string; kasAwalTunai: number; kasAwalBank: number };

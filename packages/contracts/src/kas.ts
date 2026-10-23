@@ -91,6 +91,7 @@ export const gerakanKasSchema = z.object({
     "transfer_setoran",
     "transfer_lama",
     "penarikan_tabungan",
+    "pembayaran_gaji",
   ]),
   sumberId: z.string(),
   /** Jenis mutasi, bila sumbernya mutasi. */

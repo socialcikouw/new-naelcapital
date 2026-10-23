@@ -10,6 +10,8 @@ import type { LayananAuth } from "./layanan";
  */
 export function wajibMasuk(auth: Pick<LayananAuth, "periksaTokenAkses">) {
   return createMiddleware<Lingkungan>(async (c, next) => {
+    // Sudah diperiksa router lain pada jalur bertingkat (mis. /kas/* lalu /kas/gaji).
+    if (c.get("aktor")) return next();
     const kepala = c.req.header("Authorization") ?? "";
     const [jenis, token] = kepala.split(" ");
     if (jenis !== "Bearer" || !token) {
