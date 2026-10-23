@@ -103,7 +103,7 @@ Potongan gaji (`pembayaran_gaji.potongan_tekor`) membaca tekor dari sini
 | Metode & jalur | Peran | Isi |
 |---|---|---|
 | `POST /hari-kolektor/:kolektorId/terima-kas` | kasir, bos | `{ tunaiDiterima }` — **hitung buta**: kasir mengisi uang yang ia hitung tanpa melihat angka seharusnya; server menghitung & membekukan seharusnya, lalu baru menjawab seharusnya + selisihnya. |
-| `GET /hari-kolektor?kolektorId=&tanggal=` | kolektor: miliknya; bos, kasir, pengawas | Serah terima yang berlaku beserta `tunaiDiterima` & `selisihSetor` — kolektor **langsung melihat** hasilnya di HP-nya, sehingga bisa protes saat itu juga. |
+| `GET /hari-kolektor?kolektorId=&tanggal=` | kolektor: miliknya; bos, kasir, pengawas | Serah terima yang berlaku beserta `tunaiDiterima` & `selisihSetor` — kolektor **langsung melihat** hasilnya di HP-nya, sehingga bisa protes saat itu juga. Tanpa `kolektorId` = semua kolektor hari itu. **Rincian tunai seharusnya** sebelum kas diterima hanya untuk **kolektor itu sendiri** (ia perlu tahu yang harus diserahkan); kasir, bos, dan pengawas melihatnya sesudah menyimpan uang yang diterima — hitung buta berlaku untuk siapa pun yang menerima. *(Diputuskan saat pembangunan, 24 Okt 2026.)* |
 | `POST /serah-terima-kas/:id/batal` | bos | `{ alasan }` |
 
 ## Service / logika nantinya

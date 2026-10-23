@@ -31,6 +31,9 @@ export const melanggar = (kode: string, pesan: string) => new GalatApp(422, kode
  * kirim ganda — jaring pengaman di balik pemeriksaan service. Dijawab sebagai
  * bentrok yang bisa dibaca, bukan 500.
  */
+const KAS_DITERIMA =
+  "Kas kolektor hari itu sudah diterima — bos membatalkan penerimaannya lebih dulu";
+
 const CONSTRAINT_BENTROK: Record<string, [kode: string, pesan: string]> = {
   uniq_transaksi_pinjaman_tanggal: [
     "PERISTIWA_SUDAH_ADA",
@@ -46,6 +49,15 @@ const CONSTRAINT_BENTROK: Record<string, [kode: string, pesan: string]> = {
   uniq_pinjaman_foto: ["FOTO_SUDAH_DIPAKAI", "Foto ini sudah dipakai akad lain"],
   uniq_hari_kolektor_kolektor_tanggal: ["SUDAH_ABSEN", "Anda sudah mengisi absensi hari ini"],
   uniq_nasabah_kantor_nik: ["NIK_SUDAH_TERDAFTAR", "NIK ini sudah terdaftar"],
+  // Setoran sore: hari terkunci sesudah kas diterima (aturan-usaha I4).
+  uniq_serah_terima_kas_hari: ["KAS_SUDAH_DITERIMA", KAS_DITERIMA],
+  hari_kolektor_terkunci: ["KAS_SUDAH_DITERIMA", KAS_DITERIMA],
+  transfer_setoran_terkunci: ["KAS_SUDAH_DITERIMA", KAS_DITERIMA],
+  biaya_tak_terduga_terkunci: ["KAS_SUDAH_DITERIMA", KAS_DITERIMA],
+  uniq_transfer_setoran_transaksi: [
+    "TRANSFER_SUDAH_ADA",
+    "Setoran ini sudah dicatat transfer — batalkan dulu",
+  ],
   uniq_foto_kantor_sha256: [
     "FOTO_SUDAH_DIPAKAI",
     "Foto yang sama sudah pernah diunggah — potret ulang",

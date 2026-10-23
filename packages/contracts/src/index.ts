@@ -8,4 +8,5 @@ export * from "./foto";
 export * from "./galat";
 export * from "./lapangan";
 export * from "./sehat";
+export * from "./setoran-sore";
 export * from "./tautan";

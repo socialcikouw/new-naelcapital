@@ -9,6 +9,7 @@ export * from "./akad";
 export * from "./galat";
 export * from "./gulung";
 export * from "./kalender";
+export * from "./kas";
 export * from "./kode-tautan";
 export * from "./nomor-hp";
 export * from "./setoran";
