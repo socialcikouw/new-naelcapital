@@ -7,6 +7,7 @@ export * from "./kebijakan";
 export * from "./libur";
 export * from "./nasabah";
 export * from "./pekan-kerja";
+export * from "./pembayaran-gaji";
 export * from "./pengguna";
 export * from "./perangkat";
 export * from "./pinjaman";

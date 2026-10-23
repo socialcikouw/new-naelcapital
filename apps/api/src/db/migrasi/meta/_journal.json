@@ -127,6 +127,20 @@
       "when": 1792781171554,
       "tag": "0017_kas_kantor_trigger",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792782645677,
+      "tag": "0018_pembayaran_gaji",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792782646314,
+      "tag": "0019_pembayaran_gaji_trigger",
+      "breakpoints": true
     }
   ]
 }
