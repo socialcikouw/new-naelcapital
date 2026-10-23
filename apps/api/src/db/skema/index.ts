@@ -14,6 +14,7 @@ export * from "./pinjaman";
 export * from "./posisi-harian";
 export * from "./riwayat-perubahan";
 export * from "./riwayat-status-pinjaman";
+export * from "./rute";
 export * from "./serah-terima-kas";
 export * from "./tabungan";
 export * from "./tarif-gaji";

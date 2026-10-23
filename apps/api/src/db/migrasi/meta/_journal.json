@@ -148,6 +148,20 @@
       "when": 1792783952569,
       "tag": "0020_batal_terkunci",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792787712369,
+      "tag": "0021_rute_kolektor",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1792787713384,
+      "tag": "0022_rute_trigger",
+      "breakpoints": true
     }
   ]
 }
