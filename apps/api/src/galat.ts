@@ -26,6 +26,13 @@ export const tidakDitemukan = (kode: string, pesan: string) => new GalatApp(404,
 /** Pelanggaran aturan usaha yang diperiksa server (bukan bentuk data). */
 export const melanggar = (kode: string, pesan: string) => new GalatApp(422, kode, pesan);
 
+/** Pembatalan uang (bos, aturan-usaha L1): yang sudah batal, atau bukan hari yang sama. */
+export const sudahDibatalkan = () => bentrok("SUDAH_DIBATALKAN", "Catatan ini sudah dibatalkan");
+export const batalHanyaHariIni = () =>
+  melanggar("BATAL_HANYA_HARI_INI", "Pembatalan hanya pada hari yang sama");
+export const bukuKasBelumDibuka = () =>
+  melanggar("BUKU_KAS_BELUM_DIBUKA", "Buku kas kantor belum dibuka");
+
 /**
  * Constraint database yang bisa terlanggar oleh permintaan bersamaan atau
  * kirim ganda — jaring pengaman di balik pemeriksaan service. Dijawab sebagai
@@ -58,6 +65,12 @@ const CONSTRAINT_BENTROK: Record<string, [kode: string, pesan: string]> = {
     "TRANSFER_SUDAH_ADA",
     "Setoran ini sudah dicatat transfer — batalkan dulu",
   ],
+  // Kas kantor: buku kas sekali per kantor; uang kantor sesudah buku dibuka.
+  buku_kas_pkey: ["BUKU_KAS_SUDAH_DIBUKA", "Buku kas kantor sudah dibuka"],
+  mutasi_kas_kantor_kantor_fk: ["BUKU_KAS_BELUM_DIBUKA", "Buku kas kantor belum dibuka"],
+  pencocokan_kas_kantor_fk: ["BUKU_KAS_BELUM_DIBUKA", "Buku kas kantor belum dibuka"],
+  penarikan_tabungan_kantor_fk: ["BUKU_KAS_BELUM_DIBUKA", "Buku kas kantor belum dibuka"],
+  nasabah_saldo_tabungan_check: ["TABUNGAN_TIDAK_CUKUP", "Saldo tabungan tidak cukup"],
   uniq_foto_kantor_sha256: [
     "FOTO_SUDAH_DIPAKAI",
     "Foto yang sama sudah pernah diunggah — potret ulang",

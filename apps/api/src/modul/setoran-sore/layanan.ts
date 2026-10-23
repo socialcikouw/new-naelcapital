@@ -20,7 +20,14 @@ import {
   transaksi,
   transferSetoran,
 } from "../../db/skema";
-import { bentrok, dilarang, melanggar, tidakDitemukan } from "../../galat";
+import {
+  batalHanyaHariIni,
+  bentrok,
+  dilarang,
+  melanggar,
+  sudahDibatalkan,
+  tidakDitemukan,
+} from "../../galat";
 import { wajibPeran } from "../../peran";
 import type { Aktor } from "../auth/token";
 import { bacaKalender } from "../lapangan/gerbang";
@@ -44,9 +51,6 @@ const KAS_SUDAH_DITERIMA = () =>
     "KAS_SUDAH_DITERIMA",
     "Kas kolektor hari itu sudah diterima — bos membatalkan penerimaannya lebih dulu",
   );
-const SUDAH_DIBATALKAN = () => bentrok("SUDAH_DIBATALKAN", "Catatan ini sudah dibatalkan");
-const BATAL_HANYA_HARI_INI = () =>
-  melanggar("BATAL_HANYA_HARI_INI", "Pembatalan hanya pada hari yang sama");
 
 /** Kolektor hanya membaca miliknya; bos, kasir, pengawas membaca semua. */
 function kolektorYangDibaca(aktor: Aktor, kolektorId: string | undefined): string | undefined {
@@ -389,8 +393,8 @@ export function buatLayananSetoranSore(deps: SetoranSoreDeps) {
           .for("update", { of: serahTerimaKas });
         if (!st)
           throw tidakDitemukan("SERAH_TERIMA_TIDAK_DITEMUKAN", "Serah terima tidak ditemukan");
-        if (st.dibatalkanAt) throw SUDAH_DIBATALKAN();
-        if (st.tanggal !== tanggalIni) throw BATAL_HANYA_HARI_INI();
+        if (st.dibatalkanAt) throw sudahDibatalkan();
+        if (st.tanggal !== tanggalIni) throw batalHanyaHariIni();
         await tx
           .update(serahTerimaKas)
           .set({
@@ -555,8 +559,8 @@ export function buatLayananSetoranSore(deps: SetoranSoreDeps) {
           .where(and(eq(transferSetoran.id, id), eq(transferSetoran.kantorId, aktor.kantorId)))
           .for("update", { of: transferSetoran });
         if (!t) throw tidakDitemukan("TRANSFER_TIDAK_DITEMUKAN", "Transfer tidak ditemukan");
-        if (t.dibatalkanAt) throw SUDAH_DIBATALKAN();
-        if (t.tanggal !== tanggalIni) throw BATAL_HANYA_HARI_INI();
+        if (t.dibatalkanAt) throw sudahDibatalkan();
+        if (t.tanggal !== tanggalIni) throw batalHanyaHariIni();
         if (await kasSudahDiterima(tx, t.pencatatId, t.tanggal, "share")) {
           throw KAS_SUDAH_DITERIMA();
         }
@@ -655,8 +659,8 @@ export function buatLayananSetoranSore(deps: SetoranSoreDeps) {
           .where(and(eq(biayaTakTerduga.id, id), eq(biayaTakTerduga.kantorId, aktor.kantorId)))
           .for("update");
         if (!b) throw tidakDitemukan("BIAYA_TIDAK_DITEMUKAN", "Biaya tidak ditemukan");
-        if (b.dibatalkanAt) throw SUDAH_DIBATALKAN();
-        if (b.tanggal !== tanggalIni) throw BATAL_HANYA_HARI_INI();
+        if (b.dibatalkanAt) throw sudahDibatalkan();
+        if (b.tanggal !== tanggalIni) throw batalHanyaHariIni();
         if (await kasSudahDiterima(tx, b.kolektorId, b.tanggal, "share")) {
           throw KAS_SUDAH_DITERIMA();
         }

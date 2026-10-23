@@ -107,7 +107,7 @@ Semua yang batal tidak dihitung. Satu rupiah tidak pernah punya dua catatan.
 |---|---|---|
 | `POST /kas/buka` | bos | `{ tunai, bank }` — sekali; tanggal = hari ini (`BUKU_KAS_SUDAH_DIBUKA`). |
 | `PATCH /kas/buka` | bos | `{ tunai?, bank? }` — hanya di `tanggal_buka` (`BATAL_HANYA_HARI_INI`). |
-| `GET /kas/laporan?mulai=&selesai=` | bos, pengawas | Saldo awal & akhir per akun, kas di lapangan, rincian mutasi, serah terima, penarikan tabungan, gaji. |
+| `GET /kas/laporan?mulai=&selesai=` | **bos** | Saldo awal & akhir per akun, kas di lapangan, rincian mutasi, serah terima, penarikan tabungan, gaji. **Pengawas tidak** — ia mencocokkan kas dengan hitung buta, jadi tak boleh melihat saldo buku sebelum menghitung (keputusan pemilik, 24 Okt 2026). |
 
 ## Catatan migrasi (tidak dijalankan di sesi desain)
 

@@ -14,4 +14,5 @@ export * from "./kode-tautan";
 export * from "./macet";
 export * from "./nomor-hp";
 export * from "./setoran";
+export * from "./tabungan";
 export * from "./wilayah";

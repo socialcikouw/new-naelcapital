@@ -104,9 +104,11 @@ endpoint di atas.
 3. `saldoSebelum` dari klien harus sama dengan `saldo_tabungan` di database;
    berbeda → `TABUNGAN_BERUBAH` (ada gerakan tabungan di sela bos membaca dan
    menyimpan).
-4. `saldoBaru` = `saldoSebelum` → tak ada yang dicatat. `saldoBaru` wajar:
-   ≤ batas kali pokok pinjaman terakhir nasabah (`TABUNGAN_TIDAK_WAJAR`, aturan
-   yang sama dengan sekarang).
+4. `saldoBaru` = `saldoSebelum` → tak ada yang dicatat (`TIDAK_ADA_PERUBAHAN`).
+   `saldoBaru` wajar: ≤ batas kali pokok pinjaman terakhir nasabah
+   (`TABUNGAN_TIDAK_WAJAR`, aturan yang sama dengan sekarang). *(Ditetapkan saat
+   pembangunan, 24 Okt 2026:)* nasabah **tanpa pinjaman** (selain yang batal)
+   hanya bisa dikoreksi **turun** — batas wajarnya tak bisa dihitung.
 5. Tulis baris koreksi (`selisih = saldoBaru − saldoSebelum`, `tanggal` = hari
    ini kalender kantor), lalu geser `nasabah.saldo_tabungan` sebesar selisih —
    di transaksi database yang sama.

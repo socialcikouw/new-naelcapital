@@ -1,3 +1,5 @@
+import { wajib } from "./galat";
+
 /**
  * KAS HARIAN KOLEKTOR — docs/aturan-usaha.md bagian I. Angka masukan
  * dijumlahkan server dari catatan hari itu (setoran, akad, transfer, biaya);
@@ -60,4 +62,52 @@ export function batasTransfer(t: {
     case "gulung":
       return 0;
   }
+}
+
+// ---- kas kantor (docs/skema/schema-mutasi-kas-kantor.md) -----------------------
+
+export type AkunKas = "tunai" | "bank";
+export type JenisMutasiKas =
+  | "setor_modal"
+  | "tarik_modal"
+  | "biaya_kantor"
+  | "pindah_akun"
+  | "lain_masuk"
+  | "lain_keluar";
+
+/** Arah tiap jenis mutasi: masuk (`keAkun`), keluar (`dariAkun`), atau pindah (keduanya). */
+export const ARAH_MUTASI: Record<JenisMutasiKas, "masuk" | "keluar" | "pindah"> = {
+  setor_modal: "masuk",
+  lain_masuk: "masuk",
+  tarik_modal: "keluar",
+  biaya_kantor: "keluar",
+  lain_keluar: "keluar",
+  pindah_akun: "pindah",
+};
+
+/** Akun mutasi harus sesuai arah jenisnya — sama dengan `mutasi_kas_kantor_akun_check`. */
+export function syaratAkunMutasi(m: {
+  jenis: JenisMutasiKas;
+  dariAkun?: AkunKas | null | undefined;
+  keAkun?: AkunKas | null | undefined;
+}): { dariAkun: AkunKas | null; keAkun: AkunKas | null } {
+  const dari = m.dariAkun ?? null;
+  const ke = m.keAkun ?? null;
+  const arah = ARAH_MUTASI[m.jenis];
+  const sah =
+    arah === "masuk"
+      ? ke !== null && dari === null
+      : arah === "keluar"
+        ? dari !== null && ke === null
+        : dari !== null && ke !== null && dari !== ke;
+  wajib(
+    sah,
+    "AKUN_MUTASI_TIDAK_SESUAI",
+    arah === "masuk"
+      ? "Mutasi masuk hanya mengisi akun tujuan"
+      : arah === "keluar"
+        ? "Mutasi keluar hanya mengisi akun asal"
+        : "Pindah akun mengisi akun asal dan tujuan yang berbeda",
+  );
+  return { dariAkun: dari, keAkun: ke };
 }

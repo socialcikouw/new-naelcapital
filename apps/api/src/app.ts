@@ -9,10 +9,14 @@ import { buatLayananAuth } from "./modul/auth/layanan";
 import { ruteAuth } from "./modul/auth/rute";
 import { buatLayananFoto } from "./modul/foto/layanan";
 import { ruteFoto } from "./modul/foto/rute";
+import { buatLayananKas } from "./modul/kas/layanan";
+import { ruteKas } from "./modul/kas/rute";
 import { buatLayananLapangan } from "./modul/lapangan/layanan";
 import { ruteLapangan } from "./modul/lapangan/rute";
 import { buatLayananSetoranSore } from "./modul/setoran-sore/layanan";
 import { ruteSetoranSore } from "./modul/setoran-sore/rute";
+import { buatLayananTabungan } from "./modul/tabungan/layanan";
+import { ruteTabungan } from "./modul/tabungan/rute";
 import { buatLayananTautan } from "./modul/tautan/layanan";
 import { ruteTautan } from "./modul/tautan/rute";
 import { type Penyimpanan, penyimpananDisk } from "./penyimpanan";
@@ -56,6 +60,8 @@ export function buatApp(deps: AppDeps) {
   const tautan = buatLayananTautan({ db: deps.db, auth, sekarang: deps.sekarang });
   const lapangan = buatLayananLapangan({ db: deps.db, sekarang: deps.sekarang });
   const setoranSore = buatLayananSetoranSore({ db: deps.db, sekarang: deps.sekarang });
+  const kas = buatLayananKas({ db: deps.db, sekarang: deps.sekarang });
+  const tabungan = buatLayananTabungan({ db: deps.db, sekarang: deps.sekarang });
   const foto = buatLayananFoto({
     db: deps.db,
     penyimpanan:
@@ -70,7 +76,9 @@ export function buatApp(deps: AppDeps) {
     .route("/", ruteTautan(tautan, auth, opsi))
     .route("/", ruteLapangan(lapangan, auth))
     .route("/", ruteFoto(foto, auth))
-    .route("/", ruteSetoranSore(setoranSore, auth));
+    .route("/", ruteSetoranSore(setoranSore, auth))
+    .route("/", ruteKas(kas, auth))
+    .route("/", ruteTabungan(tabungan, auth));
 
   app.onError(tanganiGalat);
   app.openAPIRegistry.registerComponent("securitySchemes", "bearer", {

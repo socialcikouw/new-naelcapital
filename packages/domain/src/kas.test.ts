@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { batasTransfer, tekorDanLebih, tunaiSeharusnya } from "./kas";
+import { GalatAturan } from "./galat";
+import { batasTransfer, syaratAkunMutasi, tekorDanLebih, tunaiSeharusnya } from "./kas";
 
 describe("kas harian kolektor (aturan-usaha I)", () => {
   test("contoh I2: tunai seharusnya 1.250.000, diterima 1.200.000 → tekor 50.000", () => {
@@ -58,5 +59,29 @@ describe("kas harian kolektor (aturan-usaha I)", () => {
       batasTransfer({ jenis: "pelunasan", setoranMurni: 100_000, setoranPelunasan: 500_000 }),
     ).toBe(100_000);
     expect(batasTransfer({ jenis: "gulung", setoranMurni: 0, setoranPelunasan: 600_000 })).toBe(0);
+  });
+});
+
+describe("kas kantor — arah mutasi", () => {
+  test("masuk, keluar, pindah", () => {
+    expect(syaratAkunMutasi({ jenis: "setor_modal", keAkun: "tunai" })).toEqual({
+      dariAkun: null,
+      keAkun: "tunai",
+    });
+    expect(syaratAkunMutasi({ jenis: "biaya_kantor", dariAkun: "bank" })).toEqual({
+      dariAkun: "bank",
+      keAkun: null,
+    });
+    expect(syaratAkunMutasi({ jenis: "pindah_akun", dariAkun: "tunai", keAkun: "bank" })).toEqual({
+      dariAkun: "tunai",
+      keAkun: "bank",
+    });
+    for (const salah of [
+      { jenis: "setor_modal" as const, dariAkun: "tunai" as const },
+      { jenis: "tarik_modal" as const, keAkun: "tunai" as const },
+      { jenis: "pindah_akun" as const, dariAkun: "bank" as const, keAkun: "bank" as const },
+    ]) {
+      expect(() => syaratAkunMutasi(salah)).toThrow(GalatAturan);
+    }
   });
 });

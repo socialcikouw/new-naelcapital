@@ -80,7 +80,7 @@ saldo di aplikasi bank), bukan hanya menghitung uang fisik.
 |---|---|---|
 | `POST /kas/pencocokan` | bos, pengawas | `{ akun, saldoNyata, keterangan? }` — **hitung buta**: tak ada endpoint yang menampilkan saldo buku sebelumnya; server membekukan saldo buku dan baru menjawab saldo buku + selisihnya sesudah angka nyata tersimpan. Selisih ≠ 0 tanpa keterangan → ditolak, penghitung mengirim ulang dengan keterangan (angka nyata tetap). |
 | `POST /kas/pencocokan/:id/batal` | bos | `{ alasan }` — hari yang sama. |
-| `GET /kas/pencocokan?mulai=&selesai=` | bos, pengawas | Riwayat + selisih. |
+| `GET /kas/pencocokan?mulai=&selesai=` | bos: semua; pengawas: **pencocokannya sendiri** | Riwayat + selisih. Pengawas tidak membaca pencocokan orang lain atau laporan kas — saldo buku yang ia lihat hanya hasil hitungannya sendiri, sesudah disimpan (keputusan pemilik, 24 Okt 2026). |
 
 ## Service / logika nantinya
 
