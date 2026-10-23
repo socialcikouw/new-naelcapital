@@ -146,6 +146,13 @@ baru di halaman yang sama, index tak disentuh.
 `pinjaman_riwayat_status` (AFTER INSERT / UPDATE OF status) menulis
 `riwayat_status_pinjaman` — lihat dokumen tabel itu.
 
+`pinjaman_terkunci` (BEFORE UPDATE OF status) — saat pinjaman **ditandai
+batal**: tolak bila hari kolektor pencairnya (`pencair_id`, `tanggal_akad`)
+sudah punya `serah_terima_kas` berlaku (`KAS_SUDAH_DITERIMA`, aturan-usaha I4).
+Perubahan status lain (sapuan macet, lunas, gulung) tidak disentuh. Jaring
+pengaman; service memeriksanya lebih dulu. *(Ditambahkan saat pembangunan,
+24 Okt 2026.)*
+
 ## Perubahan dari skema sekarang
 
 | Sekarang | Nanti | Alasan |

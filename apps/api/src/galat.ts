@@ -30,6 +30,8 @@ export const melanggar = (kode: string, pesan: string) => new GalatApp(422, kode
 export const sudahDibatalkan = () => bentrok("SUDAH_DIBATALKAN", "Catatan ini sudah dibatalkan");
 export const batalHanyaHariIni = () =>
   melanggar("BATAL_HANYA_HARI_INI", "Pembatalan hanya pada hari yang sama");
+/** Hari kolektor terkunci sesudah kas diterima (aturan-usaha I4). */
+export const kasSudahDiterimaGalat = () => bentrok("KAS_SUDAH_DITERIMA", KAS_DITERIMA);
 export const bukuKasBelumDibuka = () =>
   melanggar("BUKU_KAS_BELUM_DIBUKA", "Buku kas kantor belum dibuka");
 
@@ -61,6 +63,8 @@ const CONSTRAINT_BENTROK: Record<string, [kode: string, pesan: string]> = {
   hari_kolektor_terkunci: ["KAS_SUDAH_DITERIMA", KAS_DITERIMA],
   transfer_setoran_terkunci: ["KAS_SUDAH_DITERIMA", KAS_DITERIMA],
   biaya_tak_terduga_terkunci: ["KAS_SUDAH_DITERIMA", KAS_DITERIMA],
+  transaksi_terkunci: ["KAS_SUDAH_DITERIMA", KAS_DITERIMA],
+  pinjaman_terkunci: ["KAS_SUDAH_DITERIMA", KAS_DITERIMA],
   uniq_transfer_setoran_transaksi: [
     "TRANSFER_SUDAH_ADA",
     "Setoran ini sudah dicatat transfer — batalkan dulu",

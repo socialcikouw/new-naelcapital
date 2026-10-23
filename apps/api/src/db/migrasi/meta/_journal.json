@@ -141,6 +141,13 @@
       "when": 1792782646314,
       "tag": "0019_pembayaran_gaji_trigger",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792783952569,
+      "tag": "0020_batal_terkunci",
+      "breakpoints": true
     }
   ]
 }

@@ -24,6 +24,7 @@ import {
   batalHanyaHariIni,
   bentrok,
   dilarang,
+  kasSudahDiterimaGalat,
   melanggar,
   sudahDibatalkan,
   tidakDitemukan,
@@ -31,6 +32,7 @@ import {
 import { wajibPeran } from "../../peran";
 import type { Aktor } from "../auth/token";
 import { bacaKalender } from "../lapangan/gerbang";
+import { kasSudahDiterima } from "./kunci-hari";
 
 /**
  * SETORAN SORE — kasir menerima kas kolektor dengan hitung buta, mencatat
@@ -45,12 +47,6 @@ export interface SetoranSoreDeps {
 }
 
 const jumlah = (kolom: AnyColumn) => sql<number>`coalesce(sum(${kolom}), 0)`.mapWith(Number);
-
-const KAS_SUDAH_DITERIMA = () =>
-  bentrok(
-    "KAS_SUDAH_DITERIMA",
-    "Kas kolektor hari itu sudah diterima — bos membatalkan penerimaannya lebih dulu",
-  );
 
 /** Kolektor hanya membaca miliknya; bos, kasir, pengawas membaca semua. */
 function kolektorYangDibaca(aktor: Aktor, kolektorId: string | undefined): string | undefined {
@@ -126,27 +122,6 @@ async function hitungRincian(
     biaya: b?.biaya ?? 0,
   };
   return { ...rincian, tunaiSeharusnya: tunaiSeharusnya(rincian) };
-}
-
-/** Hari kolektor itu sudah punya serah terima berlaku? Mengunci baris harinya bila diminta. */
-async function kasSudahDiterima(
-  tx: Db,
-  kolektorId: string,
-  tanggal: string,
-  kunci?: "update" | "share",
-): Promise<boolean> {
-  const pilih = tx
-    .select({ id: hariKolektor.id })
-    .from(hariKolektor)
-    .where(and(eq(hariKolektor.kolektorId, kolektorId), eq(hariKolektor.tanggal, tanggal)));
-  const [hari] = kunci ? await pilih.for(kunci) : await pilih;
-  if (!hari) return false;
-  const [st] = await tx
-    .select({ id: serahTerimaKas.id })
-    .from(serahTerimaKas)
-    .where(and(eq(serahTerimaKas.hariKolektorId, hari.id), isNull(serahTerimaKas.dibatalkanAt)))
-    .limit(1);
-  return Boolean(st);
 }
 
 const kolektor = alias(pengguna, "kolektor");
@@ -363,7 +338,7 @@ export function buatLayananSetoranSore(deps: SetoranSoreDeps) {
         if (!h.laporanDibukaAt) {
           throw melanggar("LAPORAN_BELUM_DIBUKA", "Kolektor belum membuka laporan hari ini");
         }
-        if (await kasSudahDiterima(tx, kolektorId, tanggal)) throw KAS_SUDAH_DITERIMA();
+        if (await kasSudahDiterima(tx, kolektorId, tanggal)) throw kasSudahDiterimaGalat();
         const rincian = await hitungRincian(tx, { kolektorId, tanggal, ...h });
         await tx.insert(serahTerimaKas).values({
           kantorId: aktor.kantorId,
@@ -512,7 +487,7 @@ export function buatLayananSetoranSore(deps: SetoranSoreDeps) {
           );
         }
         if (await kasSudahDiterima(tx, t.pencatatId, t.tanggal, "share")) {
-          throw KAS_SUDAH_DITERIMA();
+          throw kasSudahDiterimaGalat();
         }
         const [ada] = await tx
           .select({ id: transferSetoran.id })
@@ -562,7 +537,7 @@ export function buatLayananSetoranSore(deps: SetoranSoreDeps) {
         if (t.dibatalkanAt) throw sudahDibatalkan();
         if (t.tanggal !== tanggalIni) throw batalHanyaHariIni();
         if (await kasSudahDiterima(tx, t.pencatatId, t.tanggal, "share")) {
-          throw KAS_SUDAH_DITERIMA();
+          throw kasSudahDiterimaGalat();
         }
         await tx
           .update(transferSetoran)
@@ -624,7 +599,7 @@ export function buatLayananSetoranSore(deps: SetoranSoreDeps) {
           throw melanggar("TIDAK_KERJA_HARI_INI", "Kolektor ini tercatat tidak kerja hari ini");
         }
         if (await kasSudahDiterima(tx, input.kolektorId, tanggal, "share")) {
-          throw KAS_SUDAH_DITERIMA();
+          throw kasSudahDiterimaGalat();
         }
         const [baru] = await tx
           .insert(biayaTakTerduga)
@@ -662,7 +637,7 @@ export function buatLayananSetoranSore(deps: SetoranSoreDeps) {
         if (b.dibatalkanAt) throw sudahDibatalkan();
         if (b.tanggal !== tanggalIni) throw batalHanyaHariIni();
         if (await kasSudahDiterima(tx, b.kolektorId, b.tanggal, "share")) {
-          throw KAS_SUDAH_DITERIMA();
+          throw kasSudahDiterimaGalat();
         }
         await tx
           .update(biayaTakTerduga)

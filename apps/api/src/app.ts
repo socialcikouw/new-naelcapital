@@ -15,6 +15,8 @@ import { buatLayananKas } from "./modul/kas/layanan";
 import { ruteKas } from "./modul/kas/rute";
 import { buatLayananLapangan } from "./modul/lapangan/layanan";
 import { ruteLapangan } from "./modul/lapangan/rute";
+import { buatLayananPembatalan } from "./modul/pembatalan/layanan";
+import { rutePembatalan } from "./modul/pembatalan/rute";
 import { buatLayananSetoranSore } from "./modul/setoran-sore/layanan";
 import { ruteSetoranSore } from "./modul/setoran-sore/rute";
 import { buatLayananTabungan } from "./modul/tabungan/layanan";
@@ -64,6 +66,7 @@ export function buatApp(deps: AppDeps) {
   const setoranSore = buatLayananSetoranSore({ db: deps.db, sekarang: deps.sekarang });
   const kas = buatLayananKas({ db: deps.db, sekarang: deps.sekarang });
   const gaji = buatLayananGaji({ db: deps.db, sekarang: deps.sekarang });
+  const pembatalan = buatLayananPembatalan({ db: deps.db, sekarang: deps.sekarang });
   const tabungan = buatLayananTabungan({ db: deps.db, sekarang: deps.sekarang });
   const foto = buatLayananFoto({
     db: deps.db,
@@ -82,7 +85,8 @@ export function buatApp(deps: AppDeps) {
     .route("/", ruteSetoranSore(setoranSore, auth))
     .route("/", ruteGaji(gaji, auth))
     .route("/", ruteKas(kas, auth))
-    .route("/", ruteTabungan(tabungan, auth));
+    .route("/", ruteTabungan(tabungan, auth))
+    .route("/", rutePembatalan(pembatalan, auth));
 
   app.onError(tanganiGalat);
   app.openAPIRegistry.registerComponent("securitySchemes", "bearer", {

@@ -60,6 +60,7 @@ kolektor bergantung padanya):
 | `transaksi_jenis_check` | CHECK | sesuai tabel isi per jenis di atas |
 | `transaksi_batal_check` | CHECK | `dibatalkan_at`, `dibatalkan_oleh`, `alasan_batal` terisi bersamaan atau kosong bersamaan |
 | `transaksi_append_only` | TRIGGER | UPDATE hanya boleh menandai batal (tanpa mengubah kolom lain); DELETE ditolak, kecuali skrip data uji yang membuka `nael.hapus_data_uji` di transaksinya sendiri. |
+| `transaksi_terkunci` | TRIGGER (BEFORE UPDATE OF dibatalkan_at) | Saat transaksi **ditandai batal**: tolak bila hari kolektor pencatatnya (`pencatat_id`, `tanggal`) sudah punya `serah_terima_kas` berlaku (`KAS_SUDAH_DITERIMA`, aturan-usaha I4). Jaring pengaman; service memeriksanya lebih dulu. *(Ditambahkan saat pembangunan, 24 Okt 2026.)* |
 | `transaksi_bentrok_libur` | TRIGGER (BEFORE INSERT) | Tolak bila pinjaman itu sudah ditandai libur di tanggal yang sama — pasangan `libur_nasabah_bentrok` ([schema-libur-nasabah.md](schema-libur-nasabah.md)). |
 
 ### Kenapa `INCLUDE`
