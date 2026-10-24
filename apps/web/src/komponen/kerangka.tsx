@@ -8,6 +8,7 @@ import {
   QrCode,
   UserCog,
   Users,
+  Wallet,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/komponen/ui/button";
@@ -23,6 +24,7 @@ const MENU = [
   { ke: "/aktivitas", label: "Aktivitas", ikon: History },
   { ke: "/harian", label: "Harian", ikon: CalendarCheck },
   { ke: "/nasabah", label: "Nasabah", ikon: Users },
+  { ke: "/kas", label: "Kas", ikon: Wallet },
   { ke: "/karyawan", label: "Karyawan", ikon: UserCog },
   { ke: "/tautkan", label: "Tautkan HP", ikon: QrCode },
 ] as const satisfies readonly Menu[];
