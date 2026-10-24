@@ -20,7 +20,7 @@ export const aktivitasSchema = z.object({
   pelaku: orang,
   peran: peranSchema,
   /**
-   * Kode kejadian untuk ikon & saringan di layar: kejadian uang (`akad`,
+   * Kode kejadian untuk ikon & saringan di layar: kejadian uang (`akad`, `salin_pinjaman`,
    * `batal_akad`, `pemutihan`, `batal_setoran`, `transfer_setoran`,
    * `terima_kas`, `biaya_tak_terduga`, `mutasi_kas`, `bayar_gaji`,
    * `tarik_tabungan`, `koreksi_tabungan`, `cocokkan_kas`, dan `batal_<…>`

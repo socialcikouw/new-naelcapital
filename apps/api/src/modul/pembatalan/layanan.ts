@@ -223,19 +223,27 @@ export function buatLayananPembatalan(deps: PembatalanDeps) {
             "Akad gulung dibatalkan lewat batal transaksi gulung pinjaman asalnya",
           );
         }
-        if (p.tanggalAkad !== tanggalIni) throw batalHanyaHariIni();
-        if (p.status !== "berjalan" || (await adaPeristiwa(tx, p.id))) {
+        // Salinan migrasi (A10): hari disalin; boleh disalin macet; tanpa uang keluar.
+        const salinan = p.asal === "migrasi";
+        if ((salinan ? p.tanggalDisalin : p.tanggalAkad) !== tanggalIni) throw batalHanyaHariIni();
+        const statusAwal = salinan ? ["berjalan", "macet"] : ["berjalan"];
+        if (!statusAwal.includes(p.status) || (await adaPeristiwa(tx, p.id))) {
           throw melanggar(
             "PINJAMAN_SUDAH_BERPERISTIWA",
             "Pinjaman ini sudah punya catatan — akad tak bisa dibatalkan",
           );
         }
-        if (await kasSudahDiterima(tx, p.pencairId, p.tanggalAkad, "share")) {
+        if (!salinan && (await kasSudahDiterima(tx, p.pencairId, p.tanggalAkad, "share"))) {
           throw kasSudahDiterimaGalat();
         }
         await tx
           .update(pinjaman)
-          .set({ status: "batal", tanggalSelesai: tanggalIni, ...tandaBatal(aktor, input.alasan) })
+          .set({
+            status: "batal",
+            tanggalSelesai: tanggalIni,
+            tanggalMacet: null,
+            ...tandaBatal(aktor, input.alasan),
+          })
           .where(eq(pinjaman.id, p.id));
         await geserTabungan(tx, p.nasabahId, -p.tabunganMasuk);
         return {

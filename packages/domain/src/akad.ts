@@ -77,3 +77,42 @@ export function syaratAkad(jenis: JenisPinjaman, pokok: number, tenor: number): 
 export function angsuranKe(p: { totalKembali: number; saldo: number; angsuran: number }): number {
   return Math.floor((p.totalKembali - p.saldo) / p.angsuran);
 }
+
+export interface SyaratMigrasi extends SyaratAkad {
+  /** Sisa saldo di buku lama — saldo awal salinan. */
+  saldoAwal: number;
+  /** Angsuran yang sudah lunas sebelum disalin. */
+  angsuranKe: number;
+}
+
+/**
+ * A10. Salinan migrasi: total kembali & angsuran seperti akad baru, tanpa uang
+ * keluar; saldo awal = sisa saldo di buku; tabungan pembuka masuk tabungan.
+ */
+export function syaratMigrasi(
+  jenis: JenisPinjaman,
+  pokok: number,
+  tenor: number,
+  saldo: number,
+  tabungan: number,
+): SyaratMigrasi {
+  const akad = syaratAkad(jenis, pokok, tenor);
+  wajib(
+    Number.isInteger(saldo) && saldo > 0 && saldo <= akad.totalKembali,
+    "SALDO_MIGRASI_TIDAK_SAH",
+    `Sisa saldo harus lebih dari 0 dan paling banyak total kembali (${akad.totalKembali})`,
+  );
+  wajib(
+    Number.isInteger(tabungan) && tabungan >= 0,
+    "TABUNGAN_MIGRASI_TIDAK_SAH",
+    "Tabungan pembuka tidak boleh minus",
+  );
+  return {
+    ...akad,
+    potonganAdmin: 0,
+    tabunganMasuk: tabungan,
+    pencairan: 0,
+    saldoAwal: saldo,
+    angsuranKe: angsuranKe({ ...akad, saldo }),
+  };
+}

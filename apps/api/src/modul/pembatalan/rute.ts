@@ -42,7 +42,7 @@ const batalTransaksi = batal(
 );
 const batalAkad = batal(
   "/pinjaman/{id}/batal",
-  "Batal akad salah input (bos, hari akad, sebelum ada peristiwa)",
+  "Batal akad salah input (bos, hari akad — salinan migrasi: hari disalin — sebelum ada peristiwa)",
   hasilBatalAkadSchema,
 );
 

@@ -114,8 +114,8 @@ query menggabungkan:
 - tabel uang — baris yang **dibuat atau dibatalkan** hari ini: `transfer_setoran`,
   `serah_terima_kas`, `biaya_tak_terduga`, `mutasi_kas_kantor`,
   `pembayaran_gaji`, `penarikan_tabungan`, `koreksi_tabungan`,
-  `pencocokan_kas`, `transaksi` (yang dibatalkan), `pinjaman` (akad &
-  pemutihan hari ini).
+  `pencocokan_kas`, `transaksi` (yang dibatalkan), `pinjaman` (akad,
+  salinan migrasi pada hari disalin, & pemutihan hari ini).
 
 Karena **setiap pembatalan uang hanya boleh di hari yang sama**, menyaring
 "tanggal = hari ini" lewat index `(kantor_id, tanggal)` yang sudah ada di tiap

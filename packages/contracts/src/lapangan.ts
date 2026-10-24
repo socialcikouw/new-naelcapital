@@ -7,7 +7,8 @@ import { nomorHpSchema } from "./auth";
  */
 
 const rupiah = z.number().int().min(0);
-const jenisPinjaman = z.enum(["harian", "mingguan", "tempoan"]);
+export const jenisPinjamanSchema = z.enum(["harian", "mingguan", "tempoan"]);
+const jenisPinjaman = jenisPinjamanSchema;
 
 /** `POST /lapangan/absen` — sekali sehari. */
 export const absenSchema = z.discriminatedUnion("absensi", [
@@ -41,19 +42,20 @@ export const kampungSchema = z.union([
 ]);
 
 /** `POST /lapangan/akad` — orang baru atau nasabah lama yang meminjam lagi. */
+/** Orang yang belum terdaftar — didaftarkan bersama akad / salinan pertamanya. */
+export const nasabahBaruSchema = z.object({
+  nama: z.string().trim().min(1).max(50),
+  kampung: kampungSchema,
+  nik: z
+    .string()
+    .regex(/^[0-9]{16}$/, "NIK 16 digit")
+    .optional(),
+  nomorHp: nomorHpSchema.optional(),
+});
+export type NasabahBaruInput = z.infer<typeof nasabahBaruSchema>;
+
 export const akadSchema = z.object({
-  nasabah: z.union([
-    z.object({ nasabahId: z.uuid() }),
-    z.object({
-      nama: z.string().trim().min(1).max(50),
-      kampung: kampungSchema,
-      nik: z
-        .string()
-        .regex(/^[0-9]{16}$/, "NIK 16 digit")
-        .optional(),
-      nomorHp: nomorHpSchema.optional(),
-    }),
-  ]),
+  nasabah: z.union([z.object({ nasabahId: z.uuid() }), nasabahBaruSchema]),
   jenis: jenisPinjaman,
   pokok: z.number().int().positive(),
   tenor: z.number().int().positive(),

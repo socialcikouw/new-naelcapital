@@ -17,6 +17,8 @@ import { buatLayananKas } from "./modul/kas/layanan";
 import { ruteKas } from "./modul/kas/rute";
 import { buatLayananLapangan } from "./modul/lapangan/layanan";
 import { ruteLapangan } from "./modul/lapangan/rute";
+import { buatLayananMigrasi } from "./modul/migrasi/layanan";
+import { ruteMigrasi } from "./modul/migrasi/rute";
 import { buatLayananNasabah } from "./modul/nasabah/layanan";
 import { ruteNasabah } from "./modul/nasabah/rute";
 import { buatLayananPembatalan } from "./modul/pembatalan/layanan";
@@ -87,6 +89,7 @@ export function buatApp(deps: AppDeps) {
   const pengaturan = buatLayananPengaturan({ db: deps.db, sekarang: deps.sekarang });
   const ringkasan = buatLayananRingkasan({ db: deps.db, sekarang: deps.sekarang });
   const rute = buatLayananRute({ db: deps.db });
+  const migrasi = buatLayananMigrasi({ db: deps.db, sekarang: deps.sekarang });
   const aktivitas = buatLayananAktivitas({ db: deps.db, sekarang: deps.sekarang });
   const tabungan = buatLayananTabungan({ db: deps.db, sekarang: deps.sekarang });
   const foto = buatLayananFoto({
@@ -107,6 +110,7 @@ export function buatApp(deps: AppDeps) {
     .route("/", ruteGaji(gaji, auth))
     .route("/", ruteKas(kas, auth))
     .route("/", ruteTabungan(tabungan, auth))
+    .route("/", ruteMigrasi(migrasi, auth))
     .route("/", rutePembatalan(pembatalan, auth))
     .route("/", rutePemutihan(pemutihan, auth))
     .route("/", rutePengguna(penggunaKantor, auth))

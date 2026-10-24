@@ -57,6 +57,30 @@ dengan nasabah yang diblokir (kecuali keduanya ber-NIK dan berbeda).
 
 **A9. Satu nasabah, satu pinjaman aktif** (berjalan atau macet) pada satu waktu.
 
+**A10. Salinan migrasi** — bos menyalin pinjaman yang masih berjalan dari
+pembukuan lama (buku), untuk nasabah lama atau orang baru:
+
+- total kembali & angsuran dihitung dengan A1–A4 dari jenis, pokok, tenor —
+  sama dengan akad baru;
+- **tanpa uang keluar**: potongan admin, pencairan, dan droping 0; tidak
+  memerlukan foto (A7) dan tidak tertahan rem pinjaman baru (A8);
+- **saldo awal = sisa saldo di buku**, lebih dari 0 dan paling banyak total
+  kembali; angsuran ke = (total kembali − saldo) ÷ angsuran, dibulatkan ke bawah;
+- **tabungan pembuka** = tabungan nasabah di buku: masuk saldo tabungan
+  nasabah, bukan kas kantor;
+- tanggal akad = tanggal akad di buku (paling lambat hari ini); mulai ditagih
+  sejak hari disalin (B1);
+- yang di buku sudah macet boleh langsung disalin sebagai macet (tanggal macet
+  = hari disalin), supaya piutang macet langsung terbaca; selanjutnya F4
+  berlaku seperti biasa;
+- salah ketik dibatalkan bos **di hari disalin**, selama belum ada catatan
+  (setoran, libur) — tabungan pembukanya ikut ditarik.
+
+> Contoh: harian 24×, pokok 1.000.000, di buku sudah 10 angsuran → sisa saldo
+> 700.000; tabungan di buku 50.000. Salinan: total kembali 1.200.000,
+> angsuran 50.000, angsuran ke 10, saldo awal 700.000, pencairan 0, droping 0,
+> tabungan nasabah +50.000.
+
 ---
 
 ## B. Jadwal tagih

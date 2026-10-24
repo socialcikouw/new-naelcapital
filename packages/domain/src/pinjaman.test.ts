@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { angsuranKe, syaratAkad } from "./akad";
+import { angsuranKe, syaratAkad, syaratMigrasi } from "./akad";
 import { GalatAturan } from "./galat";
 import { hitungGulung, type PinjamanAsal } from "./gulung";
 import { hitungBayar, hitungLunas, storting } from "./setoran";
@@ -54,6 +54,33 @@ describe("A. akad", () => {
   test("angsuran ke = angsuran yang sudah lunas", () => {
     expect(angsuranKe({ totalKembali: 1_200_000, saldo: 600_000, angsuran: 50_000 })).toBe(12);
     expect(angsuranKe({ totalKembali: 1_200_000, saldo: 625_000, angsuran: 50_000 })).toBe(11);
+  });
+});
+
+describe("A10. salinan migrasi", () => {
+  test("contoh A10: harian, 10 angsuran terbayar", () => {
+    expect(syaratMigrasi("harian", 1_000_000, 24, 700_000, 50_000)).toMatchObject({
+      totalKembali: 1_200_000,
+      angsuran: 50_000,
+      angsuranKe: 10,
+      saldoAwal: 700_000,
+      potonganAdmin: 0,
+      pencairan: 0,
+      tabunganMasuk: 50_000,
+    });
+  });
+
+  test("saldo & tabungan di luar batas ditolak", () => {
+    expect(kode(() => syaratMigrasi("harian", 1_000_000, 24, 0, 0))).toBe(
+      "SALDO_MIGRASI_TIDAK_SAH",
+    );
+    expect(kode(() => syaratMigrasi("harian", 1_000_000, 24, 1_200_001, 0))).toBe(
+      "SALDO_MIGRASI_TIDAK_SAH",
+    );
+    expect(kode(() => syaratMigrasi("tempoan", 1_000_000, 14, 1_250_000, -1))).toBe(
+      "TABUNGAN_MIGRASI_TIDAK_SAH",
+    );
+    expect(kode(() => syaratMigrasi("harian", 1_050_000, 24, 100_000, 0))).toBe("POKOK_TIDAK_SAH");
   });
 });
 

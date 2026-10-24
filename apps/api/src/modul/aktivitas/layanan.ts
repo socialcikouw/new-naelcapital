@@ -1,6 +1,6 @@
 import type { Aktivitas, JejakRiwayat, Peran } from "@naelcapital/contracts";
 import { rentangTanggalKantor } from "@naelcapital/domain";
-import { and, desc, eq, gte, inArray, isNotNull, lt, ne } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNotNull, lt, ne, or } from "drizzle-orm";
 import { type AnyPgColumn, alias } from "drizzle-orm/pg-core";
 import type { Db } from "../../db/klien";
 import {
@@ -246,14 +246,18 @@ export function buatLayananAktivitas(deps: AktivitasDeps) {
           jenis: pinjaman.jenis,
           pinjamanKe: pinjaman.pinjamanKe,
           pokok: pinjaman.pokok,
+          saldoAwal: pinjaman.saldoAwal,
         })
         .from(pinjaman)
         .innerJoin(nasabah, eq(nasabah.id, pinjaman.nasabahId))
         .where(
           and(
             eq(pinjaman.kantorId, kantorId),
-            eq(pinjaman.tanggalAkad, tanggal),
-            ne(pinjaman.asal, "migrasi"),
+            // Akad lapangan pada tanggal akadnya; salinan migrasi pada hari disalin.
+            or(
+              and(ne(pinjaman.asal, "migrasi"), eq(pinjaman.tanggalAkad, tanggal)),
+              and(eq(pinjaman.asal, "migrasi"), eq(pinjaman.tanggalDisalin, tanggal)),
+            ),
           ),
         ),
       db
@@ -412,10 +416,15 @@ export function buatLayananAktivitas(deps: AktivitasDeps) {
     const hasil: Kejadian[] = [];
     for (const b of akad) {
       hasil.push(
-        ...catatDanBatal(b, "pinjaman", "akad", {
-          ringkasan: `Akad ${b.asal} ${b.jenis} ${b.nasabah} (pinjaman ke-${b.pinjamanKe})`,
-          nominal: b.pokok,
-        }),
+        ...(b.asal === "migrasi"
+          ? catatDanBatal(b, "pinjaman", "salin_pinjaman", {
+              ringkasan: `Salin dari buku: ${b.jenis} ${b.nasabah} (pinjaman ke-${b.pinjamanKe})`,
+              nominal: b.saldoAwal,
+            })
+          : catatDanBatal(b, "pinjaman", "akad", {
+              ringkasan: `Akad ${b.asal} ${b.jenis} ${b.nasabah} (pinjaman ke-${b.pinjamanKe})`,
+              nominal: b.pokok,
+            })),
       );
     }
     for (const b of putih) {

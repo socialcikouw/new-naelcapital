@@ -10,6 +10,7 @@ export * from "./gaji";
 export * from "./galat";
 export * from "./kas";
 export * from "./lapangan";
+export * from "./migrasi";
 export * from "./nasabah";
 export * from "./pembatalan";
 export * from "./pemutihan";

@@ -2,6 +2,7 @@ import type {
   AbsenInput,
   AkadInput,
   KartuTagih,
+  NasabahBaruInput,
   NasabahLama,
   PinjamanKartu,
 } from "@naelcapital/contracts";
@@ -204,7 +205,7 @@ async function pastikanBelumAdaPeristiwa(tx: Tx, pinjamanId: string, tanggal: st
   if (t || l) throw bentrok("PERISTIWA_SUDAH_ADA", "Pinjaman ini sudah punya catatan hari ini");
 }
 
-async function pinjamanKeBerikut(tx: Tx, nasabahId: string): Promise<number> {
+export async function pinjamanKeBerikut(tx: Tx, nasabahId: string): Promise<number> {
   const [r] = await tx
     .select({ maks: sql<number>`coalesce(max(${pinjaman.pinjamanKe}), 0)::int` })
     .from(pinjaman)
@@ -351,8 +352,9 @@ export function buatLayananLapangan(deps: LapanganDeps) {
     },
 
     /** Kampung kantor ini untuk formulir akad, urut nama. */
+    /** Kampung kantor — pilihan formulir akad (kolektor) & salinan migrasi (bos). */
     async daftarKampung(aktor: Aktor) {
-      wajibPeran(aktor, "kolektor");
+      wajibPeran(aktor, "kolektor", "bos");
       return deps.db
         .select({ id: wilayah.id, nama: wilayah.nama })
         .from(wilayah)
@@ -452,53 +454,7 @@ export function buatLayananLapangan(deps: LapanganDeps) {
           if (n.diblokirAt) throw melanggar("NASABAH_DIBLOKIR", "Nasabah ini diblokir");
           nasabahId = n.id;
         } else {
-          const baru = input.nasabah;
-          if (baru.nik) {
-            const [sama] = await tx
-              .select({ diblokirAt: nasabah.diblokirAt })
-              .from(nasabah)
-              .where(and(eq(nasabah.kantorId, aktor.kantorId), eq(nasabah.nik, baru.nik)))
-              .limit(1);
-            if (sama) {
-              throw sama.diblokirAt
-                ? melanggar("NASABAH_DIBLOKIR", "Pemilik NIK ini nasabah yang diblokir")
-                : bentrok("NIK_SUDAH_TERDAFTAR", "NIK ini sudah terdaftar — pilih nasabah lamanya");
-            }
-          }
-          const wilayahId = await pastikanWilayah(tx, aktor, baru.kampung);
-          // A8: nama + kampung sama dengan nasabah yang diblokir (kecuali keduanya ber-NIK dan berbeda).
-          const kunciNama = kunciWilayah(baru.nama);
-          const [mirip] = await tx
-            .select({ nik: nasabah.nik })
-            .from(nasabah)
-            .where(
-              and(
-                eq(nasabah.kantorId, aktor.kantorId),
-                eq(nasabah.wilayahId, wilayahId),
-                sql`lower(btrim(regexp_replace(${nasabah.nama}, '\\s+', ' ', 'g'))) = ${kunciNama}`,
-                sql`${nasabah.diblokirAt} IS NOT NULL`,
-              ),
-            )
-            .limit(1);
-          if (mirip && !(baru.nik && mirip.nik && mirip.nik !== baru.nik)) {
-            throw melanggar(
-              "NASABAH_MIRIP_DIBLOKIR",
-              "Ada nasabah diblokir dengan nama & kampung yang sama — hubungi bos",
-            );
-          }
-          const [n] = await tx
-            .insert(nasabah)
-            .values({
-              kantorId: aktor.kantorId,
-              kolektorId: aktor.penggunaId,
-              nama: baru.nama,
-              wilayahId,
-              nik: baru.nik ?? null,
-              nomorHp: baru.nomorHp ?? null,
-            })
-            .returning({ id: nasabah.id });
-          if (!n) throw new Error("gagal mencatat nasabah");
-          nasabahId = n.id;
+          nasabahId = await daftarkanNasabahBaru(tx, aktor, input.nasabah, aktor.penggunaId);
         }
 
         const [aktif] = await tx
@@ -728,6 +684,64 @@ export function buatLayananLapangan(deps: LapanganDeps) {
       });
     },
   };
+}
+
+/**
+ * Daftarkan orang baru bersama akad / salinan pertamanya (A8): NIK belum
+ * terdaftar, dan tidak sama nama + kampung dengan nasabah yang diblokir
+ * (kecuali keduanya ber-NIK dan berbeda).
+ */
+export async function daftarkanNasabahBaru(
+  tx: Tx,
+  aktor: Aktor,
+  baru: NasabahBaruInput,
+  kolektorId: string,
+): Promise<string> {
+  if (baru.nik) {
+    const [sama] = await tx
+      .select({ diblokirAt: nasabah.diblokirAt })
+      .from(nasabah)
+      .where(and(eq(nasabah.kantorId, aktor.kantorId), eq(nasabah.nik, baru.nik)))
+      .limit(1);
+    if (sama) {
+      throw sama.diblokirAt
+        ? melanggar("NASABAH_DIBLOKIR", "Pemilik NIK ini nasabah yang diblokir")
+        : bentrok("NIK_SUDAH_TERDAFTAR", "NIK ini sudah terdaftar — pilih nasabah lamanya");
+    }
+  }
+  const wilayahId = await pastikanWilayah(tx, aktor, baru.kampung);
+  const kunciNama = kunciWilayah(baru.nama);
+  const [mirip] = await tx
+    .select({ nik: nasabah.nik })
+    .from(nasabah)
+    .where(
+      and(
+        eq(nasabah.kantorId, aktor.kantorId),
+        eq(nasabah.wilayahId, wilayahId),
+        sql`lower(btrim(regexp_replace(${nasabah.nama}, '\\s+', ' ', 'g'))) = ${kunciNama}`,
+        sql`${nasabah.diblokirAt} IS NOT NULL`,
+      ),
+    )
+    .limit(1);
+  if (mirip && !(baru.nik && mirip.nik && mirip.nik !== baru.nik)) {
+    throw melanggar(
+      "NASABAH_MIRIP_DIBLOKIR",
+      "Ada nasabah diblokir dengan nama & kampung yang sama — hubungi bos",
+    );
+  }
+  const [n] = await tx
+    .insert(nasabah)
+    .values({
+      kantorId: aktor.kantorId,
+      kolektorId,
+      nama: baru.nama,
+      wilayahId,
+      nik: baru.nik ?? null,
+      nomorHp: baru.nomorHp ?? null,
+    })
+    .returning({ id: nasabah.id });
+  if (!n) throw new Error("gagal mencatat nasabah");
+  return n.id;
 }
 
 /** Kampung dipilih (harus milik kantor) atau diketik (dibuat bila belum ada). */

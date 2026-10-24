@@ -189,11 +189,11 @@ pengaman; service memeriksanya lebih dulu. *(Ditambahkan saat pembangunan,
 | Metode & jalur | Peran | Isi |
 |---|---|---|
 | `POST /pinjaman/baru` | kolektor | Akad: nasabah lama (`nasabahId`) atau orang baru (`nasabah`), `jenis`, `pokok`, `tenor`, **`fotoSerahTerimaId`** (wajib; diunggah lebih dulu lewat `POST /foto`), `fotoKtpId` (opsional). Angka akad dihitung server. Wajib kunci idempoten. |
-| `POST /pinjaman/migrasi` | bos | Salin pinjaman berjalan dari pembukuan lama. |
+| `POST /pinjaman/migrasi` | bos | Salin pinjaman berjalan dari pembukuan lama ([aturan-usaha A10](../aturan-usaha.md)): `{ nasabah: { nasabahId } \| { nama, kampung, nomorHp?, nik? }, kolektorId?, jenis, tenor, pokok, tanggalAkad, saldo, tabungan, pinjamanKe?, macet? }`. Orang baru wajib `kolektorId` (pemegang & `pencair_id`); nasabah lama tetap pada pemegangnya. `pinjamanKe` bawaan nomor berikutnya — boleh diisi sesuai buku, tidak boleh mundur. Pemeriksaan orang baru sama dengan akad lapangan (NIK terdaftar, mirip nasabah diblokir). |
 | `GET /pinjaman` | bos, pengawas: semua; kolektor: pegangannya | Kartu: pinjaman + identitas nasabah + posisi tagih hari ini (`tagih`) + kunci gulung yang berlaku. |
 | `GET /pinjaman/:id` | sama | + angka aturan macet (`setoranJendela`). |
 | `PATCH /pinjaman/:id` | bos | Hanya `pinjamanKe` (identitas nasabah pindah ke `PATCH /nasabah/:id`). |
-| `POST /pinjaman/:id/batal` | bos | `{ alasan }` — batal akad salah input: hanya hari akad, sebelum ada peristiwa, dan **sebelum kas pencairnya diterima** (`KAS_SUDAH_DITERIMA`). |
+| `POST /pinjaman/:id/batal` | bos | `{ alasan }` — batal akad salah input: hanya hari akad, sebelum ada peristiwa, dan **sebelum kas pencairnya diterima** (`KAS_SUDAH_DITERIMA`). Salinan migrasi: hanya **hari disalin**, sebelum ada peristiwa (boleh berstatus macet; tanpa pemeriksaan kas). |
 | `POST /pinjaman/:id/putihkan` | bos | `{ alasan, keterangan }` |
 | `POST /pinjaman/:id/putihkan/batal` | bos | `{ alasan }` |
 | `POST /transaksi/bayar` · `/lunas` · `/gulung` | kolektor | Mengubah `saldo`/`status` di transaksi yang sama dengan baris `transaksi` penyebabnya. Gulung wajib membawa `fotoSerahTerimaId` untuk pinjaman penerusnya. |

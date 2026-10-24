@@ -136,7 +136,7 @@ const kampung = createRoute({
   method: "get",
   path: "/lapangan/kampung",
   tags: ["lapangan"],
-  summary: "Kampung kantor ini — pilihan di formulir akad",
+  summary: "Kampung kantor ini — pilihan formulir akad (kolektor) & salinan migrasi (bos)",
   security: aman,
   responses: {
     200: { description: "Kampung", ...json(z.array(kampungPilihanSchema)) },
