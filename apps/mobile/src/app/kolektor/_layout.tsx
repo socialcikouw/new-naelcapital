@@ -1,4 +1,5 @@
 import { Redirect, Stack } from "expo-router";
+import { WARNA } from "../../komponen/ui";
 import { useSesi } from "../../lib/sesi";
 
 /** Layar-layar kolektor — hanya untuk sesi berperan kolektor. */
@@ -11,9 +12,12 @@ export default function TataLetakKolektor() {
   return (
     <Stack
       screenOptions={{
-        headerTintColor: "#047857",
-        headerTitleStyle: { color: "#0f172a" },
+        headerTintColor: WARNA.utama,
+        headerTitleStyle: { color: WARNA.teks, fontWeight: "700" },
+        headerStyle: { backgroundColor: WARNA.latar },
+        headerShadowVisible: false,
         headerBackButtonDisplayMode: "minimal",
+        contentStyle: { backgroundColor: WARNA.latar },
       }}
     >
       <Stack.Screen name="index" options={{ title: "Kerja Harian" }} />

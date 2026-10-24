@@ -1,6 +1,6 @@
 import { Redirect } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
-import { Judul, Keterangan, Layar } from "../komponen/ui";
+import { Judul, Keterangan, Layar, Merek, Spanduk, WARNA } from "../komponen/ui";
 import { ALAMAT_API } from "../lib/api";
 import { useSesi } from "../lib/sesi";
 
@@ -14,18 +14,21 @@ export default function Pintu() {
   if (!ALAMAT_API) {
     return (
       <Layar>
-        <Judul>Alamat API belum diatur</Judul>
-        <Keterangan>
-          Isi EXPO_PUBLIC_API_URL di apps/mobile/.env dengan alamat server (IP laptop di jaringan
-          yang sama), lalu jalankan ulang Metro.
-        </Keterangan>
+        <Merek />
+        <Judul>Alamat server belum diatur</Judul>
+        <Spanduk
+          judul="Untuk pengembang"
+          isi="Isi EXPO_PUBLIC_API_URL di apps/mobile/.env dengan alamat server (IP laptop di jaringan yang sama), lalu jalankan ulang Metro."
+        />
+        <Keterangan>Hubungi pengelola aplikasi bila pesan ini muncul di HP kerja.</Keterangan>
       </Layar>
     );
   }
   if (s === undefined) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator />
+      <View className="flex-1 items-center justify-center gap-6 bg-slate-50">
+        <Merek besar />
+        <ActivityIndicator color={WARNA.utama} />
       </View>
     );
   }

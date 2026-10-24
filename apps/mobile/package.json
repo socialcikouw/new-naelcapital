@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@expo/ui": "~58.0.23",
+    "@expo/vector-icons": "^15.0.2",
     "@hookform/resolvers": "^6.0.0",
     "@naelcapital/contracts": "workspace:*",
     "@naelcapital/domain": "workspace:*",

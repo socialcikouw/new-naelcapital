@@ -18,6 +18,8 @@ import {
   PesanGalat,
   Pilihan,
   Tombol,
+  TombolTeks,
+  WARNA,
 } from "../../komponen/ui";
 import { cobaAturan, NAMA_JENIS, namaTenor, rupiah } from "../../lib/format";
 import { tulis, useKampung, useNasabahLama, useTulis } from "../../lib/lapangan";
@@ -91,6 +93,7 @@ export default function Akad() {
   return (
     <Gulir>
       <Pilihan
+        segmen
         pilihan={[
           { nilai: "baru", teks: "Orang baru" },
           { nilai: "lama", teks: "Nasabah lama" },
@@ -136,6 +139,7 @@ export default function Akad() {
       )}
 
       <Pilihan
+        segmen
         label="Jenis pinjaman"
         pilihan={(["harian", "mingguan", "tempoan"] as const).map((j) => ({
           nilai: j,
@@ -183,6 +187,7 @@ export default function Akad() {
       <PesanGalat pesan={akad.error?.message} />
       <Tombol
         judul="Simpan akad"
+        ikon="checkmark-circle-outline"
         memuat={akad.isPending}
         nonaktif={!nasabahLengkap || !syarat.hasil || !fotoSah || (!!nik && nik.length !== 16)}
         onPress={simpan}
@@ -221,7 +226,7 @@ function PilihKampung(props: {
             <Pressable
               key={k.id}
               onPress={() => props.onUbah(k.nama, k.id)}
-              className="rounded-full border border-slate-300 px-3 py-1.5"
+              className="min-h-10 justify-center rounded-full border border-slate-300 bg-white px-3 active:opacity-70"
             >
               <Text className="text-sm text-slate-800">{k.nama}</Text>
             </Pressable>
@@ -258,9 +263,7 @@ function PilihNasabahLama(props: {
           />
         ) : null}
         <Baris label="Tabungan" nilai={rupiah(n.tabungan)} />
-        <Pressable onPress={() => props.onPilih(null)}>
-          <Text className="text-sm font-semibold text-emerald-700">Ganti nasabah</Text>
-        </Pressable>
+        <TombolTeks judul="Ganti nasabah" onPress={() => props.onPilih(null)} />
       </Kartu>
     );
   }
@@ -269,11 +272,13 @@ function PilihNasabahLama(props: {
     <View className="gap-2">
       <Isian
         label="Cari nasabah lama"
+        ikon="search"
         value={cari}
         onChangeText={setCari}
         placeholder="Nama / kampung"
+        clearButtonMode="while-editing"
       />
-      {daftar.isPending ? <ActivityIndicator /> : null}
+      {daftar.isPending ? <ActivityIndicator color={WARNA.utama} /> : null}
       <PesanGalat pesan={daftar.error?.message} />
       {daftar.data && cocok.length === 0 ? (
         <Keterangan>Tidak ada nasabah lama tanpa pinjaman aktif.</Keterangan>
@@ -282,7 +287,7 @@ function PilihNasabahLama(props: {
         <Pressable
           key={n.id}
           onPress={() => props.onPilih(n)}
-          className="rounded-xl border border-slate-200 px-4 py-3 active:bg-slate-50"
+          className="rounded-2xl border border-slate-200 bg-white px-4 py-3 active:bg-slate-100"
         >
           <Text className="text-base font-semibold text-slate-900">{n.nama}</Text>
           <Text className="text-sm text-slate-600">

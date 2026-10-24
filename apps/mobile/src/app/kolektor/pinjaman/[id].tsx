@@ -2,7 +2,7 @@ import type { KartuTagih } from "@naelcapital/contracts";
 import { hitungBayar, hitungLunas } from "@naelcapital/domain";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, Alert, Text, View } from "react-native";
+import { Alert, Text, View } from "react-native";
 import {
   Baris,
   Gulir,
@@ -11,6 +11,7 @@ import {
   Kartu,
   Keterangan,
   Lencana,
+  Memuat,
   PesanGalat,
   Pilihan,
   Spanduk,
@@ -31,18 +32,12 @@ export default function KartuPinjaman() {
   const [aksi, setAksi] = useState<Aksi | null>(null);
   const aksiAktif = aksi ?? (tempoan ? "lunas" : "setor");
 
-  if (tagihan.isPending || hariIni.isPending) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator />
-      </View>
-    );
-  }
+  if (tagihan.isPending || hariIni.isPending) return <Memuat />;
   if (!p) {
     return (
       <Gulir>
         <Keterangan>Pinjaman ini sudah tidak ada di daftar tagih (lunas atau digulung).</Keterangan>
-        <Tombol judul="Kembali" onPress={() => router.back()} />
+        <Tombol judul="Kembali" ikon="arrow-back" jenis="kedua" onPress={() => router.back()} />
       </Gulir>
     );
   }
@@ -99,13 +94,14 @@ export default function KartuPinjaman() {
 
       {bisaCatat ? (
         <>
-          <Pilihan pilihan={pilihanAksi} nilai={aksiAktif} onPilih={setAksi} />
+          <Pilihan segmen pilihan={pilihanAksi} nilai={aksiAktif} onPilih={setAksi} />
           {aksiAktif === "setor" ? <PanelSetor p={p} /> : null}
           {aksiAktif === "lunas" ? <PanelLunas p={p} /> : null}
           {aksiAktif === "libur" ? <PanelLibur p={p} /> : null}
           {aksiAktif === "gulung" ? (
             <Tombol
               judul="Lanjut ke gulung"
+              ikon="repeat"
               onPress={() =>
                 router.push({ pathname: "/kolektor/gulung/[id]", params: { id: p.id } })
               }
@@ -142,8 +138,9 @@ function PanelSetor({ p }: { p: KartuTagih }) {
         <IsianUang label="Pelunasan sebagian" nilai={pelunasan} onUbah={setPelunasan} />
       ) : (
         <Tombol
-          judul="+ Pelunasan sebagian"
+          judul="Pelunasan sebagian"
           jenis="kedua"
+          ikon="add"
           onPress={() => setTambahPelunasan(true)}
         />
       )}
@@ -155,6 +152,7 @@ function PanelSetor({ p }: { p: KartuTagih }) {
       <PesanGalat pesan={bayar.error?.message} />
       <Tombol
         judul={`Simpan setoran ${rupiah(murni + (tambahPelunasan ? pelunasan : 0))}`}
+        ikon="checkmark-circle-outline"
         memuat={bayar.isPending}
         nonaktif={!pratinjau.hasil}
         onPress={() =>
@@ -202,7 +200,12 @@ function PanelLunas({ p }: { p: KartuTagih }) {
         />
       ) : null}
       <PesanGalat pesan={lunas.error?.message} />
-      <Tombol judul="Lunaskan" memuat={lunas.isPending} onPress={konfirmasi} />
+      <Tombol
+        judul="Lunaskan"
+        ikon="ribbon-outline"
+        memuat={lunas.isPending}
+        onPress={konfirmasi}
+      />
     </Kartu>
   );
 }
@@ -229,6 +232,7 @@ function PanelLibur({ p }: { p: KartuTagih }) {
       <PesanGalat pesan={libur.error?.message} />
       <Tombol
         judul="Catat libur hari ini"
+        ikon="moon-outline"
         memuat={libur.isPending}
         nonaktif={belumBoleh}
         onPress={() =>

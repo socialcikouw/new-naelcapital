@@ -12,15 +12,19 @@ import {
   View,
 } from "react-native";
 import {
+  Ikon,
   Isian,
   IsianUang,
   Kartu,
   Keterangan,
+  KotakAngka,
   Lencana,
+  Memuat,
   PesanGalat,
   Pilihan,
   Spanduk,
   Tombol,
+  WARNA,
 } from "../../komponen/ui";
 import { api } from "../../lib/api";
 import { NAMA_JENIS, rupiah, tanggalPanjang } from "../../lib/format";
@@ -56,18 +60,12 @@ export default function KerjaHarian() {
     void tagihan.refetch();
   };
 
-  if (hariIni.isPending) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator />
-      </View>
-    );
-  }
+  if (hariIni.isPending) return <Memuat teks="Memuat kerja hari ini…" />;
   if (hariIni.isError) {
     return (
-      <View className="flex-1 gap-4 bg-white px-5 py-6">
+      <View className="flex-1 gap-4 bg-slate-50 px-5 py-6">
         <PesanGalat pesan={hariIni.error.message} />
-        <Tombol judul="Coba lagi" onPress={segarkan} />
+        <Tombol judul="Coba lagi" ikon="refresh" onPress={segarkan} />
       </View>
     );
   }
@@ -83,7 +81,7 @@ export default function KerjaHarian() {
 
   return (
     <SectionList
-      className="flex-1 bg-white"
+      className="flex-1 bg-slate-50"
       contentContainerStyle={{ paddingBottom: 40 }}
       sections={bagian}
       keyExtractor={(p) => p.id}
@@ -96,56 +94,68 @@ export default function KerjaHarian() {
         />
       }
       ListHeaderComponent={
-        <View className="gap-4 px-5 pt-5 pb-2">
+        <View className="gap-4 px-5 pt-2 pb-3">
           <View className="gap-0.5">
-            <Text className="text-lg font-bold text-slate-900">
+            <Text className="text-sm font-medium text-emerald-700">
               {tanggalPanjang(keadaan.kalender.tanggal)}
             </Text>
-            <Text className="text-sm text-slate-600">
-              {s?.pengguna.nama} · {s?.pengguna.kantor.nama}
+            <Text className="text-2xl font-bold tracking-tight text-slate-900">
+              Halo, {s?.pengguna.nama}
             </Text>
+            <Text className="text-sm text-slate-500">{s?.pengguna.kantor.nama}</Text>
           </View>
 
           {gerbang.judul ? <Spanduk judul={gerbang.judul} isi={gerbang.isi} /> : null}
           {gerbang.perluAbsen ? <FormulirAbsen /> : null}
 
           {keadaan.hari?.absensi === "masuk_kerja" ? (
-            <Kartu>
-              <View className="flex-row justify-between">
-                <Text className="text-sm text-slate-600">Dicatat hari ini</Text>
-                <Text className="text-sm font-semibold text-slate-900">
-                  {dicatat.length} dari {semua.length}
-                </Text>
-              </View>
-              <View className="flex-row justify-between">
-                <Text className="text-sm text-slate-600">Setoran angsuran</Text>
-                <Text className="text-sm font-semibold text-slate-900">{rupiah(storting)}</Text>
-              </View>
-            </Kartu>
+            <View className="flex-row gap-3">
+              <KotakAngka
+                label="Dicatat"
+                ikon="checkmark-done"
+                nilai={`${dicatat.length} / ${semua.length}`}
+              />
+              <KotakAngka label="Setoran" ikon="cash-outline" nilai={rupiah(storting)} />
+            </View>
           ) : null}
 
           {gerbang.buka ? (
-            <Tombol judul="+ Akad baru" onPress={() => router.push("/kolektor/akad")} />
+            <Tombol
+              judul="Akad baru"
+              ikon="add-circle-outline"
+              onPress={() => router.push("/kolektor/akad")}
+            />
           ) : null}
 
           <Isian
-            label="Cari nasabah atau kampung"
+            ikon="search"
             value={cari}
             onChangeText={setCari}
-            placeholder="Nama / kampung"
+            placeholder="Cari nama atau kampung"
             autoCorrect={false}
+            clearButtonMode="while-editing"
+            returnKeyType="search"
           />
           {tagihan.isError ? <PesanGalat pesan={tagihan.error.message} /> : null}
-          {tagihan.isPending ? <ActivityIndicator /> : null}
+          {tagihan.isPending ? <ActivityIndicator color={WARNA.utama} /> : null}
           {tagihan.data && semua.length === 0 ? (
-            <Keterangan>Belum ada pinjaman aktif di pegangan Anda.</Keterangan>
+            <View className="items-center gap-2 rounded-2xl border border-dashed border-slate-300 px-4 py-8">
+              <Ikon nama="people-outline" ukuran={28} warna={WARNA.redup} />
+              <Keterangan>Belum ada pinjaman aktif di pegangan Anda.</Keterangan>
+            </View>
+          ) : null}
+          {tagihan.data && semua.length > 0 && bagian.length === 0 ? (
+            <Keterangan>Tidak ada yang cocok dengan pencarian ini.</Keterangan>
           ) : null}
         </View>
       }
       renderSectionHeader={({ section }) => (
-        <Text className="bg-slate-50 px-5 py-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-          {section.title} · {section.data.length}
-        </Text>
+        <View className="flex-row items-center gap-2 px-5 pt-4 pb-2">
+          <Ikon nama="location-outline" ukuran={14} warna={WARNA.redup} />
+          <Text className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            {section.title} · {section.data.length}
+          </Text>
+        </View>
       )}
       renderItem={({ item }) => <BarisTagih p={item} tanggal={keadaan.kalender.tanggal} />}
       ListFooterComponent={<KakiKerja laporanBisa={gerbang.buka} />}
@@ -170,8 +180,19 @@ function BarisTagih({ p, tanggal }: { p: KartuTagih; tanggal: string }) {
   return (
     <Pressable
       onPress={() => router.push({ pathname: "/kolektor/pinjaman/[id]", params: { id: p.id } })}
-      className={`flex-row items-center gap-3 border-b border-slate-100 px-5 py-3 active:bg-slate-50 ${p.hariIni ? "opacity-60" : ""}`}
+      className={`mx-5 mb-2 flex-row items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 active:bg-slate-100 ${p.hariIni ? "opacity-70" : ""}`}
     >
+      <View
+        className={`h-9 w-9 items-center justify-center rounded-full ${p.hariIni ? "bg-emerald-100" : "bg-slate-100"}`}
+      >
+        {p.hariIni ? (
+          <Ikon nama="checkmark" ukuran={18} warna={WARNA.utama} />
+        ) : (
+          <Text className="text-sm font-bold text-slate-600">
+            {p.nasabah.nama.charAt(0).toUpperCase()}
+          </Text>
+        )}
+      </View>
       <View className="flex-1 gap-1">
         <View className="flex-row flex-wrap items-center gap-2">
           <Text className="text-base font-semibold text-slate-900">{p.nasabah.nama}</Text>
@@ -183,9 +204,10 @@ function BarisTagih({ p, tanggal }: { p: KartuTagih; tanggal: string }) {
         {lencana}
       </View>
       <View className="items-end">
-        <Text className="text-base font-semibold text-slate-900">{rupiah(p.angsuran)}</Text>
+        <Text className="text-base font-bold text-slate-900">{rupiah(p.angsuran)}</Text>
         <Text className="text-xs text-slate-500">saldo {rupiah(p.saldo)}</Text>
       </View>
+      <Ikon nama="chevron-forward" ukuran={18} warna="#94a3b8" />
     </Pressable>
   );
 }
@@ -208,6 +230,7 @@ function FormulirAbsen() {
     <Kartu>
       <Text className="text-lg font-bold text-slate-900">Absen pagi</Text>
       <Pilihan
+        segmen
         pilihan={[
           { nilai: "masuk_kerja", teks: "Masuk kerja" },
           { nilai: "tidak_kerja", teks: "Tidak kerja" },
@@ -236,6 +259,7 @@ function FormulirAbsen() {
       <PesanGalat pesan={absen.error?.message} />
       <Tombol
         judul="Simpan absen"
+        ikon="checkmark-circle-outline"
         memuat={absen.isPending}
         nonaktif={absensi === "tidak_kerja" && !alasan.trim()}
         onPress={simpan}
@@ -273,6 +297,7 @@ function KakiKerja({ laporanBisa }: { laporanBisa: boolean }) {
           <Tombol
             judul="Buka laporan hari ini"
             jenis="kedua"
+            ikon="document-text-outline"
             memuat={laporan.isPending}
             onPress={bukaLaporan}
           />
@@ -280,7 +305,8 @@ function KakiKerja({ laporanBisa }: { laporanBisa: boolean }) {
       ) : null}
       <Tombol
         judul="Keluar dari HP ini"
-        jenis="kedua"
+        jenis="bahaya"
+        ikon="log-out-outline"
         memuat={keluarBerjalan}
         onPress={() =>
           Alert.alert("Keluar?", "HP ini perlu ditautkan ulang oleh bos untuk masuk lagi.", [

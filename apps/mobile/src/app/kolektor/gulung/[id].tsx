@@ -41,7 +41,7 @@ export default function Gulung() {
     return (
       <Gulir>
         <Keterangan>Pinjaman ini sudah tidak ada di daftar tagih.</Keterangan>
-        <Tombol judul="Kembali" onPress={() => router.back()} />
+        <Tombol judul="Kembali" ikon="arrow-back" jenis="kedua" onPress={() => router.back()} />
       </Gulir>
     );
   }
@@ -129,6 +129,7 @@ export default function Gulung() {
       <PesanGalat pesan={gulung.error?.message} />
       <Tombol
         judul="Simpan gulung"
+        ikon="checkmark-circle-outline"
         memuat={gulung.isPending}
         nonaktif={!rencana.hasil || !fotoSah}
         onPress={simpan}
