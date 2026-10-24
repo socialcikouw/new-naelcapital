@@ -5,6 +5,8 @@ import { Scalar } from "@scalar/hono-api-reference";
 import { BATAS_BAWAAN, type BatasPercobaan } from "./batas";
 import type { Db } from "./db/klien";
 import { tanganiGalat } from "./galat";
+import { buatLayananAktivitas } from "./modul/aktivitas/layanan";
+import { ruteAktivitas } from "./modul/aktivitas/rute";
 import { buatLayananAuth } from "./modul/auth/layanan";
 import { ruteAuth } from "./modul/auth/rute";
 import { buatLayananFoto } from "./modul/foto/layanan";
@@ -85,6 +87,7 @@ export function buatApp(deps: AppDeps) {
   const pengaturan = buatLayananPengaturan({ db: deps.db, sekarang: deps.sekarang });
   const ringkasan = buatLayananRingkasan({ db: deps.db, sekarang: deps.sekarang });
   const rute = buatLayananRute({ db: deps.db });
+  const aktivitas = buatLayananAktivitas({ db: deps.db, sekarang: deps.sekarang });
   const tabungan = buatLayananTabungan({ db: deps.db, sekarang: deps.sekarang });
   const foto = buatLayananFoto({
     db: deps.db,
@@ -110,7 +113,8 @@ export function buatApp(deps: AppDeps) {
     .route("/", ruteNasabah(nasabahKantor, auth))
     .route("/", rutePengaturan(pengaturan, auth))
     .route("/", ruteRuteKolektor(rute, auth))
-    .route("/", ruteRingkasan(ringkasan, auth));
+    .route("/", ruteRingkasan(ringkasan, auth))
+    .route("/", ruteAktivitas(aktivitas, auth));
 
   app.onError(tanganiGalat);
   app.openAPIRegistry.registerComponent("securitySchemes", "bearer", {

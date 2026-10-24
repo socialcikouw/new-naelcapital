@@ -123,7 +123,7 @@ tabel menangkap pencatatan maupun pembatalannya — tanpa tabel atau index baru.
 
 | Metode & jalur | Peran | Isi |
 |---|---|---|
-| `GET /aktivitas?tanggal=&pelakuId=` | bos, pengawas | `[{ waktu, pelaku, peran, kejadian, ringkasan, nominal?, alasan? }]`, terbaru dulu. Bawaan hari ini. |
+| `GET /aktivitas?tanggal=&pelakuId=` | bos, pengawas | `[{ waktu, pelaku, peran, kejadian, ringkasan, nominal, alasan, rujukan: { tabel, id } }]`, terbaru dulu. Bawaan hari ini. Pengawas tidak melihat kas kantor (`mutasi_kas_kantor`, jejak `buku_kas`) — bacaannya milik bos. |
 | `GET /riwayat?tabel=&barisId=` | bos, pengawas | Jejak satu baris (mis. riwayat suntingan seorang nasabah). |
 
 ## Service / logika nantinya

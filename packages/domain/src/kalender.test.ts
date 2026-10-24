@@ -8,6 +8,7 @@ import {
   hariPekanDari,
   hariTagihMingguan,
   menitDariJam,
+  rentangTanggalKantor,
   selisihHari,
   waktuKantor,
 } from "./kalender";
@@ -20,6 +21,16 @@ describe("kalender kantor", () => {
     expect(waktuKantor(t, "WITA").menit).toBe(90);
     // 16:59 UTC masih 22 Okt 23:59 WIB.
     expect(waktuKantor(new Date("2026-10-22T16:59:00Z"), "WIB").tanggal).toBe("2026-10-22");
+  });
+
+  test("rentang satu tanggal kantor = tengah malam ke tengah malam waktu kantor", () => {
+    expect(rentangTanggalKantor("2026-10-23", "WIB")).toEqual({
+      mulai: new Date("2026-10-22T17:00:00Z"),
+      selesai: new Date("2026-10-23T17:00:00Z"),
+    });
+    expect(rentangTanggalKantor("2026-10-23", "WIT").mulai).toEqual(
+      new Date("2026-10-22T15:00:00Z"),
+    );
   });
 
   test("jam kerja: buka inklusif, tutup eksklusif, 24:00 = tengah malam", () => {

@@ -27,6 +27,15 @@ export function waktuKantor(sekarang: Date, zona: ZonaWaktu): WaktuKantor {
   };
 }
 
+/** Satu tanggal kantor sebagai rentang waktu `[mulai, selesai)` — untuk kolom `*_at`. */
+export function rentangTanggalKantor(
+  tanggal: string,
+  zona: ZonaWaktu,
+): { mulai: Date; selesai: Date } {
+  const mulai = Date.parse(`${tanggal}T00:00:00Z`) - OFFSET_JAM[zona] * 60 * 60 * 1000;
+  return { mulai: new Date(mulai), selesai: new Date(mulai + SEHARI_MS) };
+}
+
 /** `"07:00"` / `"07:00:00"` / `"24:00:00"` → menit sejak tengah malam. */
 export function menitDariJam(jam: string): number {
   const [h = "0", m = "0"] = jam.split(":");
