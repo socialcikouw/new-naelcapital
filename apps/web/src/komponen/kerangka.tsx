@@ -1,5 +1,6 @@
 import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import {
+  CalendarCheck,
   History,
   LayoutDashboard,
   LogOut,
@@ -20,6 +21,7 @@ type Menu = { ke: string; label: string; ikon: LucideIcon; persis?: boolean };
 const MENU = [
   { ke: "/", label: "Beranda", ikon: LayoutDashboard, persis: true },
   { ke: "/aktivitas", label: "Aktivitas", ikon: History },
+  { ke: "/harian", label: "Harian", ikon: CalendarCheck },
   { ke: "/nasabah", label: "Nasabah", ikon: Users },
   { ke: "/karyawan", label: "Karyawan", ikon: UserCog },
   { ke: "/tautkan", label: "Tautkan HP", ikon: QrCode },

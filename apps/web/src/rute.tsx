@@ -10,6 +10,7 @@ import { Kerangka } from "./komponen/kerangka";
 import { LayarAktivitas } from "./layar/aktivitas";
 import { LayarBeranda } from "./layar/beranda";
 import { LayarDaftar } from "./layar/daftar";
+import { LayarHarian } from "./layar/harian";
 import { LayarKaryawan } from "./layar/karyawan";
 import { LayarMasuk } from "./layar/masuk";
 import { LayarNasabah } from "./layar/nasabah";
@@ -65,6 +66,18 @@ const karyawan = createRoute({
   }),
   component: LayarKaryawan,
 });
+const TAB_HARIAN = ["setoran", "transfer", "biaya"] as const;
+const harian = createRoute({
+  getParentRoute: () => bos,
+  path: "/harian",
+  validateSearch: (
+    s: Record<string, unknown>,
+  ): { tanggal?: string; tab?: (typeof TAB_HARIAN)[number] } => ({
+    ...saringTanggal(s),
+    tab: TAB_HARIAN.find((t) => t === s.tab),
+  }),
+  component: LayarHarian,
+});
 const nasabah = createRoute({
   getParentRoute: () => bos,
   path: "/nasabah",
@@ -98,7 +111,7 @@ const daftar = createRoute({
 
 export const router = createRouter({
   routeTree: akar.addChildren([
-    bos.addChildren([beranda, aktivitas, nasabah, karyawan, tautkan]),
+    bos.addChildren([beranda, aktivitas, harian, nasabah, karyawan, tautkan]),
     masuk,
     daftar,
   ]),
