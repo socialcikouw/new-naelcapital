@@ -10,6 +10,7 @@ import { Kerangka } from "./komponen/kerangka";
 import { LayarAktivitas } from "./layar/aktivitas";
 import { LayarBeranda } from "./layar/beranda";
 import { LayarDaftar } from "./layar/daftar";
+import { LayarGaji } from "./layar/gaji";
 import { LayarHarian } from "./layar/harian";
 import { LayarKaryawan } from "./layar/karyawan";
 import { LayarKas } from "./layar/kas";
@@ -91,6 +92,18 @@ const kas = createRoute({
   }),
   component: LayarKas,
 });
+const gaji = createRoute({
+  getParentRoute: () => bos,
+  path: "/gaji",
+  validateSearch: (
+    s: Record<string, unknown>,
+  ): { kolektor?: string; mulai?: string; selesai?: string } => ({
+    kolektor: teksSah(s.kolektor),
+    mulai: tanggalSah(s.mulai),
+    selesai: tanggalSah(s.selesai),
+  }),
+  component: LayarGaji,
+});
 const nasabah = createRoute({
   getParentRoute: () => bos,
   path: "/nasabah",
@@ -124,7 +137,7 @@ const daftar = createRoute({
 
 export const router = createRouter({
   routeTree: akar.addChildren([
-    bos.addChildren([beranda, aktivitas, harian, nasabah, kas, karyawan, tautkan]),
+    bos.addChildren([beranda, aktivitas, harian, nasabah, kas, gaji, karyawan, tautkan]),
     masuk,
     daftar,
   ]),

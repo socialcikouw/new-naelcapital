@@ -1,5 +1,6 @@
 import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import {
+  Banknote,
   CalendarCheck,
   History,
   LayoutDashboard,
@@ -25,6 +26,7 @@ const MENU = [
   { ke: "/harian", label: "Harian", ikon: CalendarCheck },
   { ke: "/nasabah", label: "Nasabah", ikon: Users },
   { ke: "/kas", label: "Kas", ikon: Wallet },
+  { ke: "/gaji", label: "Gaji", ikon: Banknote },
   { ke: "/karyawan", label: "Karyawan", ikon: UserCog },
   { ke: "/tautkan", label: "Tautkan HP", ikon: QrCode },
 ] as const satisfies readonly Menu[];
