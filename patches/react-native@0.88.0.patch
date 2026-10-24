@@ -1,0 +1,26 @@
+diff --git a/src/private/devsupport/rndevtools/setUpFuseboxReactDevToolsDispatcher.js b/src/private/devsupport/rndevtools/setUpFuseboxReactDevToolsDispatcher.js
+index 79f7f4d7688ae0a4b70bb25fdfe766680faaab54..4e2675f681a117c08d371c9bd2c849cc575f7a57 100644
+--- a/src/private/devsupport/rndevtools/setUpFuseboxReactDevToolsDispatcher.js	
++++ b/src/private/devsupport/rndevtools/setUpFuseboxReactDevToolsDispatcher.js
+@@ -105,9 +105,15 @@ class FuseboxReactDevToolsDispatcher {
+   }
+ }
+ 
+-Object.defineProperty(global, '__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__', {
+-  value: FuseboxReactDevToolsDispatcher,
+-  configurable: false,
+-  enumerable: false,
+-  writable: false,
+-});
++// Nael Capital (bun patch): idempoten — Expo Go iOS 58.0.5 memuat ulang di
++// runtime JS yang sama, sehingga penyiapan ini berjalan dua kali dan
++// definisi ulang properti non-configurable melempar "property is not
++// writable". Sama dengan usulan react/react-native#56316.
++if (!Object.prototype.hasOwnProperty.call(global, '__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__')) {
++  Object.defineProperty(global, '__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__', {
++    value: FuseboxReactDevToolsDispatcher,
++    configurable: false,
++    enumerable: false,
++    writable: false,
++  });
++}
