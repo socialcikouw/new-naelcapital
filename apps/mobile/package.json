@@ -8,6 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "build:dev": "bunx eas-cli build --profile development --platform android",
+    "build:dev:ios": "bunx eas-cli build --profile development --platform ios",
     "build:preview": "bunx eas-cli build --profile preview --platform android",
     "update:preview": "APP_VARIANT=preview bunx eas-cli update --channel preview --environment preview --platform android",
     "typecheck": "bun run --cwd ../api tipe && tsc --noEmit"
