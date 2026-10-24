@@ -75,4 +75,5 @@ export const jejakRiwayatSchema = z.object({
 });
 
 export type Aktivitas = z.infer<typeof aktivitasSchema>;
+export type TabelBerjejak = z.infer<typeof tabelBerjejakSchema>;
 export type JejakRiwayat = z.infer<typeof jejakRiwayatSchema>;

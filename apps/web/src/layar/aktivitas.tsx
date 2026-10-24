@@ -1,4 +1,4 @@
-import type { Aktivitas, Peran } from "@naelcapital/contracts";
+import type { Aktivitas, Peran, TabelBerjejak } from "@naelcapital/contracts";
 import { tabelBerjejakSchema } from "@naelcapital/contracts";
 import { useQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
@@ -67,25 +67,35 @@ const teksNilai = (v: unknown) =>
   v === null || v === undefined ? "—" : typeof v === "string" ? v : JSON.stringify(v);
 
 /** Jejak perubahan satu baris: sebelum → sesudah per kolom. */
-function DialogRiwayat({ aktivitas, tutup }: { aktivitas: Aktivitas; tutup: () => void }) {
+export function DialogRiwayat({
+  tabel,
+  barisId,
+  judul,
+  tutup,
+}: {
+  tabel: TabelBerjejak;
+  barisId: string;
+  judul: string;
+  tutup: () => void;
+}) {
   const kantor = useKantor();
-  const tabel = tabelBerjejakSchema.parse(aktivitas.rujukan.tabel);
   const q = useQuery({
-    queryKey: ["riwayat", tabel, aktivitas.rujukan.id],
-    queryFn: () =>
-      ambil(() => api.riwayat.$get({ query: { tabel, barisId: aktivitas.rujukan.id } })),
+    queryKey: ["riwayat", tabel, barisId],
+    queryFn: () => ambil(() => api.riwayat.$get({ query: { tabel, barisId } })),
   });
   return (
     <Dialog open onOpenChange={(buka) => !buka && tutup()}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{aktivitas.ringkasan}</DialogTitle>
+          <DialogTitle>{judul}</DialogTitle>
           <DialogDescription>Semua perubahan pada data ini, terbaru dulu.</DialogDescription>
         </DialogHeader>
         {q.isPending ? (
           <Memuat />
         ) : q.isError ? (
           <GalatMuat galat={q.error} />
+        ) : q.data.length === 0 ? (
+          <Kosong>Belum pernah diubah</Kosong>
         ) : (
           <ol className="space-y-4">
             {q.data.map((j) => {
@@ -201,7 +211,14 @@ export function DaftarAktivitas({
           );
         })}
       </ul>
-      {dibuka ? <DialogRiwayat aktivitas={dibuka} tutup={() => setDibuka(null)} /> : null}
+      {dibuka ? (
+        <DialogRiwayat
+          tabel={tabelBerjejakSchema.parse(dibuka.rujukan.tabel)}
+          barisId={dibuka.rujukan.id}
+          judul={dibuka.ringkasan}
+          tutup={() => setDibuka(null)}
+        />
+      ) : null}
     </>
   );
 }
