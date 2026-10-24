@@ -120,6 +120,11 @@ const pengaturan = createRoute({
   }),
   component: lazyRouteComponent(() => import("./layar/pengaturan"), "LayarPengaturan"),
 });
+const salinBuku = createRoute({
+  getParentRoute: () => bos,
+  path: "/nasabah/salin",
+  component: lazyRouteComponent(() => import("./layar/salin-buku"), "LayarSalinBuku"),
+});
 const tautkan = createRoute({
   getParentRoute: () => bos,
   path: "/tautkan",
@@ -146,6 +151,7 @@ export const router = createRouter({
       aktivitas,
       harian,
       nasabah,
+      salinBuku,
       kas,
       gaji,
       karyawan,

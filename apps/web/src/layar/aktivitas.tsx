@@ -5,6 +5,7 @@ import { getRouteApi } from "@tanstack/react-router";
 import {
   ArrowLeftRight,
   Banknote,
+  BookCopy,
   Eraser,
   HandCoins,
   History,
@@ -47,6 +48,7 @@ export const LABEL_PERAN: Record<Peran, string> = {
 
 const IKON: Record<string, LucideIcon> = {
   akad: HandCoins,
+  salin_pinjaman: BookCopy,
   pemutihan: Eraser,
   transfer_setoran: ArrowLeftRight,
   terima_kas: Wallet,
@@ -66,6 +68,8 @@ const ikonKejadian = (k: string) => (k.startsWith("batal_") ? Undo2 : (IKON[k] ?
  */
 const PEMBATAL: Record<string, (id: string, alasan: string) => Promise<unknown>> = {
   akad: (id, alasan) =>
+    ambil(() => api.pinjaman[":id"].batal.$post({ param: { id }, json: { alasan } })),
+  salin_pinjaman: (id, alasan) =>
     ambil(() => api.pinjaman[":id"].batal.$post({ param: { id }, json: { alasan } })),
   pemutihan: (id, alasan) =>
     ambil(() => api.pinjaman[":id"].putihkan.batal.$post({ param: { id }, json: { alasan } })),

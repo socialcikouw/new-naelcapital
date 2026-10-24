@@ -1,12 +1,13 @@
 import type { NasabahJawaban } from "@naelcapital/contracts";
 import { useQuery } from "@tanstack/react-query";
-import { getRouteApi } from "@tanstack/react-router";
-import { Search } from "lucide-react";
+import { getRouteApi, Link } from "@tanstack/react-router";
+import { BookCopy, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { PilihanAsli } from "@/komponen/formulir";
 import { GalatMuat, KepalaHalaman, Memuat } from "@/komponen/halaman";
 import { type Kolom, pembantuKolom, TabelData } from "@/komponen/tabel-data";
 import { Badge } from "@/komponen/ui/badge";
+import { Button } from "@/komponen/ui/button";
 import { Input } from "@/komponen/ui/input";
 import { ambil, api } from "@/lib/api";
 import { rupiah } from "@/lib/format";
@@ -107,6 +108,14 @@ export function LayarNasabah() {
       <KepalaHalaman
         judul="Nasabah"
         keterangan="Cari nama, lalu ketuk baris untuk rincian, tabungan, pemutihan, dan aksi lain."
+        aksi={
+          <Button asChild>
+            <Link to="/nasabah/salin">
+              <BookCopy />
+              Salin dari buku
+            </Link>
+          </Button>
+        }
       />
       <div className="flex flex-wrap gap-2">
         <div className="relative min-w-60 flex-1">

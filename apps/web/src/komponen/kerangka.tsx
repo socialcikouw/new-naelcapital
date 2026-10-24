@@ -1,6 +1,7 @@
 import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import {
   Banknote,
+  BookCopy,
   CalendarCheck,
   History,
   LayoutDashboard,
@@ -25,7 +26,8 @@ const MENU = [
   { ke: "/", label: "Beranda", ikon: LayoutDashboard, persis: true },
   { ke: "/aktivitas", label: "Aktivitas", ikon: History },
   { ke: "/harian", label: "Harian", ikon: CalendarCheck },
-  { ke: "/nasabah", label: "Nasabah", ikon: Users },
+  { ke: "/nasabah", label: "Nasabah", ikon: Users, persis: true },
+  { ke: "/nasabah/salin", label: "Salin dari buku", ikon: BookCopy },
   { ke: "/kas", label: "Kas", ikon: Wallet },
   { ke: "/gaji", label: "Gaji", ikon: Banknote },
   { ke: "/karyawan", label: "Karyawan", ikon: UserCog },
