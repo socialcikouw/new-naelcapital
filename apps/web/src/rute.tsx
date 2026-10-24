@@ -1,3 +1,4 @@
+import { type Peran, peranSchema } from "@naelcapital/contracts";
 import {
   createRootRoute,
   createRoute,
@@ -9,6 +10,7 @@ import { Kerangka } from "./komponen/kerangka";
 import { LayarAktivitas } from "./layar/aktivitas";
 import { LayarBeranda } from "./layar/beranda";
 import { LayarDaftar } from "./layar/daftar";
+import { LayarKaryawan } from "./layar/karyawan";
 import { LayarMasuk } from "./layar/masuk";
 import { LayarTautkan } from "./layar/tautkan";
 import { tanggalSah, teksSah } from "./lib/kantor";
@@ -53,6 +55,15 @@ const aktivitas = createRoute({
   }),
   component: LayarAktivitas,
 });
+const karyawan = createRoute({
+  getParentRoute: () => bos,
+  path: "/karyawan",
+  validateSearch: (s: Record<string, unknown>): { peran?: Peran; nonaktif?: "ya" } => ({
+    peran: peranSchema.safeParse(s.peran).data,
+    nonaktif: s.nonaktif === "ya" ? "ya" : undefined,
+  }),
+  component: LayarKaryawan,
+});
 const tautkan = createRoute({
   getParentRoute: () => bos,
   path: "/tautkan",
@@ -73,7 +84,11 @@ const daftar = createRoute({
 });
 
 export const router = createRouter({
-  routeTree: akar.addChildren([bos.addChildren([beranda, aktivitas, tautkan]), masuk, daftar]),
+  routeTree: akar.addChildren([
+    bos.addChildren([beranda, aktivitas, karyawan, tautkan]),
+    masuk,
+    daftar,
+  ]),
 });
 
 // Sesi dicabut (refresh ditolak / keluar di tab lain) → muat ulang aturan rute.

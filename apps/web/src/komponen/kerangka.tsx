@@ -1,5 +1,5 @@
 import { Link, Outlet, useNavigate } from "@tanstack/react-router";
-import { History, LayoutDashboard, LogOut, type LucideIcon, QrCode } from "lucide-react";
+import { History, LayoutDashboard, LogOut, type LucideIcon, QrCode, UserCog } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/komponen/ui/button";
 import { api } from "@/lib/api";
@@ -12,6 +12,7 @@ type Menu = { ke: string; label: string; ikon: LucideIcon; persis?: boolean };
 const MENU = [
   { ke: "/", label: "Beranda", ikon: LayoutDashboard, persis: true },
   { ke: "/aktivitas", label: "Aktivitas", ikon: History },
+  { ke: "/karyawan", label: "Karyawan", ikon: UserCog },
   { ke: "/tautkan", label: "Tautkan HP", ikon: QrCode },
 ] as const satisfies readonly Menu[];
 

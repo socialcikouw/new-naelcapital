@@ -1,10 +1,12 @@
 import { bakukanKode, tampilanKode } from "@naelcapital/domain";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import QrScanner from "qr-scanner";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { Isian, KartuFormulir, PesanGalat, Pilihan, Tombol } from "@/komponen/formulir";
-import { api, panggil } from "@/lib/api";
+import { Tabs, TabsList, TabsTrigger } from "@/komponen/ui/tabs";
+import { ambil, api, panggil } from "@/lib/api";
+import { LABEL_PERAN } from "./aktivitas";
 
 type PeranTertaut = "kolektor" | "kasir" | "pengawas";
 
@@ -41,14 +43,19 @@ function Pemindai({ onKode }: { onKode: (kode: string) => void }) {
 
 /**
  * Bos menyetujui HP karyawan: kode dari pemindai atau ketikan, lalu akun baru
- * kasir / pengawas / kolektor. (Menautkan ke akun lama menyusul bersama daftar
- * pengguna.)
+ * kasir / pengawas / kolektor — atau akun lama (HP baru, akun diaktifkan lagi).
  */
 export function LayarTautkan() {
   const [kode, setKode] = useState<string | null>(null);
   const [ketikan, setKetikan] = useState("");
   const [kamera, setKamera] = useState(false);
   const [galatKode, setGalatKode] = useState<string | null>(null);
+  const [akunLama, setAkunLama] = useState<string | null>(null);
+  const karyawan = useQuery({
+    queryKey: ["pengguna", "semua"],
+    queryFn: () => ambil(() => api.pengguna.$get({ query: { termasukNonaktif: "ya" } })),
+  });
+  const bisaDitautkan = (karyawan.data ?? []).filter((o) => o.aktif && o.peran !== "bos");
   const [akun, setAkun] = useState({
     peran: "kolektor" as PeranTertaut,
     nama: "",
@@ -63,14 +70,17 @@ export function LayarTautkan() {
         api.auth.tautan.setujui.$post({
           json: {
             kode,
-            akun: {
-              peran: akun.peran,
-              nama: akun.nama.trim(),
-              ...(akun.nomorHp.trim() ? { nomorHp: akun.nomorHp.trim() } : {}),
-              ...(akun.peran === "kolektor" && akun.resort.trim()
-                ? { resort: akun.resort.trim() }
-                : {}),
-            },
+            akun:
+              akunLama !== null
+                ? { penggunaId: akunLama }
+                : {
+                    peran: akun.peran,
+                    nama: akun.nama.trim(),
+                    ...(akun.nomorHp.trim() ? { nomorHp: akun.nomorHp.trim() } : {}),
+                    ...(akun.peran === "kolektor" && akun.resort.trim()
+                      ? { resort: akun.resort.trim() }
+                      : {}),
+                  },
           },
         }),
       );
@@ -94,6 +104,7 @@ export function LayarTautkan() {
     setKetikan("");
     setKamera(false);
     setAkun({ peran: "kolektor", nama: "", nomorHp: "", resort: "" });
+    setAkunLama(null);
     setujui.reset();
   };
 
@@ -156,37 +167,35 @@ export function LayarTautkan() {
           setujui.mutate();
         }}
       >
-        <Pilihan
-          label="Peran"
-          value={akun.peran}
-          onChange={(e) => setAkun({ ...akun, peran: e.target.value as PeranTertaut })}
+        <Tabs
+          value={akunLama === null ? "baru" : "lama"}
+          onValueChange={(v) => setAkunLama(v === "lama" ? (bisaDitautkan[0]?.id ?? "") : null)}
         >
-          <option value="kolektor">Kolektor</option>
-          <option value="kasir">Kasir</option>
-          <option value="pengawas">Pengawas</option>
-        </Pilihan>
-        <Isian
-          label="Nama"
-          value={akun.nama}
-          onChange={(e) => setAkun({ ...akun, nama: e.target.value })}
-          required
-        />
-        <Isian
-          label="Nomor HP (opsional)"
-          type="tel"
-          value={akun.nomorHp}
-          onChange={(e) => setAkun({ ...akun, nomorHp: e.target.value })}
-          placeholder="0812…"
-        />
-        {akun.peran === "kolektor" ? (
-          <Isian
-            label="Resort (opsional)"
-            value={akun.resort}
-            onChange={(e) => setAkun({ ...akun, resort: e.target.value })}
-          />
-        ) : null}
+          <TabsList className="w-full">
+            <TabsTrigger value="baru">Akun baru</TabsTrigger>
+            <TabsTrigger value="lama">Akun yang sudah ada</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        {akunLama !== null ? (
+          <Pilihan
+            label="Akun"
+            value={akunLama}
+            onChange={(e) => setAkunLama(e.target.value)}
+            required
+          >
+            {bisaDitautkan.length === 0 ? <option value="">Belum ada akun aktif</option> : null}
+            {bisaDitautkan.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.nama} — {LABEL_PERAN[o.peran]}
+                {o.perangkatAktif > 0 ? ` (${o.perangkatAktif} HP tertaut)` : ""}
+              </option>
+            ))}
+          </Pilihan>
+        ) : (
+          <AkunBaru akun={akun} ubah={setAkun} />
+        )}
         <PesanGalat pesan={setujui.error?.message} />
-        <Tombol type="submit" memuat={setujui.isPending}>
+        <Tombol type="submit" memuat={setujui.isPending} disabled={akunLama === ""}>
           Setujui
         </Tombol>
         <Tombol jenis="kedua" onClick={ulang}>
@@ -194,5 +203,43 @@ export function LayarTautkan() {
         </Tombol>
       </form>
     </KartuFormulir>
+  );
+}
+
+type IsiAkun = { peran: PeranTertaut; nama: string; nomorHp: string; resort: string };
+
+function AkunBaru({ akun, ubah: setAkun }: { akun: IsiAkun; ubah: (a: IsiAkun) => void }) {
+  return (
+    <>
+      <Pilihan
+        label="Peran"
+        value={akun.peran}
+        onChange={(e) => setAkun({ ...akun, peran: e.target.value as PeranTertaut })}
+      >
+        <option value="kolektor">Kolektor</option>
+        <option value="kasir">Kasir</option>
+        <option value="pengawas">Pengawas</option>
+      </Pilihan>
+      <Isian
+        label="Nama"
+        value={akun.nama}
+        onChange={(e) => setAkun({ ...akun, nama: e.target.value })}
+        required
+      />
+      <Isian
+        label="Nomor HP (opsional)"
+        type="tel"
+        value={akun.nomorHp}
+        onChange={(e) => setAkun({ ...akun, nomorHp: e.target.value })}
+        placeholder="0812…"
+      />
+      {akun.peran === "kolektor" ? (
+        <Isian
+          label="Resort (opsional)"
+          value={akun.resort}
+          onChange={(e) => setAkun({ ...akun, resort: e.target.value })}
+        />
+      ) : null}
+    </>
   );
 }
