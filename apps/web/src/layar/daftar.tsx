@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { type FormEvent, useState } from "react";
-import { Isian, KartuTengah, PesanGalat, Pilihan, Tombol } from "../komponen/ui";
+import { Isian, KartuTengah, PesanGalat, Pilihan, Tombol } from "../komponen/formulir";
 import { api, panggil } from "../lib/api";
 import { sesi } from "../lib/sesi";
 

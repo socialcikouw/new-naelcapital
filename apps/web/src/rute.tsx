@@ -5,10 +5,13 @@ import {
   Outlet,
   redirect,
 } from "@tanstack/react-router";
+import { Kerangka } from "./komponen/kerangka";
+import { LayarAktivitas } from "./layar/aktivitas";
 import { LayarBeranda } from "./layar/beranda";
 import { LayarDaftar } from "./layar/daftar";
 import { LayarMasuk } from "./layar/masuk";
 import { LayarTautkan } from "./layar/tautkan";
+import { tanggalSah, teksSah } from "./lib/kantor";
 import { sesi } from "./lib/sesi";
 
 const akar = createRootRoute({ component: () => <Outlet /> });
@@ -22,18 +25,40 @@ const sudahMasuk = () => {
   if (sesi.ambil()) throw redirect({ to: "/" });
 };
 
-const beranda = createRoute({
+/** Kerangka semua layar bos (menu + isi); id rute anak diawali `/bos`. */
+const bos = createRoute({
   getParentRoute: () => akar,
-  path: "/",
+  id: "bos",
   beforeLoad: wajibMasuk,
+  component: Kerangka,
+});
+
+/** Saringan pencarian — semua kunci opsional supaya tautan tanpa `search` tetap sah. */
+const saringTanggal = (s: Record<string, unknown>): { tanggal?: string } => ({
+  tanggal: tanggalSah(s.tanggal),
+});
+
+const beranda = createRoute({
+  getParentRoute: () => bos,
+  path: "/",
+  validateSearch: saringTanggal,
   component: LayarBeranda,
 });
+const aktivitas = createRoute({
+  getParentRoute: () => bos,
+  path: "/aktivitas",
+  validateSearch: (s: Record<string, unknown>): { tanggal?: string; pelaku?: string } => ({
+    ...saringTanggal(s),
+    pelaku: teksSah(s.pelaku),
+  }),
+  component: LayarAktivitas,
+});
 const tautkan = createRoute({
-  getParentRoute: () => akar,
+  getParentRoute: () => bos,
   path: "/tautkan",
-  beforeLoad: wajibMasuk,
   component: LayarTautkan,
 });
+
 const masuk = createRoute({
   getParentRoute: () => akar,
   path: "/masuk",
@@ -48,7 +73,7 @@ const daftar = createRoute({
 });
 
 export const router = createRouter({
-  routeTree: akar.addChildren([beranda, tautkan, masuk, daftar]),
+  routeTree: akar.addChildren([bos.addChildren([beranda, aktivitas, tautkan]), masuk, daftar]),
 });
 
 // Sesi dicabut (refresh ditolak / keluar di tab lain) → muat ulang aturan rute.

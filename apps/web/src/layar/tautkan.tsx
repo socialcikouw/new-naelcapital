@@ -3,8 +3,8 @@ import { useMutation } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import QrScanner from "qr-scanner";
 import { type FormEvent, useEffect, useRef, useState } from "react";
-import { Isian, KartuTengah, PesanGalat, Pilihan, Tombol } from "../komponen/ui";
-import { api, panggil } from "../lib/api";
+import { Isian, KartuFormulir, PesanGalat, Pilihan, Tombol } from "@/komponen/formulir";
+import { api, panggil } from "@/lib/api";
 
 type PeranTertaut = "kolektor" | "kasir" | "pengawas";
 
@@ -99,23 +99,23 @@ export function LayarTautkan() {
 
   if (setujui.data) {
     return (
-      <KartuTengah judul="Disetujui">
-        <p className="text-slate-700">
+      <KartuFormulir judul="Disetujui">
+        <p className="text-foreground">
           HP {setujui.data.perangkat.nama ?? "karyawan"} akan masuk otomatis sebagai{" "}
           <strong>{setujui.data.pengguna.nama}</strong> dalam beberapa detik.
         </p>
         <Tombol onClick={ulang}>Tautkan HP lain</Tombol>
-        <Link to="/" className="block text-center text-sm text-slate-600 hover:underline">
+        <Link to="/" className="block text-center text-sm text-muted-foreground hover:underline">
           Kembali ke beranda
         </Link>
-      </KartuTengah>
+      </KartuFormulir>
     );
   }
 
   if (!kode) {
     return (
-      <KartuTengah judul="Tautkan HP karyawan">
-        <p className="text-slate-600">
+      <KartuFormulir judul="Tautkan HP karyawan">
+        <p className="text-muted-foreground">
           Di HP karyawan, buka aplikasi Nael Capital — layar "Tautkan HP ini" menampilkan QR dan
           kode.
         </p>
@@ -140,15 +140,15 @@ export function LayarTautkan() {
             Lanjut
           </Tombol>
         </form>
-        <Link to="/" className="block text-center text-sm text-slate-600 hover:underline">
+        <Link to="/" className="block text-center text-sm text-muted-foreground hover:underline">
           Batal
         </Link>
-      </KartuTengah>
+      </KartuFormulir>
     );
   }
 
   return (
-    <KartuTengah judul={`Akun untuk HP ${tampilanKode(kode)}`}>
+    <KartuFormulir judul={`Akun untuk HP ${tampilanKode(kode)}`}>
       <form
         className="space-y-4"
         onSubmit={(e) => {
@@ -193,6 +193,6 @@ export function LayarTautkan() {
           Ganti kode
         </Tombol>
       </form>
-    </KartuTengah>
+    </KartuFormulir>
   );
 }

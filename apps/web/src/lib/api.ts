@@ -86,3 +86,12 @@ export async function panggil<R extends Jawaban>(
   }
   return res;
 }
+
+/** Isi jawaban berhasil (200/201) dari union jawaban klien `hc`. */
+type IsiBerhasil<R> = R extends { status: 200 | 201; json(): Promise<infer T> } ? T : never;
+
+/** `panggil` lalu baca isi jawaban berhasilnya — untuk `useQuery` & `useMutation`. */
+export async function ambil<R extends Jawaban>(kirim: () => Promise<R>): Promise<IsiBerhasil<R>> {
+  const res = await panggil(kirim);
+  return (await res.json()) as IsiBerhasil<R>;
+}
