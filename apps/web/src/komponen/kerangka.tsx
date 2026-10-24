@@ -7,6 +7,7 @@ import {
   LogOut,
   type LucideIcon,
   QrCode,
+  Settings,
   UserCog,
   Users,
   Wallet,
@@ -29,6 +30,7 @@ const MENU = [
   { ke: "/gaji", label: "Gaji", ikon: Banknote },
   { ke: "/karyawan", label: "Karyawan", ikon: UserCog },
   { ke: "/tautkan", label: "Tautkan HP", ikon: QrCode },
+  { ke: "/pengaturan", label: "Pengaturan", ikon: Settings },
 ] as const satisfies readonly Menu[];
 
 function TautanMenu({ menu, ringkas }: { menu: Menu; ringkas?: boolean }) {

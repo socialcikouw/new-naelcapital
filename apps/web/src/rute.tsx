@@ -3,23 +3,18 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  lazyRouteComponent,
   Outlet,
   redirect,
 } from "@tanstack/react-router";
 import { Kerangka } from "./komponen/kerangka";
-import { LayarAktivitas } from "./layar/aktivitas";
-import { LayarBeranda } from "./layar/beranda";
 import { LayarDaftar } from "./layar/daftar";
-import { LayarGaji } from "./layar/gaji";
-import { LayarHarian } from "./layar/harian";
-import { LayarKaryawan } from "./layar/karyawan";
-import { LayarKas } from "./layar/kas";
 import { LayarMasuk } from "./layar/masuk";
-import { LayarNasabah } from "./layar/nasabah";
-import { LayarTautkan } from "./layar/tautkan";
+import type { TabPengaturan } from "./layar/pengaturan";
 import { tanggalSah, teksSah } from "./lib/kantor";
 import { sesi } from "./lib/sesi";
 
+// Layar bos dimuat saat dibuka (satu potongan per layar); masuk & daftar ikut bundel awal.
 const akar = createRootRoute({ component: () => <Outlet /> });
 
 /** Layar bos: tanpa sesi → masuk. */
@@ -48,7 +43,7 @@ const beranda = createRoute({
   getParentRoute: () => bos,
   path: "/",
   validateSearch: saringTanggal,
-  component: LayarBeranda,
+  component: lazyRouteComponent(() => import("./layar/beranda"), "LayarBeranda"),
 });
 const aktivitas = createRoute({
   getParentRoute: () => bos,
@@ -57,7 +52,7 @@ const aktivitas = createRoute({
     ...saringTanggal(s),
     pelaku: teksSah(s.pelaku),
   }),
-  component: LayarAktivitas,
+  component: lazyRouteComponent(() => import("./layar/aktivitas"), "LayarAktivitas"),
 });
 const karyawan = createRoute({
   getParentRoute: () => bos,
@@ -66,7 +61,7 @@ const karyawan = createRoute({
     peran: peranSchema.safeParse(s.peran).data,
     nonaktif: s.nonaktif === "ya" ? "ya" : undefined,
   }),
-  component: LayarKaryawan,
+  component: lazyRouteComponent(() => import("./layar/karyawan"), "LayarKaryawan"),
 });
 const TAB_HARIAN = ["setoran", "transfer", "biaya"] as const;
 const harian = createRoute({
@@ -78,7 +73,7 @@ const harian = createRoute({
     ...saringTanggal(s),
     tab: TAB_HARIAN.find((t) => t === s.tab),
   }),
-  component: LayarHarian,
+  component: lazyRouteComponent(() => import("./layar/harian"), "LayarHarian"),
 });
 const kas = createRoute({
   getParentRoute: () => bos,
@@ -90,7 +85,7 @@ const kas = createRoute({
     selesai: tanggalSah(s.selesai),
     tab: s.tab === "cocok" ? "cocok" : undefined,
   }),
-  component: LayarKas,
+  component: lazyRouteComponent(() => import("./layar/kas"), "LayarKas"),
 });
 const gaji = createRoute({
   getParentRoute: () => bos,
@@ -102,7 +97,7 @@ const gaji = createRoute({
     mulai: tanggalSah(s.mulai),
     selesai: tanggalSah(s.selesai),
   }),
-  component: LayarGaji,
+  component: lazyRouteComponent(() => import("./layar/gaji"), "LayarGaji"),
 });
 const nasabah = createRoute({
   getParentRoute: () => bos,
@@ -114,12 +109,21 @@ const nasabah = createRoute({
     kolektor: teksSah(s.kolektor),
     pilih: teksSah(s.pilih),
   }),
-  component: LayarNasabah,
+  component: lazyRouteComponent(() => import("./layar/nasabah"), "LayarNasabah"),
+});
+const TAB_PENGATURAN = ["rem", "libur", "tarif", "rute"] as const;
+const pengaturan = createRoute({
+  getParentRoute: () => bos,
+  path: "/pengaturan",
+  validateSearch: (s: Record<string, unknown>): { tab?: Exclude<TabPengaturan, "kantor"> } => ({
+    tab: TAB_PENGATURAN.find((t) => t === s.tab),
+  }),
+  component: lazyRouteComponent(() => import("./layar/pengaturan"), "LayarPengaturan"),
 });
 const tautkan = createRoute({
   getParentRoute: () => bos,
   path: "/tautkan",
-  component: LayarTautkan,
+  component: lazyRouteComponent(() => import("./layar/tautkan"), "LayarTautkan"),
 });
 
 const masuk = createRoute({
@@ -137,7 +141,17 @@ const daftar = createRoute({
 
 export const router = createRouter({
   routeTree: akar.addChildren([
-    bos.addChildren([beranda, aktivitas, harian, nasabah, kas, gaji, karyawan, tautkan]),
+    bos.addChildren([
+      beranda,
+      aktivitas,
+      harian,
+      nasabah,
+      kas,
+      gaji,
+      karyawan,
+      tautkan,
+      pengaturan,
+    ]),
     masuk,
     daftar,
   ]),
