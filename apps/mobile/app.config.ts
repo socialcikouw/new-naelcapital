@@ -5,8 +5,8 @@ import type { ConfigContext, ExpoConfig } from "expo/config";
  * jalur dipakai di mana-mana: profil EAS = channel = branch EAS Update
  * (lihat "Jalur rilis aplikasi HP" di CLAUDE.md).
  *
- * `development`: development build (expo-dev-client) yang memuat JS dari Metro
- * di laptop.
+ * `development` tidak punya varian di sini: aplikasi dibuka di Expo Go
+ * (tanpa build, `APP_VARIANT` kosong) dengan JS dari Metro di laptop.
  * `preview`: APK uji pemilik ("Nael Uji"); JS dari EAS Update channel
  * `preview`, API dari variabel EAS lingkungan `preview`.
  *
@@ -22,13 +22,12 @@ import type { ConfigContext, ExpoConfig } from "expo/config";
  * saat aplikasi baru menggantikan aplikasi lama.
  */
 const VARIAN = {
-  development: { name: "Nael Dev", paket: "com.naelcapital.app.dev" },
   preview: { name: "Nael Uji", paket: "com.naelcapital.app.preview" },
 } as const;
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   const varian = process.env.APP_VARIANT;
-  if (varian !== "development" && varian !== "preview") return config as ExpoConfig;
+  if (varian !== "preview") return config as ExpoConfig;
   const { name, paket } = VARIAN[varian];
 
   // APK preview dipakai tanpa laptop: alamat API wajib dari variabel EAS

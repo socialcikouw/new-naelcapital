@@ -64,10 +64,10 @@ export async function ambilDenganSesi(
 /** Klien RPC bertipe — bentuk permintaan & jawaban mengikuti rute di `apps/api`. */
 export const api = hc<App>(ALAMAT_API, { fetch: ambilDenganSesi });
 
-/** Galat API → pesan untuk orang (atau pesan jaringan bila server tak terjangkau). */
 /** Bentuk minimal jawaban (Response biasa maupun ClientResponse hc). */
 type Jawaban = { status: number; json(): Promise<unknown> };
 
+/** Galat API → pesan untuk orang. */
 export async function bacaGalat(res: Jawaban): Promise<string> {
   const galat = (await res.json().catch(() => null)) as Galat | null;
   return galat?.pesan ?? `Gagal (${res.status})`;
