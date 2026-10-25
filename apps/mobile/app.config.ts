@@ -27,16 +27,23 @@ const VARIAN = {
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   const varian = process.env.APP_VARIANT;
-  if (varian !== "preview") return config as ExpoConfig;
-  const { name, paket } = VARIAN[varian];
-
-  // APK preview dipakai tanpa laptop: alamat API wajib dari variabel EAS
-  // lingkungan `preview`. Tanpa itu `.env` lokal (IP laptop) ikut terbundel
-  // diam-diam saat `eas update` dijalankan dari laptop.
-  const alamatApi = process.env.EXPO_PUBLIC_API_URL ?? "";
-  if (varian === "preview" && !alamatApi.startsWith("https://")) {
+  if (!varian) return config as ExpoConfig;
+  // Varian salah ketik / usang (mis. `development`) jangan diam-diam jatuh ke
+  // konfigurasi dasar: sidik jarinya lain, OTA terkirim tapi tak pernah masuk.
+  if (!Object.hasOwn(VARIAN, varian)) {
     throw new Error(
-      `Varian preview butuh EXPO_PUBLIC_API_URL https:// dari variabel EAS lingkungan "preview" (sekarang: "${alamatApi}").`,
+      `APP_VARIANT "${varian}" tidak dikenal (yang ada: ${Object.keys(VARIAN).join(", ")}).`,
+    );
+  }
+  const { name, paket } = VARIAN[varian as keyof typeof VARIAN];
+
+  // APK dipakai tanpa laptop: alamat API wajib dari variabel EAS lingkungan
+  // varian itu. Tanpa itu `.env` lokal (IP laptop) ikut terbundel diam-diam
+  // saat `eas update` dijalankan dari laptop.
+  const alamatApi = process.env.EXPO_PUBLIC_API_URL ?? "";
+  if (!alamatApi.startsWith("https://")) {
+    throw new Error(
+      `Varian ${varian} butuh EXPO_PUBLIC_API_URL https:// dari variabel EAS lingkungan "${varian}" (sekarang: "${alamatApi}").`,
     );
   }
 
