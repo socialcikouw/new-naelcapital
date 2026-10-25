@@ -18,4 +18,5 @@ export * from "./nomor-hp";
 export * from "./performa";
 export * from "./setoran";
 export * from "./tabungan";
+export * from "./tagih";
 export * from "./wilayah";

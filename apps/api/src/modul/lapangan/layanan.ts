@@ -31,6 +31,7 @@ import {
 } from "../../db/skema";
 import { bentrok, dilarang, melanggar, tidakDitemukan } from "../../galat";
 import { wajibPeran } from "../../peran";
+import { gabungRem } from "../../rem";
 import type { Aktor } from "../auth/token";
 import { bacaKalender, bukaGerbang } from "./gerbang";
 
@@ -44,7 +45,7 @@ export interface LapanganDeps {
 
 type Tx = Db;
 
-const kolomKartu = {
+export const kolomKartu = {
   id: pinjaman.id,
   nasabahId: nasabah.id,
   nasabahNama: nasabah.nama,
@@ -67,7 +68,7 @@ const kolomKartu = {
 };
 
 /** Baris hasil `select(kolomKartu)` → bentuk kartu di kontrak. */
-function keKartu<T extends { nasabahId: string; nasabahNama: string; kampung: string }>(
+export function keKartu<T extends { nasabahId: string; nasabahNama: string; kampung: string }>(
   b: T,
 ): PinjamanKartu {
   const { nasabahId, nasabahNama, kampung, ...p } = b;
@@ -89,17 +90,20 @@ async function kartu(db: Db, pinjamanId: string): Promise<PinjamanKartu> {
   return keKartu(b);
 }
 
-/** Rem bos yang berlaku untuk kolektor (& nasabah) ini — lapis paling spesifik menang untuk alasan. */
+/** Kolom `kebijakan` untuk `gabungRem`. */
+export const kolomRem = {
+  kolektorId: kebijakan.kolektorId,
+  nasabahId: kebijakan.nasabahId,
+  pinjamanBaru: kebijakan.pinjamanBaruDikunci,
+  naik: kebijakan.naikPinjamanDikunci,
+  gulung: kebijakan.gulungPinjamanDikunci,
+  alasan: kebijakan.alasanKunci,
+};
+
+/** Rem bos yang berlaku untuk kolektor (& nasabah) ini. */
 async function remBerlaku(db: Db, aktor: Aktor, nasabahId: string | null) {
   const baris = await db
-    .select({
-      kolektorId: kebijakan.kolektorId,
-      nasabahId: kebijakan.nasabahId,
-      pinjamanBaru: kebijakan.pinjamanBaruDikunci,
-      naik: kebijakan.naikPinjamanDikunci,
-      gulung: kebijakan.gulungPinjamanDikunci,
-      alasan: kebijakan.alasanKunci,
-    })
+    .select(kolomRem)
     .from(kebijakan)
     .where(
       and(
@@ -111,18 +115,7 @@ async function remBerlaku(db: Db, aktor: Aktor, nasabahId: string | null) {
         ),
       ),
     );
-  // Urut paling spesifik dulu: nasabah, kolektor, kantor.
-  const tingkat = (r: (typeof baris)[number]) => (r.nasabahId ? 2 : r.kolektorId ? 1 : 0);
-  const urut = [...baris].sort((a, b) => tingkat(b) - tingkat(a));
-  const alasanUntuk = (saklar: "pinjamanBaru" | "naik" | "gulung") =>
-    urut.find((r) => r[saklar])?.alasan ?? null;
-  return {
-    // Lapis nasabah tak punya saklar pinjaman baru (blokir yang mengurusnya).
-    pinjamanBaru: baris.some((r) => r.pinjamanBaru && !r.nasabahId),
-    naik: baris.some((r) => r.naik),
-    gulung: baris.some((r) => r.gulung),
-    alasan: alasanUntuk,
-  };
+  return gabungRem(baris, { kolektorId: aktor.penggunaId, nasabahId });
 }
 
 /** Foto serah terima sah untuk akad/gulung oleh kolektor ini, saat ini (A7). */

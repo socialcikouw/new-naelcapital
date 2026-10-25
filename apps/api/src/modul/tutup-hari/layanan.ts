@@ -1,23 +1,14 @@
 import {
   awalJendelaMacet,
-  geserTanggal,
   hariPerluDitutup,
-  hariTagihKantor,
   mulaiDitagih,
   nilaiMacet,
   tanggalMasukPembukuan,
 } from "@naelcapital/domain";
 import { and, between, eq, inArray, isNull, lt, lte, or, sql } from "drizzle-orm";
 import type { Db } from "../../db/klien";
-import {
-  kantor,
-  liburKantor,
-  nasabah,
-  pekanKerja,
-  pinjaman,
-  posisiHarian,
-  transaksi,
-} from "../../db/skema";
+import { kantor, nasabah, pinjaman, posisiHarian, transaksi } from "../../db/skema";
+import { hariTagihAntara } from "../lapangan/gerbang";
 
 /**
  * TUTUP HARI — sapuan tengah malam per kantor (aturan-usaha F, docs/skema/
@@ -50,28 +41,10 @@ const jumlahBila = <T>(nilai: T, syarat: ReturnType<typeof sql>) =>
 export function buatLayananTutupHari(deps: TutupHariDeps) {
   const sekarang = deps.sekarang ?? (() => new Date());
 
-  /** Hari tagih kantor dalam jendela (B2) — pola pekan bertanggal & libur kantor. */
-  async function hariTagihJendela(tx: Db, kantorId: string, awal: string, tanggal: string) {
-    const pola = await tx
-      .select({ berlakuMulai: pekanKerja.berlakuMulai, hariKerja: pekanKerja.hariKerja })
-      .from(pekanKerja)
-      .where(eq(pekanKerja.kantorId, kantorId));
-    const libur = await tx
-      .select({ tanggal: liburKantor.tanggal })
-      .from(liburKantor)
-      .where(and(eq(liburKantor.kantorId, kantorId), between(liburKantor.tanggal, awal, tanggal)));
-    const setLibur = new Set(libur.map((l) => l.tanggal));
-    const hari: string[] = [];
-    for (let t = awal; t <= tanggal; t = geserTanggal(t, 1)) {
-      if (hariTagihKantor(t, pola, setLibur)) hari.push(t);
-    }
-    return hari;
-  }
-
   /** Nilai macet / pulih pinjaman aktif kantor pada penutupan `tanggal`. */
   async function nilaiSemua(tx: Db, kantorId: string, tanggal: string) {
     const awal = awalJendelaMacet(tanggal);
-    const hariTagih = await hariTagihJendela(tx, kantorId, awal, tanggal);
+    const hariTagih = await hariTagihAntara(tx, kantorId, awal, tanggal);
     const setoranJendela = tx
       .select({
         pinjamanId: transaksi.pinjamanId,

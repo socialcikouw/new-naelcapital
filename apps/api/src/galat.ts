@@ -55,6 +55,10 @@ const CONSTRAINT_BENTROK: Record<string, [kode: string, pesan: string]> = {
   transaksi_bentrok_libur: ["PERISTIWA_SUDAH_ADA", "Pinjaman ini ditandai libur hari ini"],
   libur_nasabah_bentrok: ["PERISTIWA_SUDAH_ADA", "Pinjaman ini sudah punya setoran hari ini"],
   uniq_pinjaman_aktif_nasabah: ["PINJAMAN_MASIH_AKTIF", "Nasabah ini masih punya pinjaman aktif"],
+  uniq_pinjaman_nasabah_ke: [
+    "PINJAMAN_KE_DIPAKAI",
+    "Nomor pinjaman ke- ini sudah dipakai pinjaman lain nasabah ini",
+  ],
   uniq_pinjaman_foto: ["FOTO_SUDAH_DIPAKAI", "Foto ini sudah dipakai akad lain"],
   uniq_hari_kolektor_kolektor_tanggal: ["SUDAH_ABSEN", "Anda sudah mengisi absensi hari ini"],
   uniq_pengguna_nomor_hp_bos: ["NOMOR_HP_DIPAKAI", "Nomor HP ini sudah dipakai akun bos lain"],

@@ -1,5 +1,11 @@
-import { dalamJamKerja, hariKerjaPekan, waktuKantor } from "@naelcapital/domain";
-import { and, desc, eq, lte } from "drizzle-orm";
+import {
+  dalamJamKerja,
+  geserTanggal,
+  hariKerjaPekan,
+  hariTagihKantor,
+  waktuKantor,
+} from "@naelcapital/domain";
+import { and, between, desc, eq, lte } from "drizzle-orm";
 import type { Db } from "../../db/klien";
 import { hariKolektor, kantor, liburKantor, pekanKerja } from "../../db/skema";
 import { melanggar } from "../../galat";
@@ -45,6 +51,33 @@ export async function bacaKalender(
     hariKerja: pola ? hariKerjaPekan(pola.hariKerja, w.hariPekan) : false,
     liburKantor: libur?.alasan ?? null,
   };
+}
+
+/**
+ * Hari tagih kantor (aturan-usaha B2) dari `awal` s/d `akhir` (ikut), urut —
+ * pola pekan bertanggal & libur kantor. Dipakai sapuan macet dan posisi tagih.
+ */
+export async function hariTagihAntara(
+  db: Db,
+  kantorId: string,
+  awal: string,
+  akhir: string,
+): Promise<string[]> {
+  if (awal > akhir) return [];
+  const pola = await db
+    .select({ berlakuMulai: pekanKerja.berlakuMulai, hariKerja: pekanKerja.hariKerja })
+    .from(pekanKerja)
+    .where(eq(pekanKerja.kantorId, kantorId));
+  const libur = await db
+    .select({ tanggal: liburKantor.tanggal })
+    .from(liburKantor)
+    .where(and(eq(liburKantor.kantorId, kantorId), between(liburKantor.tanggal, awal, akhir)));
+  const setLibur = new Set(libur.map((l) => l.tanggal));
+  const hari: string[] = [];
+  for (let t = awal; t <= akhir; t = geserTanggal(t, 1)) {
+    if (hariTagihKantor(t, pola, setLibur)) hari.push(t);
+  }
+  return hari;
 }
 
 /**
