@@ -24,3 +24,4 @@ export * from "./sehat";
 export * from "./setoran-sore";
 export * from "./tabungan";
 export * from "./tautan";
+export * from "./wilayah";

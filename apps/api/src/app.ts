@@ -43,6 +43,8 @@ import { buatLayananTabungan } from "./modul/tabungan/layanan";
 import { ruteTabungan } from "./modul/tabungan/rute";
 import { buatLayananTautan } from "./modul/tautan/layanan";
 import { ruteTautan } from "./modul/tautan/rute";
+import { buatLayananWilayah } from "./modul/wilayah/layanan";
+import { ruteWilayah } from "./modul/wilayah/rute";
 import { type Penyimpanan, penyimpananDisk } from "./penyimpanan";
 import { buatRouter } from "./router";
 
@@ -91,6 +93,7 @@ export function buatApp(deps: AppDeps) {
   const penggunaKantor = buatLayananPengguna({ db: deps.db, sekarang: deps.sekarang });
   const nasabahKantor = buatLayananNasabah({ db: deps.db });
   const pinjamanKantor = buatLayananPinjaman({ db: deps.db, sekarang: deps.sekarang });
+  const kampung = buatLayananWilayah({ db: deps.db, sekarang: deps.sekarang });
   const peristiwa = buatLayananPeristiwa({
     db: deps.db,
     nasabah: nasabahKantor,
@@ -127,6 +130,7 @@ export function buatApp(deps: AppDeps) {
     .route("/", ruteNasabah(nasabahKantor, auth))
     .route("/", rutePinjaman(pinjamanKantor, auth))
     .route("/", rutePeristiwa(peristiwa, auth))
+    .route("/", ruteWilayah(kampung, auth))
     .route("/", rutePengaturan(pengaturan, auth))
     .route("/", ruteRuteKolektor(rute, auth))
     .route("/", ruteRingkasan(ringkasan, auth))

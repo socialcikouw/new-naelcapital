@@ -69,9 +69,9 @@ Jumlah nasabah per wilayah dibaca lewat index `nasabah(wilayah_id)` (tabel
 
 | Metode & jalur | Peran | Isi |
 |---|---|---|
-| `GET /wilayah` | semua (kolektor: saran formulir) | `[{ id, nama, kunci, nasabahAktif, nasabahTotal, dipakaiRute, dibuatOleh, dibuatAt }]`, urut nama. `?baru=7` (bos): kampung yang muncul 7 hari terakhir — bahan memeriksa salah ketik. |
-| `POST /wilayah/ganti-nama` | bos | `{ dari, ke }` — ganti nama, atau gabung bila `ke` sudah dipakai kampung lain. |
-| `DELETE /wilayah/:id` | bos | Hapus kampung kosong. Masih dirujuk nasabah/rute → `WILAYAH_MASIH_DIPAKAI` (409). |
+| `GET /wilayah` | semua (kolektor: saran formulir) | `[{ id, nama, kunci, nasabahAktif, nasabahTotal, dipakaiRute, dibuatOleh: { id, nama }, dibuatAt }]`, urut nama. `nasabahAktif` = nasabah berpinjaman berjalan/macet; `dipakaiRute` = banyak rute kolektor yang memuatnya. `?baru=7` (bos, 1–90): kampung yang muncul 7 hari terakhir — bahan memeriksa salah ketik. |
+| `POST /wilayah/ganti-nama` | bos | `{ dari: wilayahId, ke: nama }` — ganti nama, atau gabung bila kunci `ke` sudah dipakai kampung lain (jawaban: kampung hasilnya + `digabung`). Nama sama persis → `TIDAK_ADA_PERUBAHAN`. |
+| `DELETE /wilayah/:id` | bos | Hapus kampung kosong. Masih dirujuk nasabah/rute → `WILAYAH_MASIH_DIPAKAI` (409). Jejak `hapus_wilayah`. |
 
 Kampung baru tidak punya endpoint sendiri — dibuat lewat formulir nasabah
 (`wilayahId` dipilih atau `alamat` diketik).
