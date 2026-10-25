@@ -1,7 +1,7 @@
 import type { HariKas } from "@naelcapital/contracts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
-import { ArrowLeftRight, HandCoins, Plus, Undo2 } from "lucide-react";
+import { ArrowLeftRight, HandCoins, Pencil, Plus, RotateCcw, Trash2, Undo2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { DialogBatal } from "@/komponen/dialog-batal";
 import { DialogFormulir } from "@/komponen/dialog-formulir";
@@ -16,6 +16,7 @@ import { ambil, api } from "@/lib/api";
 import { tanggal as formatTanggal, jam, rupiah } from "@/lib/format";
 import { useHariIni, useKantor } from "@/lib/kantor";
 import { cn } from "@/lib/utils";
+import { DialogHapusLibur } from "./nasabah-pinjaman";
 
 const rute = getRouteApi("/bos/harian");
 
@@ -102,6 +103,47 @@ function DialogTerimaKas({ hari, tutup }: { hari: HariKas; tutup: () => void }) 
   );
 }
 
+/** Pembetulan angka pagi kolektor (bos, hari ini, sebelum kas diterima). */
+function DialogUbahHariIni({ hari, tutup }: { hari: HariKas; tutup: () => void }) {
+  const klien = useQueryClient();
+  const [kas, setKas] = useState<number | null>(hari.kasLapangan);
+  const [jalan, setJalan] = useState<number | null>(hari.uangJalan);
+  const ubah = {
+    ...(kas !== null && kas !== hari.kasLapangan ? { kasLapangan: kas } : {}),
+    ...(jalan !== null && jalan !== hari.uangJalan ? { uangJalan: jalan } : {}),
+  };
+  const m = useMutation({
+    mutationFn: () =>
+      ambil(() =>
+        api["hari-kolektor"][":kolektorId"]["hari-ini"].$patch({
+          param: { kolektorId: hari.kolektor.id },
+          json: ubah,
+        }),
+      ),
+    onSuccess: () => {
+      for (const k of [["harian"], ["ringkasan"], ["aktivitas"]]) {
+        void klien.invalidateQueries({ queryKey: k });
+      }
+      tutup();
+    },
+  });
+  return (
+    <DialogFormulir
+      judul={`Betulkan angka pagi ${hari.kolektor.nama}`}
+      keterangan="Kas lapangan dan uang jalan yang diisi kolektor saat absen. Hanya sebelum kasnya diterima; tercatat di aktivitas."
+      buka
+      ubahBuka={(b) => !b && tutup()}
+      kirim={() => m.mutate()}
+      memuat={m.isPending}
+      galat={m.error?.message}
+      bisaKirim={Object.keys(ubah).length > 0}
+    >
+      <IsianRupiah label="Kas lapangan" nilai={kas} ubah={setKas} autoFocus />
+      <IsianRupiah label="Uang jalan" nilai={jalan} ubah={setJalan} />
+    </DialogFormulir>
+  );
+}
+
 function RincianKas({ hari }: { hari: HariKas }) {
   const r = hari.rincian;
   const st = hari.serahTerima;
@@ -150,6 +192,8 @@ function SetoranSore({ tanggal, hariIni }: { tanggal: string; hariIni: string })
   const [terima, setTerima] = useState<HariKas | null>(null);
   const [batal, setBatal] = useState<HariKas | null>(null);
   const [rinci, setRinci] = useState<HariKas | null>(null);
+  const [betulkan, setBetulkan] = useState<HariKas | null>(null);
+  const [bukaLagi, setBukaLagi] = useState<HariKas | null>(null);
   const q = useQuery({
     queryKey: ["harian", "hari-kolektor", tanggal],
     queryFn: () => ambil(() => api["hari-kolektor"].$get({ query: { tanggal } })),
@@ -232,18 +276,36 @@ function SetoranSore({ tanggal, hariIni }: { tanggal: string; hariIni: string })
                 <TombolSel label="Batal terima kas" bahaya onClick={() => setBatal(h)}>
                   <Undo2 />
                 </TombolSel>
-              ) : h.laporanDibukaAt ? (
-                <Button
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setTerima(h);
-                  }}
-                >
-                  <HandCoins />
-                  Terima kas
-                </Button>
-              ) : null}
+              ) : (
+                <>
+                  <TombolSel
+                    label="Betulkan kas lapangan / uang jalan"
+                    onClick={() => setBetulkan(h)}
+                  >
+                    <Pencil />
+                  </TombolSel>
+                  {h.laporanDibukaAt ? (
+                    <>
+                      <TombolSel
+                        label="Batal laporan — buka lagi hari kolektor"
+                        onClick={() => setBukaLagi(h)}
+                      >
+                        <RotateCcw />
+                      </TombolSel>
+                      <Button
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTerima(h);
+                        }}
+                      >
+                        <HandCoins />
+                        Terima kas
+                      </Button>
+                    </>
+                  ) : null}
+                </>
+              )}
             </div>
           );
         },
@@ -266,6 +328,23 @@ function SetoranSore({ tanggal, hariIni }: { tanggal: string; hariIni: string })
         Ketuk baris yang kasnya sudah diterima untuk melihat rincian tunai seharusnya.
       </p>
       {terima ? <DialogTerimaKas hari={terima} tutup={() => setTerima(null)} /> : null}
+      {betulkan ? <DialogUbahHariIni hari={betulkan} tutup={() => setBetulkan(null)} /> : null}
+      {bukaLagi ? (
+        <DialogBatal
+          judul={`Batal laporan ${bukaLagi.kolektor.nama}?`}
+          keterangan="Hari kolektor dibuka lagi — ia bisa mencatat setoran, akad, dan libur hari ini (mis. nasabah libur datang membayar sore), lalu membuka laporan ulang."
+          segarkan={KUNCI_HARIAN}
+          tutup={() => setBukaLagi(null)}
+          kirim={(alasan) =>
+            ambil(() =>
+              api["hari-kolektor"][":kolektorId"].laporan.batal.$post({
+                param: { kolektorId: bukaLagi.kolektor.id },
+                json: { alasan },
+              }),
+            )
+          }
+        />
+      ) : null}
       {rinci ? (
         <DialogFormulir
           judul={`Rincian kas ${rinci.kolektor.nama}`}
@@ -536,6 +615,66 @@ function DaftarTransfer({ tanggal, hariIni }: { tanggal: string; hariIni: string
   );
 }
 
+// ---- libur nasabah ------------------------------------------------------------------
+
+const ambilLibur = async (tanggal: string) =>
+  (await ambil(() => api.transaksi.peristiwa.$get({ query: { tanggal } }))).filter(
+    (p) => p.kategori === "libur",
+  );
+type Libur = Awaited<ReturnType<typeof ambilLibur>>[number];
+
+function DaftarLibur({ tanggal, hariIni }: { tanggal: string; hariIni: string }) {
+  const kantor = useKantor();
+  const [hapus, setHapus] = useState<Libur | null>(null);
+  const q = useQuery({
+    queryKey: ["harian", "libur", tanggal],
+    queryFn: () => ambilLibur(tanggal),
+  });
+  const kolom = useMemo(() => {
+    const k = pembantuKolom<Libur>();
+    return [
+      k.accessor((l) => l.nasabah.nama, {
+        id: "nasabah",
+        header: "Nasabah",
+        cell: (c) => <span className="font-medium">{c.getValue()}</span>,
+      }),
+      k.accessor("alasanLibur", { header: "Alasan", cell: (c) => c.getValue() ?? "—" }),
+      k.accessor((l) => l.pencatat.nama, { id: "kolektor", header: "Ditandai" }),
+      k.accessor("dibuatAt", { header: "Jam", cell: (c) => jam(c.getValue(), kantor.zonaWaktu) }),
+      k.display({
+        id: "aksi",
+        header: "",
+        cell: (c) =>
+          tanggal === hariIni ? (
+            <div className="flex justify-end">
+              <TombolSel label="Hapus tanda libur" bahaya onClick={() => setHapus(c.row.original)}>
+                <Trash2 />
+              </TombolSel>
+            </div>
+          ) : null,
+      }),
+    ] as Kolom<Libur>[];
+  }, [tanggal, hariIni, kantor.zonaWaktu]);
+
+  if (q.isPending) return <Memuat />;
+  if (q.isError) return <GalatMuat galat={q.error} ulangi={() => void q.refetch()} />;
+  return (
+    <>
+      <TabelData
+        kolom={kolom}
+        data={q.data}
+        idBaris={(l) => l.id}
+        kosong="Tidak ada nasabah yang ditandai libur"
+      />
+      <p className="text-xs text-muted-foreground">
+        Tanda libur yang salah bisa dihapus di hari yang sama — sesudahnya kolektor bisa mencatat
+        setorannya.
+      </p>
+      {hapus ? <DialogHapusLibur libur={hapus} tutup={() => setHapus(null)} /> : null}
+    </>
+  );
+}
+
 // ---- biaya tak terduga --------------------------------------------------------------
 
 const ambilBiaya = (tanggal: string) =>
@@ -706,7 +845,7 @@ function DaftarBiaya({
 
 // ---- layar --------------------------------------------------------------------------
 
-type Tab = "sore" | "setoran" | "transfer" | "biaya";
+type Tab = "sore" | "setoran" | "libur" | "transfer" | "biaya";
 
 /** Pekerjaan harian kantor: setoran sore, setoran nasabah, transfer, biaya tak terduga. */
 export function LayarHarian() {
@@ -751,6 +890,7 @@ export function LayarHarian() {
         <TabsList>
           <TabsTrigger value="sore">Setoran sore</TabsTrigger>
           <TabsTrigger value="setoran">Setoran nasabah</TabsTrigger>
+          <TabsTrigger value="libur">Libur nasabah</TabsTrigger>
           <TabsTrigger value="transfer">Transfer</TabsTrigger>
           <TabsTrigger value="biaya">Biaya tak terduga</TabsTrigger>
         </TabsList>
@@ -759,6 +899,9 @@ export function LayarHarian() {
         </TabsContent>
         <TabsContent value="setoran" className="space-y-3">
           <SetoranNasabah tanggal={t} hariIni={hariIni} kolektor={kolektor} />
+        </TabsContent>
+        <TabsContent value="libur" className="space-y-3">
+          <DaftarLibur tanggal={t} hariIni={hariIni} />
         </TabsContent>
         <TabsContent value="transfer" className="space-y-3">
           <DaftarTransfer tanggal={t} hariIni={hariIni} />

@@ -64,6 +64,8 @@ export function buatLayananPeristiwa(deps: PeristiwaDeps) {
       .select({
         id: transaksi.id,
         pinjamanId: transaksi.pinjamanId,
+        nasabahId: nasabah.id,
+        nasabahNama: nasabah.nama,
         pencatatId: pencatat.id,
         pencatatNama: pencatat.nama,
         tanggal: transaksi.tanggal,
@@ -84,6 +86,8 @@ export function buatLayananPeristiwa(deps: PeristiwaDeps) {
       .select({
         id: liburNasabah.id,
         pinjamanId: liburNasabah.pinjamanId,
+        nasabahId: nasabah.id,
+        nasabahNama: nasabah.nama,
         pencatatId: pencatat.id,
         pencatatNama: pencatat.nama,
         tanggal: liburNasabah.tanggal,
@@ -97,16 +101,29 @@ export function buatLayananPeristiwa(deps: PeristiwaDeps) {
       .where(and(...syaratPinjaman(liburNasabah.tanggal)));
 
     const semua: Peristiwa[] = [
-      ...uang.map(({ pencatatId, pencatatNama, jenis, dibuatAt, storting, ...t }) => ({
-        ...t,
-        pencatat: { id: pencatatId, nama: pencatatNama },
-        kategori: jenis,
-        storting: storting ?? 0,
-        alasanLibur: null,
-        dibuatAt: dibuatAt.toISOString(),
-      })),
-      ...libur.map(({ pencatatId, pencatatNama, dibuatAt, ...l }) => ({
+      ...uang.map(
+        ({
+          nasabahId,
+          nasabahNama,
+          pencatatId,
+          pencatatNama,
+          jenis,
+          dibuatAt,
+          storting,
+          ...t
+        }) => ({
+          ...t,
+          nasabah: { id: nasabahId, nama: nasabahNama },
+          pencatat: { id: pencatatId, nama: pencatatNama },
+          kategori: jenis,
+          storting: storting ?? 0,
+          alasanLibur: null,
+          dibuatAt: dibuatAt.toISOString(),
+        }),
+      ),
+      ...libur.map(({ nasabahId, nasabahNama, pencatatId, pencatatNama, dibuatAt, ...l }) => ({
         ...l,
+        nasabah: { id: nasabahId, nama: nasabahNama },
         pencatat: { id: pencatatId, nama: pencatatNama },
         kategori: "libur" as const,
         setoranMurni: 0,

@@ -28,6 +28,7 @@ export type SaringPeristiwa = z.infer<typeof saringPeristiwaSchema>;
 export const peristiwaSchema = z.object({
   id: z.uuid(),
   pinjamanId: z.uuid(),
+  nasabah: orang,
   pencatat: orang,
   tanggal: z.string(),
   kategori: kategoriPeristiwaSchema,

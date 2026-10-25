@@ -1,12 +1,13 @@
-import { geserTanggal } from "@naelcapital/domain";
+import { geserTanggal, kunciWilayah, rapikanNamaWilayah } from "@naelcapital/domain";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
-import { ArrowDown, ArrowUp, Plus, Trash2, Undo2 } from "lucide-react";
-import { type FormEvent, type ReactNode, useEffect, useState } from "react";
+import { ArrowDown, ArrowUp, Pencil, Plus, Trash2, Undo2 } from "lucide-react";
+import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 import { DialogBatal } from "@/komponen/dialog-batal";
 import { DialogFormulir } from "@/komponen/dialog-formulir";
 import { Isian, Medan, PesanGalat, PilihanAsli } from "@/komponen/formulir";
 import { GalatMuat, KepalaHalaman, Kosong, Memuat } from "@/komponen/halaman";
+import { type Kolom, pembantuKolom, TabelData } from "@/komponen/tabel-data";
 import { Badge } from "@/komponen/ui/badge";
 import { Button } from "@/komponen/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/komponen/ui/card";
@@ -845,6 +846,201 @@ function RuteKolektor() {
   );
 }
 
+// ---- kampung ------------------------------------------------------------------------
+
+const ambilKampung = (baru: boolean) =>
+  ambil(() => api.wilayah.$get({ query: baru ? { baru: "7" } : {} }));
+type Kampung = Awaited<ReturnType<typeof ambilKampung>>[number];
+
+/** Segarkan semua yang memuat nama kampung. */
+function useSegarkanKampung() {
+  const klien = useQueryClient();
+  return () => {
+    for (const k of [["wilayah"], ["nasabah"], ["rute-kolektor"]]) {
+      void klien.invalidateQueries({ queryKey: k });
+    }
+  };
+}
+
+function DialogGantiNama({ w, semua, tutup }: { w: Kampung; semua: Kampung[]; tutup: () => void }) {
+  const segarkan = useSegarkanKampung();
+  const [nama, setNama] = useState(w.nama);
+  const rapi = rapikanNamaWilayah(nama);
+  // Sama dengan pemeriksaan server: kunci sudah dipakai kampung lain → gabung.
+  const tujuan = semua.find((x) => x.id !== w.id && x.kunci === kunciWilayah(rapi));
+  const m = useMutation({
+    mutationFn: () =>
+      ambil(() => api.wilayah["ganti-nama"].$post({ json: { dari: w.id, ke: rapi } })),
+    onSuccess: () => {
+      segarkan();
+      tutup();
+    },
+  });
+  return (
+    <DialogFormulir
+      judul={`Ganti nama ${w.nama}`}
+      keterangan="Nasabah dan rute yang memakai kampung ini ikut berganti nama."
+      buka
+      ubahBuka={(b) => !b && tutup()}
+      kirim={() => m.mutate()}
+      memuat={m.isPending}
+      galat={m.error?.message}
+      labelKirim={tujuan ? `Gabung ke ${tujuan.nama}` : "Simpan"}
+      bahaya={!!tujuan}
+      bisaKirim={rapi !== "" && rapi !== w.nama}
+    >
+      <Isian
+        label="Nama baru"
+        value={nama}
+        maxLength={50}
+        autoFocus
+        onChange={(e) => setNama(e.target.value)}
+      />
+      {tujuan ? (
+        <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Nama ini sudah dipakai kampung <b>{tujuan.nama}</b>. {w.nama} akan digabung ke sana:{" "}
+          {w.nasabahTotal} nasabah dan {w.dipakaiRute} rute pindah, lalu {w.nama} dihapus.
+        </p>
+      ) : null}
+    </DialogFormulir>
+  );
+}
+
+function DialogHapusKampung({ w, tutup }: { w: Kampung; tutup: () => void }) {
+  const segarkan = useSegarkanKampung();
+  const m = useMutation({
+    mutationFn: () => ambil(() => api.wilayah[":id"].$delete({ param: { id: w.id } })),
+    onSuccess: () => {
+      segarkan();
+      tutup();
+    },
+  });
+  return (
+    <DialogFormulir
+      judul={`Hapus kampung ${w.nama}?`}
+      keterangan="Kampung ini tidak dipakai nasabah maupun rute. Penghapusan tercatat di aktivitas."
+      buka
+      ubahBuka={(b) => !b && tutup()}
+      kirim={() => m.mutate()}
+      memuat={m.isPending}
+      galat={m.error?.message}
+      labelKirim="Hapus"
+      bahaya
+    />
+  );
+}
+
+function DaftarKampung() {
+  const kantor = useKantor();
+  const [baru, setBaru] = useState(false);
+  const [cari, setCari] = useState("");
+  const [aksi, setAksi] = useState<{ jenis: "ganti" | "hapus"; w: Kampung } | null>(null);
+  const q = useQuery({ queryKey: ["wilayah", baru], queryFn: () => ambilKampung(baru) });
+  const data = (q.data ?? []).filter((w) => w.kunci.includes(kunciWilayah(cari)));
+
+  const kolom = useMemo(() => {
+    const k = pembantuKolom<Kampung>();
+    return [
+      k.accessor("nama", {
+        header: "Kampung",
+        cell: (c) => <span className="font-medium">{c.getValue()}</span>,
+      }),
+      k.accessor("nasabahTotal", {
+        header: "Nasabah",
+        meta: { kanan: true },
+        cell: (c) => `${c.row.original.nasabahAktif} aktif / ${c.getValue()}`,
+      }),
+      k.accessor("dipakaiRute", { header: "Rute", meta: { kanan: true } }),
+      k.accessor("dibuatAt", {
+        header: "Muncul",
+        cell: (c) => (
+          <span className="text-muted-foreground">
+            {c.row.original.dibuatOleh.nama} · {waktu(c.getValue(), kantor.zonaWaktu)}
+          </span>
+        ),
+      }),
+      k.display({
+        id: "aksi",
+        header: "",
+        cell: (c) => {
+          const w = c.row.original;
+          const kosong = w.nasabahTotal === 0 && w.dipakaiRute === 0;
+          return (
+            <div className="flex justify-end gap-1">
+              <Button
+                size="icon"
+                variant="ghost"
+                title="Ganti nama / gabung"
+                aria-label={`Ganti nama ${w.nama}`}
+                onClick={() => setAksi({ jenis: "ganti", w })}
+              >
+                <Pencil />
+              </Button>
+              {kosong ? (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  title="Hapus kampung kosong"
+                  aria-label={`Hapus ${w.nama}`}
+                  className="text-red-700 hover:text-red-800"
+                  onClick={() => setAksi({ jenis: "hapus", w })}
+                >
+                  <Trash2 />
+                </Button>
+              ) : null}
+            </div>
+          );
+        },
+      }),
+    ] as Kolom<Kampung>[];
+  }, [kantor.zonaWaktu]);
+
+  return (
+    <Bagian
+      judul="Kampung"
+      keterangan="Kampung baru muncul dari formulir nasabah. Betulkan salah ketik dengan ganti nama — bila namanya sama dengan kampung lain, keduanya digabung."
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        <Input
+          type="search"
+          className="w-60"
+          placeholder="Cari kampung…"
+          value={cari}
+          maxLength={50}
+          onChange={(e) => setCari(e.target.value)}
+        />
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="size-4 accent-primary"
+            checked={baru}
+            onChange={(e) => setBaru(e.target.checked)}
+          />
+          Hanya yang muncul 7 hari terakhir
+        </label>
+      </div>
+      {q.isPending ? (
+        <Memuat />
+      ) : q.isError ? (
+        <GalatMuat galat={q.error} ulangi={() => void q.refetch()} />
+      ) : (
+        <TabelData
+          kolom={kolom}
+          data={data}
+          idBaris={(w) => w.id}
+          kosong={baru ? "Tidak ada kampung baru 7 hari terakhir" : "Belum ada kampung"}
+        />
+      )}
+      {aksi?.jenis === "ganti" ? (
+        <DialogGantiNama w={aksi.w} semua={q.data ?? []} tutup={() => setAksi(null)} />
+      ) : null}
+      {aksi?.jenis === "hapus" ? (
+        <DialogHapusKampung w={aksi.w} tutup={() => setAksi(null)} />
+      ) : null}
+    </Bagian>
+  );
+}
+
 // ---- layar --------------------------------------------------------------------------
 
 const TAB = [
@@ -853,6 +1049,7 @@ const TAB = [
   { nilai: "libur", label: "Libur" },
   { nilai: "tarif", label: "Tarif gaji" },
   { nilai: "rute", label: "Rute kolektor" },
+  { nilai: "kampung", label: "Kampung" },
 ] as const;
 export type TabPengaturan = (typeof TAB)[number]["nilai"];
 
@@ -893,6 +1090,9 @@ export function LayarPengaturan() {
         </TabsContent>
         <TabsContent value="rute">
           <RuteKolektor />
+        </TabsContent>
+        <TabsContent value="kampung">
+          <DaftarKampung />
         </TabsContent>
       </Tabs>
     </>

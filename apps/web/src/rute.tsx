@@ -63,7 +63,7 @@ const karyawan = createRoute({
   }),
   component: lazyRouteComponent(() => import("./layar/karyawan"), "LayarKaryawan"),
 });
-const TAB_HARIAN = ["setoran", "transfer", "biaya"] as const;
+const TAB_HARIAN = ["setoran", "libur", "transfer", "biaya"] as const;
 const harian = createRoute({
   getParentRoute: () => bos,
   path: "/harian",
@@ -111,7 +111,20 @@ const nasabah = createRoute({
   }),
   component: lazyRouteComponent(() => import("./layar/nasabah"), "LayarNasabah"),
 });
-const TAB_PENGATURAN = ["rem", "libur", "tarif", "rute"] as const;
+const pinjaman = createRoute({
+  getParentRoute: () => bos,
+  path: "/pinjaman",
+  validateSearch: (
+    s: Record<string, unknown>,
+  ): { kolektor?: string; status?: "selesai" | "semua"; tunggak?: "ya"; pilih?: string } => ({
+    kolektor: teksSah(s.kolektor),
+    status: s.status === "selesai" || s.status === "semua" ? s.status : undefined,
+    tunggak: s.tunggak === "ya" ? "ya" : undefined,
+    pilih: teksSah(s.pilih),
+  }),
+  component: lazyRouteComponent(() => import("./layar/pinjaman"), "LayarPinjaman"),
+});
+const TAB_PENGATURAN = ["rem", "libur", "tarif", "rute", "kampung"] as const;
 const pengaturan = createRoute({
   getParentRoute: () => bos,
   path: "/pengaturan",
@@ -151,6 +164,7 @@ export const router = createRouter({
       aktivitas,
       harian,
       nasabah,
+      pinjaman,
       salinBuku,
       kas,
       gaji,

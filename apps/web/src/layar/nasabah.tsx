@@ -95,10 +95,11 @@ export function LayarNasabah() {
     () => (kolektorQ.data ?? []).map((o) => ({ id: o.id, nama: o.nama })),
     [kolektorQ.data],
   );
-  const kampung = useMemo(
-    () => [...new Set((daftar.data ?? []).map((n) => n.kampung.nama))].sort(),
-    [daftar.data],
-  );
+  const kampungQ = useQuery({
+    queryKey: ["wilayah"],
+    queryFn: () => ambil(() => api.wilayah.$get({ query: {} })),
+  });
+  const kampung = useMemo(() => (kampungQ.data ?? []).map((w) => w.nama), [kampungQ.data]);
   const dipilih = daftar.data?.find((n) => n.id === pilih);
   const ubahPilih = (id: string | undefined) =>
     void navigasi({ search: (s) => ({ ...s, pilih: id }) });

@@ -19,7 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/kom
 import { Input } from "@/komponen/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/komponen/ui/tabs";
 import { ambil, api } from "@/lib/api";
-import { jam, rupiah } from "@/lib/format";
+import { jam, LABEL_JENIS, rupiah } from "@/lib/format";
 import { useHariIni, useKantor } from "@/lib/kantor";
 import { cn } from "@/lib/utils";
 
@@ -28,12 +28,6 @@ import { cn } from "@/lib/utils";
  * berjalan di buku lama, satu per satu. Kolektor, kampung, jenis, dan tenor
  * tetap terisi untuk baris berikutnya supaya menyalin satu halaman buku cepat.
  */
-
-const LABEL_JENIS: Record<JenisPinjaman, string> = {
-  harian: "Harian",
-  mingguan: "Mingguan",
-  tempoan: "Tempoan",
-};
 
 function useTenang<T>(nilai: T, ms = 300) {
   const [tenang, setTenang] = useState(nilai);

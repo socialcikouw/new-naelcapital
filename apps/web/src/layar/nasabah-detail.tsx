@@ -16,7 +16,7 @@ import {
 import { type ReactNode, useState } from "react";
 import { DialogFormulir } from "@/komponen/dialog-formulir";
 import { Isian, Medan, PilihanAsli } from "@/komponen/formulir";
-import { GalatMuat, Kosong, Memuat } from "@/komponen/halaman";
+import { BarisNilai, GalatMuat, Kosong, Memuat } from "@/komponen/halaman";
 import { IsianRupiah } from "@/komponen/isian-rupiah";
 import { Badge } from "@/komponen/ui/badge";
 import { Button } from "@/komponen/ui/button";
@@ -34,6 +34,7 @@ import { tanggal as formatTanggal, rupiah } from "@/lib/format";
 import { useHariIni } from "@/lib/kantor";
 import { cn } from "@/lib/utils";
 import { DialogRiwayat } from "./aktivitas";
+import { TabPeristiwa, TabPinjaman } from "./nasabah-pinjaman";
 
 type Nasabah = NasabahJawaban;
 type Kolektor = { id: string; nama: string };
@@ -52,15 +53,6 @@ const ALASAN_PUTIH = [
   { nilai: "meninggal", label: "Meninggal" },
   { nilai: "lainnya", label: "Lainnya" },
 ] as const;
-
-function Baris({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4 py-1.5 text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="text-right font-medium tabular-nums">{children}</span>
-    </div>
-  );
-}
 
 // ---- dialog aksi --------------------------------------------------------------------
 
@@ -459,23 +451,23 @@ function Neraca({ id }: { id: string }) {
   return (
     <div className="grid gap-x-8 sm:grid-cols-2">
       <div className="divide-y">
-        <Baris label="Jumlah pinjaman">{r.jumlahPinjaman}</Baris>
-        <Baris label="Uang diterima nasabah">{rupiah(r.totalPencairan)}</Baris>
-        <Baris label="Tabungan dikembalikan">{rupiah(r.tabunganDikembalikan)}</Baris>
-        <Baris label="Total setoran">{rupiah(r.totalSetoran)}</Baris>
-        <Baris label="Arus kas kantor">
+        <BarisNilai label="Jumlah pinjaman">{r.jumlahPinjaman}</BarisNilai>
+        <BarisNilai label="Uang diterima nasabah">{rupiah(r.totalPencairan)}</BarisNilai>
+        <BarisNilai label="Tabungan dikembalikan">{rupiah(r.tabunganDikembalikan)}</BarisNilai>
+        <BarisNilai label="Total setoran">{rupiah(r.totalSetoran)}</BarisNilai>
+        <BarisNilai label="Arus kas kantor">
           <span className={r.arusKas < 0 ? "text-red-700" : "text-emerald-700"}>
             {rupiah(r.arusKas)}
           </span>
-        </Baris>
+        </BarisNilai>
       </div>
       <div className="divide-y">
-        <Baris label="Tabungan">{rupiah(r.tabungan)}</Baris>
-        <Baris label="Piutang aktif">{rupiah(r.piutangAktif)}</Baris>
-        <Baris label="Piutang diputihkan">{rupiah(r.piutangDiputihkan)}</Baris>
-        <Baris label="Neraca (tabungan − piutang)">
+        <BarisNilai label="Tabungan">{rupiah(r.tabungan)}</BarisNilai>
+        <BarisNilai label="Piutang aktif">{rupiah(r.piutangAktif)}</BarisNilai>
+        <BarisNilai label="Piutang diputihkan">{rupiah(r.piutangDiputihkan)}</BarisNilai>
+        <BarisNilai label="Neraca (tabungan − piutang)">
           <span className={r.neraca < 0 ? "text-red-700" : undefined}>{rupiah(r.neraca)}</span>
-        </Baris>
+        </BarisNilai>
       </div>
     </div>
   );
@@ -684,11 +676,19 @@ export function DialogNasabah({
             ) : null}
           </div>
 
-          <Tabs defaultValue="neraca">
+          <Tabs defaultValue="pinjaman">
             <TabsList>
+              <TabsTrigger value="pinjaman">Pinjaman</TabsTrigger>
+              <TabsTrigger value="peristiwa">Setoran & libur</TabsTrigger>
               <TabsTrigger value="neraca">Neraca</TabsTrigger>
               <TabsTrigger value="tabungan">Tabungan · {rupiah(n.saldoTabungan ?? 0)}</TabsTrigger>
             </TabsList>
+            <TabsContent value="pinjaman">
+              <TabPinjaman nasabahId={n.id} />
+            </TabsContent>
+            <TabsContent value="peristiwa">
+              <TabPeristiwa nasabahId={n.id} />
+            </TabsContent>
             <TabsContent value="neraca">
               <Neraca id={n.id} />
             </TabsContent>

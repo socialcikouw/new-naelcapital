@@ -57,6 +57,16 @@ export function KartuAngka({
   );
 }
 
+/** Satu baris label — nilai (nilai rata kanan) di rincian. */
+export function BarisNilai({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 py-1.5 text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="text-right font-medium tabular-nums">{children}</span>
+    </div>
+  );
+}
+
 export function Memuat({ teks = "Memuat…" }: { teks?: string }) {
   return (
     <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">

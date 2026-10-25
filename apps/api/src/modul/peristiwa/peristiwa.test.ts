@@ -91,6 +91,7 @@ describe.skipIf(!URL_DB)("peristiwa & buku nasabah", () => {
           storting: 0,
           saldoSesudah: null,
           alasanLibur: "Sakit",
+          nasabah: { id: a, nama: "Ani" },
           pencatat: { id: andiId, nama: "Andi" },
         },
         {

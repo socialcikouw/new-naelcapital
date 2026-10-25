@@ -1,4 +1,4 @@
-import type { ZonaWaktu } from "@naelcapital/domain";
+import type { JenisPinjaman, ZonaWaktu } from "@naelcapital/domain";
 
 /**
  * FORMAT TAMPILAN — rupiah, tanggal kantor (`YYYY-MM-DD`), dan jam menurut
@@ -67,3 +67,37 @@ export function waktu(iso: string, zona: ZonaWaktu): string {
 export function persen(n: number): string {
   return `${new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 }).format(n)}%`;
 }
+
+// ---- pinjaman -------------------------------------------------------------------
+
+export const LABEL_JENIS: Record<JenisPinjaman, string> = {
+  harian: "Harian",
+  mingguan: "Mingguan",
+  tempoan: "Tempoan",
+};
+
+/** Satuan tenor per jenis (A2): harian & mingguan = kali bayar, tempoan = hari. */
+export function namaTenor(jenis: JenisPinjaman, tenor: number): string {
+  return jenis === "tempoan" ? `${tenor} hari` : `${tenor}×`;
+}
+
+export type StatusPinjaman = "berjalan" | "macet" | "lunas" | "digulung" | "batal" | "diputihkan";
+
+export const LABEL_STATUS: Record<
+  StatusPinjaman,
+  { label: string; nada: "success" | "warning" | "secondary" | "destructive" }
+> = {
+  berjalan: { label: "Berjalan", nada: "success" },
+  macet: { label: "Macet", nada: "warning" },
+  lunas: { label: "Lunas", nada: "secondary" },
+  digulung: { label: "Digulung", nada: "secondary" },
+  batal: { label: "Batal", nada: "destructive" },
+  diputihkan: { label: "Diputihkan", nada: "destructive" },
+};
+
+export const LABEL_PERISTIWA = {
+  angsuran: "Angsuran",
+  pelunasan: "Pelunasan",
+  gulung: "Gulung",
+  libur: "Libur",
+} as const;
