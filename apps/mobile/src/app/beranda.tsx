@@ -1,7 +1,7 @@
 import { Redirect, router } from "expo-router";
 import { useState } from "react";
 import { Alert, Text, View } from "react-native";
-import { Ikon, Kartu, Layar, Lencana, Merek, Spanduk, Tombol, WARNA } from "../komponen/ui";
+import { g, Ikon, Kartu, Layar, Lencana, Merek, Spanduk, Tombol, WARNA } from "../komponen/ui";
 import { api } from "../lib/api";
 import { sesi, useSesi } from "../lib/sesi";
 
@@ -33,20 +33,18 @@ export default function Beranda() {
     <Layar>
       <Merek />
       <Kartu>
-        <View className="flex-row items-center gap-3">
-          <View className="h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
-            <Text className="text-lg font-bold text-emerald-800">
-              {pengguna.nama.charAt(0).toUpperCase()}
-            </Text>
+        <View style={g.baris3}>
+          <View style={g.avatar}>
+            <Text style={g.avatarHuruf}>{pengguna.nama.charAt(0).toUpperCase()}</Text>
           </View>
-          <View className="flex-1 gap-1">
-            <Text className="text-lg font-bold text-slate-900">Halo, {pengguna.nama}</Text>
+          <View style={[g.isi, g.tumpuk1]}>
+            <Text style={g.subjudul}>Halo, {pengguna.nama}</Text>
             <Lencana teks={NAMA_PERAN[pengguna.peran]} warna="hijau" />
           </View>
         </View>
-        <View className="flex-row items-center gap-2">
+        <View style={g.baris2}>
           <Ikon nama="business-outline" ukuran={16} warna={WARNA.redup} />
-          <Text className="text-sm text-slate-600">
+          <Text style={g.teksKecil}>
             {pengguna.kantor.nama} · {pengguna.kantor.zonaWaktu}
           </Text>
         </View>
@@ -57,7 +55,7 @@ export default function Beranda() {
         isi={`Fitur untuk ${NAMA_PERAN[pengguna.peran].toLowerCase()} menyusul. HP ini sudah tertaut dan siap dipakai.`}
       />
 
-      <View className="flex-1" />
+      <View style={g.isi} />
       <Tombol
         judul="Keluar dari HP ini"
         jenis="bahaya"

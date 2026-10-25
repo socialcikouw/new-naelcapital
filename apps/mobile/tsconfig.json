@@ -6,5 +6,5 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": ["src", "nativewind-env.d.ts"]
+  "include": ["src"]
 }

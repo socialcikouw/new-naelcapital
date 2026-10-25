@@ -8,10 +8,13 @@ import {
   Pressable,
   RefreshControl,
   SectionList,
+  StyleSheet,
   Text,
   View,
 } from "react-native";
+import { HURUF, RUANG, SUDUT, TEBAL } from "../../komponen/tema";
 import {
+  g,
   Ikon,
   Isian,
   IsianUang,
@@ -63,7 +66,7 @@ export default function KerjaHarian() {
   if (hariIni.isPending) return <Memuat teks="Memuat kerja hari ini…" />;
   if (hariIni.isError) {
     return (
-      <View className="flex-1 gap-4 bg-slate-50 px-5 py-6">
+      <View style={[g.layar, gaya.galat]}>
         <PesanGalat pesan={hariIni.error.message} />
         <Tombol judul="Coba lagi" ikon="refresh" onPress={segarkan} />
       </View>
@@ -81,8 +84,8 @@ export default function KerjaHarian() {
 
   return (
     <SectionList
-      className="flex-1 bg-slate-50"
-      contentContainerStyle={{ paddingBottom: 40 }}
+      style={g.layar}
+      contentContainerStyle={gaya.daftar}
       sections={bagian}
       keyExtractor={(p) => p.id}
       keyboardShouldPersistTaps="handled"
@@ -94,22 +97,18 @@ export default function KerjaHarian() {
         />
       }
       ListHeaderComponent={
-        <View className="gap-4 px-5 pt-2 pb-3">
-          <View className="gap-0.5">
-            <Text className="text-sm font-medium text-emerald-700">
-              {tanggalPanjang(keadaan.kalender.tanggal)}
-            </Text>
-            <Text className="text-2xl font-bold tracking-tight text-slate-900">
-              Halo, {s?.pengguna.nama}
-            </Text>
-            <Text className="text-sm text-slate-500">{s?.pengguna.kantor.nama}</Text>
+        <View style={gaya.kepala}>
+          <View style={g.tumpuk05}>
+            <Text style={gaya.tanggal}>{tanggalPanjang(keadaan.kalender.tanggal)}</Text>
+            <Text style={g.judul}>Halo, {s?.pengguna.nama}</Text>
+            <Text style={g.teksRedup}>{s?.pengguna.kantor.nama}</Text>
           </View>
 
           {gerbang.judul ? <Spanduk judul={gerbang.judul} isi={gerbang.isi} /> : null}
           {gerbang.perluAbsen ? <FormulirAbsen /> : null}
 
           {keadaan.hari?.absensi === "masuk_kerja" ? (
-            <View className="flex-row gap-3">
+            <View style={g.baris3}>
               <KotakAngka
                 label="Dicatat"
                 ikon="checkmark-done"
@@ -139,7 +138,7 @@ export default function KerjaHarian() {
           {tagihan.isError ? <PesanGalat pesan={tagihan.error.message} /> : null}
           {tagihan.isPending ? <ActivityIndicator color={WARNA.utama} /> : null}
           {tagihan.data && semua.length === 0 ? (
-            <View className="items-center gap-2 rounded-2xl border border-dashed border-slate-300 px-4 py-8">
+            <View style={gaya.kosong}>
               <Ikon nama="people-outline" ukuran={28} warna={WARNA.redup} />
               <Keterangan>Belum ada pinjaman aktif di pegangan Anda.</Keterangan>
             </View>
@@ -150,9 +149,9 @@ export default function KerjaHarian() {
         </View>
       }
       renderSectionHeader={({ section }) => (
-        <View className="flex-row items-center gap-2 px-5 pt-4 pb-2">
+        <View style={[g.baris2, gaya.kampung]}>
           <Ikon nama="location-outline" ukuran={14} warna={WARNA.redup} />
-          <Text className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <Text style={gaya.kampungTeks}>
             {section.title} · {section.data.length}
           </Text>
         </View>
@@ -180,34 +179,36 @@ function BarisTagih({ p, tanggal }: { p: KartuTagih; tanggal: string }) {
   return (
     <Pressable
       onPress={() => router.push({ pathname: "/kolektor/pinjaman/[id]", params: { id: p.id } })}
-      className={`mx-5 mb-2 flex-row items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 active:bg-slate-100 ${p.hariIni ? "opacity-70" : ""}`}
+      style={({ pressed }) => [
+        g.butirDaftar,
+        g.baris3,
+        gaya.butir,
+        pressed ? g.butirDitekan : null,
+        p.hariIni ? gaya.sudahDicatat : null,
+      ]}
     >
-      <View
-        className={`h-9 w-9 items-center justify-center rounded-full ${p.hariIni ? "bg-emerald-100" : "bg-slate-100"}`}
-      >
+      <View style={[gaya.inisial, p.hariIni ? gaya.inisialDicatat : null]}>
         {p.hariIni ? (
           <Ikon nama="checkmark" ukuran={18} warna={WARNA.utama} />
         ) : (
-          <Text className="text-sm font-bold text-slate-600">
-            {p.nasabah.nama.charAt(0).toUpperCase()}
-          </Text>
+          <Text style={gaya.inisialHuruf}>{p.nasabah.nama.charAt(0).toUpperCase()}</Text>
         )}
       </View>
-      <View className="flex-1 gap-1">
-        <View className="flex-row flex-wrap items-center gap-2">
-          <Text className="text-base font-semibold text-slate-900">{p.nasabah.nama}</Text>
+      <View style={[g.isi, gaya.rincian]}>
+        <View style={g.bungkus}>
+          <Text style={g.teksTebal}>{p.nasabah.nama}</Text>
           {p.status === "macet" ? <Lencana teks="Macet" warna="merah" /> : null}
         </View>
-        <Text className="text-sm text-slate-600">
+        <Text style={g.teksKecil}>
           {NAMA_JENIS[p.jenis]} ke-{p.pinjamanKe} · {kemajuan}
         </Text>
         {lencana}
       </View>
-      <View className="items-end">
-        <Text className="text-base font-bold text-slate-900">{rupiah(p.angsuran)}</Text>
-        <Text className="text-xs text-slate-500">saldo {rupiah(p.saldo)}</Text>
+      <View style={gaya.angka}>
+        <Text style={gaya.angsuran}>{rupiah(p.angsuran)}</Text>
+        <Text style={g.teksMini}>saldo {rupiah(p.saldo)}</Text>
       </View>
-      <Ikon nama="chevron-forward" ukuran={18} warna="#94a3b8" />
+      <Ikon nama="chevron-forward" ukuran={18} warna={WARNA.samar} />
     </Pressable>
   );
 }
@@ -228,7 +229,7 @@ function FormulirAbsen() {
 
   return (
     <Kartu>
-      <Text className="text-lg font-bold text-slate-900">Absen pagi</Text>
+      <Text style={g.subjudul}>Absen pagi</Text>
       <Pilihan
         segmen
         pilihan={[
@@ -290,7 +291,7 @@ function KakiKerja({ laporanBisa }: { laporanBisa: boolean }) {
   };
 
   return (
-    <View className="gap-3 px-5 pt-6">
+    <View style={gaya.kaki}>
       {laporanBisa ? (
         <>
           <PesanGalat pesan={laporan.error?.message} />
@@ -318,3 +319,49 @@ function KakiKerja({ laporanBisa }: { laporanBisa: boolean }) {
     </View>
   );
 }
+
+const gaya = StyleSheet.create({
+  galat: { gap: RUANG[4], paddingHorizontal: RUANG[5], paddingVertical: RUANG[6] },
+  daftar: { paddingBottom: RUANG[10] },
+  kepala: {
+    gap: RUANG[4],
+    paddingHorizontal: RUANG[5],
+    paddingTop: RUANG[2],
+    paddingBottom: RUANG[3],
+  },
+  tanggal: { ...HURUF.sm, fontWeight: TEBAL.sedang, color: WARNA.utama },
+  kosong: {
+    alignItems: "center",
+    gap: RUANG[2],
+    borderRadius: SUDUT.besar,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: WARNA.garisTegas,
+    paddingHorizontal: RUANG[4],
+    paddingVertical: RUANG[8],
+  },
+  kampung: { paddingHorizontal: RUANG[5], paddingTop: RUANG[4], paddingBottom: RUANG[2] },
+  kampungTeks: {
+    ...HURUF.xs,
+    fontWeight: TEBAL.tebal,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    color: WARNA.redup,
+  },
+  butir: { marginHorizontal: RUANG[5], marginBottom: RUANG[2] },
+  sudahDicatat: { opacity: 0.7 },
+  inisial: {
+    width: 36,
+    height: 36,
+    borderRadius: SUDUT.bulat,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: WARNA.abu,
+  },
+  inisialDicatat: { backgroundColor: WARNA.utamaMuda },
+  inisialHuruf: { ...HURUF.sm, fontWeight: TEBAL.tebal, color: WARNA.teksKedua },
+  rincian: { gap: RUANG[1] },
+  angka: { alignItems: "flex-end" },
+  angsuran: { ...HURUF.base, fontWeight: TEBAL.tebal, color: WARNA.teks },
+  kaki: { gap: RUANG[3], paddingHorizontal: RUANG[5], paddingTop: RUANG[6] },
+});

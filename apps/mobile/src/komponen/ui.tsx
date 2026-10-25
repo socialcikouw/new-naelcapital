@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   type TextInputProps,
@@ -11,20 +12,15 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { bacaUang, tulisUang } from "../lib/format";
+import { BAYANGAN, HURUF, RUANG, SENTUH, SUDUT, TEBAL, WARNA } from "./tema";
+
+export { WARNA };
 
 /**
  * KOMPONEN DASAR HP — satu gaya untuk semua layar: latar abu muda, kartu
  * putih, hijau Nael untuk aksi utama. Sentuhan minimal 44 pt (pedoman iOS),
  * isian menyala hijau saat aktif, keyboard tidak menutupi isian.
  */
-
-export const WARNA = {
-  utama: "#047857",
-  teks: "#0f172a",
-  redup: "#64748b",
-  garis: "#cbd5e1",
-  latar: "#f8fafc",
-} as const;
 
 export type NamaIkon = ComponentProps<typeof Ionicons>["name"];
 
@@ -35,8 +31,8 @@ export function Ikon(props: { nama: NamaIkon; ukuran?: number; warna?: string })
 /** Kerangka layar tanpa header: aman dari poni & bilah navigasi. */
 export function Layar({ children }: { children: ReactNode }) {
   return (
-    <SafeAreaView className="flex-1 bg-slate-50">
-      <View className="flex-1 gap-5 px-5 pt-4 pb-6">{children}</View>
+    <SafeAreaView style={g.layar}>
+      <View style={g.layarIsi}>{children}</View>
     </SafeAreaView>
   );
 }
@@ -45,8 +41,8 @@ export function Layar({ children }: { children: ReactNode }) {
 export function Gulir({ children }: { children: ReactNode }) {
   return (
     <ScrollView
-      className="flex-1 bg-slate-50"
-      contentContainerClassName="gap-4 px-5 pt-4 pb-12"
+      style={g.layar}
+      contentContainerStyle={g.gulirIsi}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="interactive"
       automaticallyAdjustKeyboardInsets
@@ -59,9 +55,9 @@ export function Gulir({ children }: { children: ReactNode }) {
 /** Pemuat penuh layar. */
 export function Memuat({ teks }: { teks?: string }) {
   return (
-    <View className="flex-1 items-center justify-center gap-3 bg-slate-50">
+    <View style={g.memuat}>
       <ActivityIndicator color={WARNA.utama} />
-      {teks ? <Text className="text-sm text-slate-500">{teks}</Text> : null}
+      {teks ? <Text style={g.teksRedup}>{teks}</Text> : null}
     </View>
   );
 }
@@ -69,34 +65,36 @@ export function Memuat({ teks }: { teks?: string }) {
 /** Tanda merek: kotak hijau ber-"N" + nama aplikasi. */
 export function Merek({ besar }: { besar?: boolean }) {
   return (
-    <View className="flex-row items-center gap-3">
-      <View
-        className={`items-center justify-center rounded-2xl bg-emerald-700 ${besar ? "h-14 w-14" : "h-10 w-10"}`}
-      >
-        <Text className={`font-extrabold text-white ${besar ? "text-2xl" : "text-lg"}`}>N</Text>
+    <View style={g.baris3}>
+      <View style={[g.merekKotak, besar ? g.merekKotakBesar : null]}>
+        <Text style={[g.merekHuruf, besar ? HURUF["2xl"] : HURUF.lg]}>N</Text>
       </View>
       <View>
-        <Text className={`font-bold text-slate-900 ${besar ? "text-xl" : "text-base"}`}>
-          Nael Capital
-        </Text>
-        <Text className="text-xs text-slate-500">Simpan pinjam harian</Text>
+        <Text style={[g.merekNama, besar ? HURUF.xl : HURUF.base]}>Nael Capital</Text>
+        <Text style={g.teksMini}>Simpan pinjam harian</Text>
       </View>
     </View>
   );
 }
 
 export function Judul({ children }: { children: ReactNode }) {
-  return <Text className="text-2xl font-bold tracking-tight text-slate-900">{children}</Text>;
+  return <Text style={g.judul}>{children}</Text>;
 }
 
 export function Keterangan({ children }: { children: ReactNode }) {
-  return <Text className="text-base leading-6 text-slate-600">{children}</Text>;
+  return <Text style={g.keterangan}>{children}</Text>;
 }
 
 const GAYA_TOMBOL = {
-  utama: { kotak: "bg-emerald-700", teks: "text-white", ikon: "#ffffff" },
-  kedua: { kotak: "border border-slate-300 bg-white", teks: "text-slate-800", ikon: WARNA.teks },
-  bahaya: { kotak: "border border-red-200 bg-red-50", teks: "text-red-700", ikon: "#b91c1c" },
+  utama: { kotak: { backgroundColor: WARNA.utama }, teks: WARNA.putih },
+  kedua: {
+    kotak: { backgroundColor: WARNA.permukaan, borderWidth: 1, borderColor: WARNA.garisTegas },
+    teks: WARNA.teksTombol,
+  },
+  bahaya: {
+    kotak: { backgroundColor: WARNA.bahayaLembut, borderWidth: 1, borderColor: WARNA.bahayaGaris },
+    teks: WARNA.bahaya,
+  },
 } as const;
 
 export function Tombol(props: {
@@ -115,14 +113,19 @@ export function Tombol(props: {
       disabled={mati}
       accessibilityRole="button"
       accessibilityState={{ disabled: !!mati, busy: !!props.memuat }}
-      className={`min-h-[52px] flex-row items-center justify-center gap-2 rounded-2xl px-4 active:opacity-80 ${gaya.kotak} ${mati ? "opacity-50" : ""}`}
+      style={({ pressed }) => [
+        g.tombol,
+        gaya.kotak,
+        pressed ? g.ditekan : null,
+        mati ? g.mati : null,
+      ]}
     >
       {props.memuat ? (
-        <ActivityIndicator color={gaya.ikon} />
+        <ActivityIndicator color={gaya.teks} />
       ) : (
         <>
-          {props.ikon ? <Ikon nama={props.ikon} warna={gaya.ikon} /> : null}
-          <Text className={`text-base font-semibold ${gaya.teks}`}>{props.judul}</Text>
+          {props.ikon ? <Ikon nama={props.ikon} warna={gaya.teks} /> : null}
+          <Text style={[g.tombolTeks, { color: gaya.teks }]}>{props.judul}</Text>
         </>
       )}
     </Pressable>
@@ -132,19 +135,23 @@ export function Tombol(props: {
 /** Tautan teks kecil (mis. "Ganti nasabah"). */
 export function TombolTeks(props: { judul: string; onPress: () => void }) {
   return (
-    <Pressable onPress={props.onPress} hitSlop={10} className="self-start py-1 active:opacity-60">
-      <Text className="text-sm font-semibold text-emerald-700">{props.judul}</Text>
+    <Pressable
+      onPress={props.onPress}
+      hitSlop={10}
+      style={({ pressed }) => [g.tautanTombol, pressed ? g.ditekanKuat : null]}
+    >
+      <Text style={g.tautan}>{props.judul}</Text>
     </Pressable>
   );
 }
 
 function Label({ teks }: { teks?: string | undefined }) {
-  return teks ? <Text className="text-sm font-medium text-slate-700">{teks}</Text> : null;
+  return teks ? <Text style={g.label}>{teks}</Text> : null;
 }
 
 /** Bingkai isian: menyala hijau saat aktif, merah saat galat. */
 function bingkai(fokus: boolean, galat: unknown) {
-  return galat ? "border-red-500" : fokus ? "border-emerald-600" : "border-slate-300";
+  return { borderColor: galat ? WARNA.bahayaBingkai : fokus ? WARNA.utamaFokus : WARNA.garisTegas };
 }
 
 export function Isian(
@@ -153,15 +160,13 @@ export function Isian(
   const { label, galat, ikon, onFocus, onBlur, ...input } = props;
   const [fokus, setFokus] = useState(false);
   return (
-    <View className="gap-1.5">
+    <View style={g.tumpuk1}>
       <Label teks={label} />
-      <View
-        className={`min-h-[52px] flex-row items-center gap-2 rounded-2xl border-2 bg-white px-4 ${bingkai(fokus, galat)}`}
-      >
+      <View style={[g.bingkaiIsian, bingkai(fokus, galat)]}>
         {ikon ? <Ikon nama={ikon} warna={WARNA.redup} /> : null}
         <TextInput
-          className="flex-1 py-3 text-base text-slate-900"
-          placeholderTextColor="#94a3b8"
+          style={g.isian}
+          placeholderTextColor={WARNA.samar}
           onFocus={(e) => {
             setFokus(true);
             onFocus?.(e);
@@ -173,7 +178,7 @@ export function Isian(
           {...input}
         />
       </View>
-      {galat ? <Text className="text-sm text-red-600">{galat}</Text> : null}
+      {galat ? <Text style={g.galat}>{galat}</Text> : null}
     </View>
   );
 }
@@ -188,17 +193,15 @@ export function IsianUang(props: {
 }) {
   const [fokus, setFokus] = useState(false);
   return (
-    <View className="gap-1.5">
+    <View style={g.tumpuk1}>
       <Label teks={props.label} />
-      <View
-        className={`min-h-[56px] flex-row items-center rounded-2xl border-2 bg-white px-4 ${bingkai(fokus, props.galat)}`}
-      >
-        <Text className="text-lg font-semibold text-slate-400">Rp</Text>
+      <View style={[g.bingkaiIsian, g.bingkaiUang, bingkai(fokus, props.galat)]}>
+        <Text style={g.awalanRp}>Rp</Text>
         <TextInput
-          className="flex-1 py-3 pl-2 text-xl font-bold text-slate-900"
+          style={g.isianUang}
           keyboardType="number-pad"
           placeholder="0"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={WARNA.samar}
           value={tulisUang(props.nilai)}
           onChangeText={(t) => props.onUbah(bacaUang(t))}
           onFocus={() => setFokus(true)}
@@ -206,7 +209,7 @@ export function IsianUang(props: {
           autoFocus={props.autoFocus ?? false}
         />
       </View>
-      {props.galat ? <Text className="text-sm text-red-600">{props.galat}</Text> : null}
+      {props.galat ? <Text style={g.galat}>{props.galat}</Text> : null}
     </View>
   );
 }
@@ -214,28 +217,28 @@ export function IsianUang(props: {
 export function PesanGalat({ pesan }: { pesan: string | null | undefined }) {
   if (!pesan) return null;
   return (
-    <View className="flex-row items-start gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
-      <Ikon nama="alert-circle" ukuran={18} warna="#b91c1c" />
-      <Text className="flex-1 text-sm leading-5 text-red-700">{pesan}</Text>
+    <View style={[g.kotakPesan, g.kotakGalat]}>
+      <Ikon nama="alert-circle" ukuran={18} warna={WARNA.bahaya} />
+      <Text style={g.pesanGalat}>{pesan}</Text>
     </View>
   );
 }
 
 export function Kartu({ children }: { children: ReactNode }) {
-  return (
-    <View className="gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200">
-      {children}
-    </View>
-  );
+  return <View style={g.kartu}>{children}</View>;
 }
 
-/** Satu baris label — nilai (angka rata kanan). */
+/** Satu baris label — nilai (angka rata kanan). `warna` = warna teks nilai. */
 export function Baris(props: { label: string; nilai: string; tebal?: boolean; warna?: string }) {
   return (
-    <View className="flex-row items-center justify-between gap-3">
-      <Text className="shrink text-sm text-slate-600">{props.label}</Text>
+    <View style={g.barisNilai}>
+      <Text style={g.barisLabel}>{props.label}</Text>
       <Text
-        className={`text-right ${props.tebal ? "text-lg font-bold" : "text-base font-medium"} ${props.warna ?? "text-slate-900"}`}
+        style={[
+          g.barisAngka,
+          props.tebal ? g.barisAngkaTebal : null,
+          { color: props.warna ?? WARNA.teks },
+        ]}
       >
         {props.nilai}
       </Text>
@@ -246,41 +249,43 @@ export function Baris(props: { label: string; nilai: string; tebal?: boolean; wa
 /** Angka ringkas berlabel — deret ringkasan di atas layar. */
 export function KotakAngka(props: { label: string; nilai: string; ikon?: NamaIkon }) {
   return (
-    <View className="flex-1 gap-1 rounded-2xl border border-slate-200 bg-white p-4">
-      <View className="flex-row items-center gap-1.5">
+    <View style={g.kotakAngka}>
+      <View style={g.baris1}>
         {props.ikon ? <Ikon nama={props.ikon} ukuran={14} warna={WARNA.redup} /> : null}
-        <Text className="text-xs font-medium text-slate-500">{props.label}</Text>
+        <Text style={g.kotakAngkaLabel}>{props.label}</Text>
       </View>
-      <Text className="text-lg font-bold text-slate-900">{props.nilai}</Text>
+      <Text style={g.kotakAngkaNilai}>{props.nilai}</Text>
     </View>
   );
 }
 
 const WARNA_LENCANA = {
-  hijau: "bg-emerald-100 text-emerald-800",
-  kuning: "bg-amber-100 text-amber-800",
-  merah: "bg-red-100 text-red-800",
-  abu: "bg-slate-100 text-slate-700",
+  hijau: { backgroundColor: WARNA.utamaMuda, color: WARNA.utamaTua },
+  kuning: { backgroundColor: WARNA.waspadaMuda, color: WARNA.waspadaTua },
+  merah: { backgroundColor: WARNA.bahayaMuda, color: WARNA.bahayaTua },
+  abu: { backgroundColor: WARNA.abu, color: WARNA.teksLabel },
 } as const;
 
 export function Lencana(props: { teks: string; warna?: keyof typeof WARNA_LENCANA }) {
-  return (
-    <Text
-      className={`self-start overflow-hidden rounded-full px-2.5 py-1 text-xs font-semibold ${WARNA_LENCANA[props.warna ?? "abu"]}`}
-    >
-      {props.teks}
-    </Text>
-  );
+  return <Text style={[g.lencana, WARNA_LENCANA[props.warna ?? "abu"]]}>{props.teks}</Text>;
 }
 
 const GAYA_SPANDUK: Record<
   "kuning" | "merah" | "hijau",
-  { kotak: string; ikon: NamaIkon; warna: string }
+  { kotak: { backgroundColor: string; borderColor: string }; ikon: NamaIkon; warna: string }
 > = {
-  kuning: { kotak: "border-amber-200 bg-amber-50", ikon: "warning", warna: "#b45309" },
-  merah: { kotak: "border-red-200 bg-red-50", ikon: "alert-circle", warna: "#b91c1c" },
+  kuning: {
+    kotak: { backgroundColor: WARNA.waspadaLembut, borderColor: WARNA.waspadaGaris },
+    ikon: "warning",
+    warna: WARNA.waspada,
+  },
+  merah: {
+    kotak: { backgroundColor: WARNA.bahayaLembut, borderColor: WARNA.bahayaGaris },
+    ikon: "alert-circle",
+    warna: WARNA.bahaya,
+  },
   hijau: {
-    kotak: "border-emerald-200 bg-emerald-50",
+    kotak: { backgroundColor: WARNA.utamaLembut, borderColor: WARNA.utamaGaris },
     ikon: "checkmark-circle",
     warna: WARNA.utama,
   },
@@ -294,11 +299,11 @@ export function Spanduk(props: {
 }) {
   const gaya = GAYA_SPANDUK[props.warna ?? "kuning"];
   return (
-    <View className={`flex-row items-start gap-3 rounded-2xl border px-4 py-3 ${gaya.kotak}`}>
+    <View style={[g.kotakPesan, g.spanduk, gaya.kotak]}>
       <Ikon nama={gaya.ikon} warna={gaya.warna} />
-      <View className="flex-1 gap-0.5">
-        <Text className="text-base font-semibold text-slate-900">{props.judul}</Text>
-        {props.isi ? <Text className="text-sm leading-5 text-slate-700">{props.isi}</Text> : null}
+      <View style={g.spandukIsi}>
+        <Text style={g.spandukJudul}>{props.judul}</Text>
+        {props.isi ? <Text style={g.spandukTeks}>{props.isi}</Text> : null}
       </View>
     </View>
   );
@@ -317,9 +322,9 @@ export function Pilihan<T extends string | number>(props: {
 }) {
   if (props.segmen) {
     return (
-      <View className="gap-1.5">
+      <View style={g.tumpuk1}>
         <Label teks={props.label} />
-        <View className="flex-row rounded-2xl bg-slate-200 p-1">
+        <View style={g.segmen}>
           {props.pilihan.map((p) => {
             const aktif = p.nilai === props.nilai;
             return (
@@ -328,11 +333,9 @@ export function Pilihan<T extends string | number>(props: {
                 onPress={() => props.onPilih(p.nilai)}
                 accessibilityRole="button"
                 accessibilityState={{ selected: aktif }}
-                className={`min-h-11 flex-1 items-center justify-center rounded-xl ${aktif ? "bg-white shadow-sm shadow-slate-300" : ""}`}
+                style={[g.segmenButir, aktif ? g.segmenAktif : null]}
               >
-                <Text
-                  className={`text-sm font-semibold ${aktif ? "text-emerald-800" : "text-slate-600"}`}
-                >
+                <Text style={[g.pilihanTeks, { color: aktif ? WARNA.utamaTua : WARNA.teksKedua }]}>
                   {p.teks}
                 </Text>
               </Pressable>
@@ -343,9 +346,9 @@ export function Pilihan<T extends string | number>(props: {
     );
   }
   return (
-    <View className="gap-1.5">
+    <View style={g.tumpuk1}>
       <Label teks={props.label} />
-      <View className="flex-row flex-wrap gap-2">
+      <View style={g.bungkus}>
         {props.pilihan.map((p) => {
           const aktif = p.nilai === props.nilai;
           return (
@@ -354,9 +357,13 @@ export function Pilihan<T extends string | number>(props: {
               onPress={() => props.onPilih(p.nilai)}
               accessibilityRole="button"
               accessibilityState={{ selected: aktif }}
-              className={`min-h-11 justify-center rounded-full border px-4 active:opacity-80 ${aktif ? "border-emerald-700 bg-emerald-700" : "border-slate-300 bg-white"}`}
+              style={({ pressed }) => [
+                g.chip,
+                aktif ? g.chipAktif : null,
+                pressed ? g.ditekan : null,
+              ]}
             >
-              <Text className={`text-sm font-semibold ${aktif ? "text-white" : "text-slate-800"}`}>
+              <Text style={[g.pilihanTeks, { color: aktif ? WARNA.putih : WARNA.teksTombol }]}>
                 {p.teks}
               </Text>
             </Pressable>
@@ -366,3 +373,215 @@ export function Pilihan<T extends string | number>(props: {
     </View>
   );
 }
+
+/**
+ * Gaya bersama: dipakai komponen di atas, dan oleh layar untuk tata letak
+ * berulang (deret, tumpukan, teks baku) — layar tidak menulis ulang angka.
+ */
+export const g = StyleSheet.create({
+  layar: { flex: 1, backgroundColor: WARNA.latar },
+  layarIsi: {
+    flex: 1,
+    gap: RUANG[5],
+    paddingHorizontal: RUANG[5],
+    paddingTop: RUANG[4],
+    paddingBottom: RUANG[6],
+  },
+  gulirIsi: {
+    gap: RUANG[4],
+    paddingHorizontal: RUANG[5],
+    paddingTop: RUANG[4],
+    paddingBottom: RUANG[12],
+  },
+  memuat: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: RUANG[3],
+    backgroundColor: WARNA.latar,
+  },
+  isi: { flex: 1 },
+
+  /** Deret mendatar, tengah tegak, celah 6 / 8 / 12 pt. */
+  baris1: { flexDirection: "row", alignItems: "center", gap: RUANG[1.5] },
+  baris2: { flexDirection: "row", alignItems: "center", gap: RUANG[2] },
+  baris3: { flexDirection: "row", alignItems: "center", gap: RUANG[3] },
+  /** Deret yang boleh membungkus ke baris berikut. */
+  bungkus: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: RUANG[2] },
+  /** Tumpukan tegak, celah 2 / 6 / 8 / 12 pt. */
+  tumpuk05: { gap: RUANG[0.5] },
+  tumpuk1: { gap: RUANG[1.5] },
+  tumpuk2: { gap: RUANG[2] },
+  tumpuk3: { gap: RUANG[3] },
+
+  judul: { ...HURUF["2xl"], fontWeight: TEBAL.tebal, letterSpacing: -0.4, color: WARNA.teks },
+  keterangan: { ...HURUF.base, color: WARNA.teksKedua },
+  /** Judul kartu. */
+  subjudul: { ...HURUF.lg, fontWeight: TEBAL.tebal, color: WARNA.teks },
+  /** Nama orang / butir utama di daftar. */
+  teksTebal: { ...HURUF.base, fontWeight: TEBAL.semi, color: WARNA.teks },
+  teksKecil: { ...HURUF.sm, color: WARNA.teksKedua },
+  teksRedup: { ...HURUF.sm, color: WARNA.redup },
+  teksMini: { ...HURUF.xs, color: WARNA.redup },
+  tautan: { ...HURUF.sm, fontWeight: TEBAL.semi, color: WARNA.utama },
+  tautanTombol: { alignSelf: "flex-start", paddingVertical: RUANG[1] },
+
+  /** Lingkaran inisial (avatar). */
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: SUDUT.bulat,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: WARNA.utamaMuda,
+  },
+  avatarHuruf: { ...HURUF.lg, fontWeight: TEBAL.tebal, color: WARNA.utamaTua },
+
+  merekKotak: {
+    width: 40,
+    height: 40,
+    borderRadius: SUDUT.besar,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: WARNA.utama,
+  },
+  merekKotakBesar: { width: 56, height: 56 },
+  merekHuruf: { fontWeight: TEBAL.ekstra, color: WARNA.putih },
+  merekNama: { fontWeight: TEBAL.tebal, color: WARNA.teks },
+
+  tombol: {
+    minHeight: SENTUH.besar,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: RUANG[2],
+    borderRadius: SUDUT.besar,
+    paddingHorizontal: RUANG[4],
+  },
+  tombolTeks: { ...HURUF.base, fontWeight: TEBAL.semi },
+  ditekan: { opacity: 0.8 },
+  ditekanKuat: { opacity: 0.6 },
+  mati: { opacity: 0.5 },
+
+  label: { ...HURUF.sm, fontWeight: TEBAL.sedang, color: WARNA.teksLabel },
+  bingkaiIsian: {
+    minHeight: SENTUH.besar,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: RUANG[2],
+    borderRadius: SUDUT.besar,
+    borderWidth: 2,
+    backgroundColor: WARNA.permukaan,
+    paddingHorizontal: RUANG[4],
+  },
+  bingkaiUang: { minHeight: SENTUH.isianUang, gap: 0 },
+  isian: { flex: 1, paddingVertical: RUANG[3], fontSize: HURUF.base.fontSize, color: WARNA.teks },
+  awalanRp: { ...HURUF.lg, fontWeight: TEBAL.semi, color: WARNA.samar },
+  isianUang: {
+    flex: 1,
+    paddingVertical: RUANG[3],
+    paddingLeft: RUANG[2],
+    fontSize: HURUF.xl.fontSize,
+    fontWeight: TEBAL.tebal,
+    color: WARNA.teks,
+  },
+  galat: { ...HURUF.sm, color: WARNA.bahayaTeks },
+
+  kotakPesan: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    borderRadius: SUDUT.besar,
+    borderWidth: 1,
+    paddingHorizontal: RUANG[4],
+    paddingVertical: RUANG[3],
+  },
+  kotakGalat: {
+    gap: RUANG[2],
+    borderColor: WARNA.bahayaGaris,
+    backgroundColor: WARNA.bahayaLembut,
+  },
+  pesanGalat: { ...HURUF.sm, flex: 1, color: WARNA.bahaya },
+  spanduk: { gap: RUANG[3] },
+  spandukIsi: { flex: 1, gap: RUANG[0.5] },
+  spandukJudul: { ...HURUF.base, fontWeight: TEBAL.semi, color: WARNA.teks },
+  spandukTeks: { ...HURUF.sm, color: WARNA.teksLabel },
+
+  kartu: {
+    gap: RUANG[3],
+    borderRadius: SUDUT.besar,
+    borderWidth: 1,
+    borderColor: WARNA.garis,
+    backgroundColor: WARNA.permukaan,
+    padding: RUANG[4],
+    boxShadow: BAYANGAN.kecil,
+  },
+
+  barisNilai: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: RUANG[3],
+  },
+  barisLabel: { ...HURUF.sm, flexShrink: 1, color: WARNA.teksKedua },
+  barisAngka: { ...HURUF.base, textAlign: "right", fontWeight: TEBAL.sedang },
+  barisAngkaTebal: { ...HURUF.lg, fontWeight: TEBAL.tebal },
+
+  kotakAngka: {
+    flex: 1,
+    gap: RUANG[1],
+    borderRadius: SUDUT.besar,
+    borderWidth: 1,
+    borderColor: WARNA.garis,
+    backgroundColor: WARNA.permukaan,
+    padding: RUANG[4],
+  },
+  kotakAngkaLabel: { ...HURUF.xs, fontWeight: TEBAL.sedang, color: WARNA.redup },
+  kotakAngkaNilai: { ...HURUF.lg, fontWeight: TEBAL.tebal, color: WARNA.teks },
+
+  lencana: {
+    ...HURUF.xs,
+    alignSelf: "flex-start",
+    overflow: "hidden",
+    borderRadius: SUDUT.bulat,
+    paddingHorizontal: RUANG[2.5],
+    paddingVertical: RUANG[1],
+    fontWeight: TEBAL.semi,
+  },
+
+  segmen: {
+    flexDirection: "row",
+    borderRadius: SUDUT.besar,
+    backgroundColor: WARNA.abuTua,
+    padding: RUANG[1],
+  },
+  segmenButir: {
+    minHeight: SENTUH.sedang,
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: SUDUT.sedang,
+  },
+  segmenAktif: { backgroundColor: WARNA.permukaan, boxShadow: BAYANGAN.sedang },
+  pilihanTeks: { ...HURUF.sm, fontWeight: TEBAL.semi },
+  /** Butir pilihan bulat — juga dipakai layar (mis. saran kampung). */
+  chip: {
+    minHeight: SENTUH.sedang,
+    justifyContent: "center",
+    borderRadius: SUDUT.bulat,
+    borderWidth: 1,
+    borderColor: WARNA.garisTegas,
+    backgroundColor: WARNA.permukaan,
+    paddingHorizontal: RUANG[4],
+  },
+  chipAktif: { borderColor: WARNA.utama, backgroundColor: WARNA.utama },
+  /** Butir daftar yang bisa diketuk (kartu pinjaman, nasabah lama). */
+  butirDaftar: {
+    borderRadius: SUDUT.besar,
+    borderWidth: 1,
+    borderColor: WARNA.garis,
+    backgroundColor: WARNA.permukaan,
+    paddingHorizontal: RUANG[4],
+    paddingVertical: RUANG[3],
+  },
+  butirDitekan: { backgroundColor: WARNA.abu },
+});

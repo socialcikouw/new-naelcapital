@@ -1,9 +1,10 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRef, useState } from "react";
-import { Image, Modal, Pressable, Text, View } from "react-native";
+import { Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { unggahFotoSerahTerima } from "../lib/foto";
-import { Keterangan, PesanGalat, Tombol } from "./ui";
+import { HURUF, RUANG, SUDUT, WARNA } from "./tema";
+import { g, Keterangan, PesanGalat, Tombol } from "./ui";
 
 interface Potret {
   uri: string;
@@ -62,9 +63,9 @@ export function KameraSerahTerima(props: {
 
   return (
     <Modal visible={props.terbuka} animationType="slide" onRequestClose={tutup}>
-      <SafeAreaView className="flex-1 bg-black">
+      <SafeAreaView style={gaya.latar}>
         {!izin ? null : !izin.granted ? (
-          <View className="flex-1 justify-center gap-4 bg-white px-5">
+          <View style={gaya.izin}>
             <Keterangan>
               Kamera dibutuhkan untuk memotret nasabah memegang uang pencairan.
             </Keterangan>
@@ -76,9 +77,9 @@ export function KameraSerahTerima(props: {
             <Tombol judul="Batal" jenis="kedua" onPress={tutup} />
           </View>
         ) : potret ? (
-          <View className="flex-1">
-            <Image source={{ uri: potret.uri }} className="flex-1" resizeMode="contain" />
-            <View className="gap-3 bg-white px-5 py-4">
+          <View style={g.isi}>
+            <Image source={{ uri: potret.uri }} style={g.isi} resizeMode="contain" />
+            <View style={[gaya.panel, gaya.panelTerang]}>
               <PesanGalat pesan={galat} />
               <Tombol judul="Pakai foto ini" memuat={mengunggah} onPress={() => void pakai()} />
               <Tombol
@@ -90,31 +91,31 @@ export function KameraSerahTerima(props: {
             </View>
           </View>
         ) : (
-          <View className="flex-1">
+          <View style={g.isi}>
             <CameraView
               ref={kamera}
-              style={{ flex: 1 }}
+              style={g.isi}
               facing="back"
               animateShutter
               onCameraReady={() => setSiap(true)}
             />
-            <View className="gap-3 bg-black px-5 py-4">
-              <Text className="text-center text-sm text-white">
+            <View style={gaya.panel}>
+              <Text style={gaya.petunjuk}>
                 Nasabah memegang uang pencairan, wajah terlihat jelas.
               </Text>
               <PesanGalat pesan={galat} />
-              <View className="flex-row items-center justify-between">
-                <Pressable onPress={tutup} className="w-20 py-3">
-                  <Text className="text-base text-white">Batal</Text>
+              <View style={gaya.kendali}>
+                <Pressable onPress={tutup} style={gaya.sisi}>
+                  <Text style={gaya.batal}>Batal</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => void jepret()}
                   disabled={!siap}
-                  className={`h-20 w-20 items-center justify-center rounded-full border-4 border-white ${siap ? "" : "opacity-40"}`}
+                  style={[gaya.rana, siap ? null : gaya.ranaMati]}
                 >
-                  <View className="h-16 w-16 rounded-full bg-white" />
+                  <View style={gaya.ranaIsi} />
                 </Pressable>
-                <View className="w-20" />
+                <View style={gaya.sisi} />
               </View>
             </View>
           </View>
@@ -144,13 +145,13 @@ export function IsianFotoSerahTerima(props: {
   const berlaku = fotoMasihBerlaku(props.nilai);
 
   return (
-    <View className="gap-2">
-      <Text className="text-sm font-medium text-slate-700">Foto serah terima</Text>
+    <View style={g.tumpuk2}>
+      <Text style={g.label}>Foto serah terima</Text>
       {props.nilai && berlaku ? (
-        <View className="flex-row items-center gap-3">
-          <Image source={{ uri: props.nilai.uri }} className="h-20 w-16 rounded-lg bg-slate-100" />
-          <View className="flex-1 gap-1">
-            <Text className="text-sm text-slate-700">
+        <View style={g.baris3}>
+          <Image source={{ uri: props.nilai.uri }} style={gaya.pratinjau} />
+          <View style={[g.isi, gaya.keteranganFoto]}>
+            <Text style={gaya.diambil}>
               Diambil{" "}
               {new Date(props.nilai.diambilAt).toLocaleTimeString("id-ID", {
                 hour: "2-digit",
@@ -158,17 +159,15 @@ export function IsianFotoSerahTerima(props: {
               })}{" "}
               · berlaku 1 jam
             </Text>
-            <Pressable onPress={() => setTerbuka(true)}>
-              <Text className="text-sm font-semibold text-emerald-700">Potret ulang</Text>
+            <Pressable onPress={() => setTerbuka(true)} hitSlop={10}>
+              <Text style={g.tautan}>Potret ulang</Text>
             </Pressable>
           </View>
         </View>
       ) : (
         <>
           {props.nilai ? (
-            <Text className="text-sm text-red-600">
-              Foto sudah lebih dari 1 jam — potret ulang.
-            </Text>
+            <Text style={g.galat}>Foto sudah lebih dari 1 jam — potret ulang.</Text>
           ) : null}
           <Tombol judul="Potret serah terima" jenis="kedua" onPress={() => setTerbuka(true)} />
         </>
@@ -184,3 +183,39 @@ export function IsianFotoSerahTerima(props: {
     </View>
   );
 }
+
+const gaya = StyleSheet.create({
+  latar: { flex: 1, backgroundColor: WARNA.hitam },
+  izin: {
+    flex: 1,
+    justifyContent: "center",
+    gap: RUANG[4],
+    backgroundColor: WARNA.permukaan,
+    paddingHorizontal: RUANG[5],
+  },
+  panel: {
+    gap: RUANG[3],
+    backgroundColor: WARNA.hitam,
+    paddingHorizontal: RUANG[5],
+    paddingVertical: RUANG[4],
+  },
+  panelTerang: { backgroundColor: WARNA.permukaan },
+  petunjuk: { ...HURUF.sm, textAlign: "center", color: WARNA.putih },
+  kendali: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  sisi: { width: 80, paddingVertical: RUANG[3] },
+  batal: { ...HURUF.base, color: WARNA.putih },
+  rana: {
+    width: 80,
+    height: 80,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: SUDUT.bulat,
+    borderWidth: 4,
+    borderColor: WARNA.putih,
+  },
+  ranaMati: { opacity: 0.4 },
+  ranaIsi: { width: 64, height: 64, borderRadius: SUDUT.bulat, backgroundColor: WARNA.putih },
+  pratinjau: { width: 64, height: 80, borderRadius: SUDUT.kecil, backgroundColor: WARNA.abu },
+  keteranganFoto: { gap: RUANG[1] },
+  diambil: { ...HURUF.sm, color: WARNA.teksLabel },
+});

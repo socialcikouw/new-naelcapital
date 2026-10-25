@@ -6,6 +6,7 @@ import { Alert, Text, View } from "react-native";
 import {
   Baris,
   Gulir,
+  g,
   Isian,
   IsianUang,
   Kartu,
@@ -62,13 +63,13 @@ export default function KartuPinjaman() {
     <Gulir>
       <Stack.Screen options={{ title: p.nasabah.nama }} />
       <Kartu>
-        <View className="flex-row flex-wrap items-center gap-2">
-          <Text className="text-lg font-bold text-slate-900">
+        <View style={g.bungkus}>
+          <Text style={g.subjudul}>
             {NAMA_JENIS[p.jenis]} {namaTenor(p.jenis, p.tenor)} · ke-{p.pinjamanKe}
           </Text>
           {p.status === "macet" ? <Lencana teks="Macet" warna="merah" /> : null}
         </View>
-        <Text className="text-sm text-slate-600">
+        <Text style={g.teksKecil}>
           {p.nasabah.kampung} · akad {tanggalPendek(p.tanggalAkad)}
           {p.jatuhTempo ? ` · jatuh tempo ${tanggalPendek(p.jatuhTempo)}` : ""}
         </Text>

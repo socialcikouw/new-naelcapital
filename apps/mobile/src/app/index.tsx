@@ -1,6 +1,7 @@
 import { Redirect } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
-import { Judul, Keterangan, Layar, Merek, Spanduk, WARNA } from "../komponen/ui";
+import { RUANG } from "../komponen/tema";
+import { g, Judul, Keterangan, Layar, Merek, Spanduk, WARNA } from "../komponen/ui";
 import { ALAMAT_API } from "../lib/api";
 import { useSesi } from "../lib/sesi";
 
@@ -26,7 +27,7 @@ export default function Pintu() {
   }
   if (s === undefined) {
     return (
-      <View className="flex-1 items-center justify-center gap-6 bg-slate-50">
+      <View style={[g.memuat, { gap: RUANG[6] }]}>
         <Merek besar />
         <ActivityIndicator color={WARNA.utama} />
       </View>

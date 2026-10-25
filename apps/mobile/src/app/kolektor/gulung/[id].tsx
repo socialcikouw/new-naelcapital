@@ -10,6 +10,7 @@ import {
 import {
   Baris,
   Gulir,
+  g,
   IsianUang,
   Kartu,
   Keterangan,
@@ -17,6 +18,7 @@ import {
   Pilihan,
   Spanduk,
   Tombol,
+  WARNA,
 } from "../../../komponen/ui";
 import { cobaAturan, NAMA_JENIS, namaTenor, rupiah } from "../../../lib/format";
 import { tulis, useTagihan, useTulis } from "../../../lib/lapangan";
@@ -74,7 +76,7 @@ export default function Gulung() {
     <Gulir>
       <Stack.Screen options={{ title: `Gulung · ${p.nasabah.nama}` }} />
       <Kartu>
-        <Text className="text-base font-semibold text-slate-900">
+        <Text style={g.teksTebal}>
           Pinjaman lama: {NAMA_JENIS[p.jenis]} ke-{p.pinjamanKe}
         </Text>
         <Baris label="Pokok lama" nilai={rupiah(p.pokok)} />
@@ -82,8 +84,8 @@ export default function Gulung() {
       </Kartu>
 
       <IsianUang label="Pokok baru" nilai={pokok} onUbah={setPokok} />
-      <View className="flex-row gap-2">
-        <View className="flex-1">
+      <View style={g.baris2}>
+        <View style={g.isi}>
           <Tombol
             judul={`− ${rupiah(KELIPATAN_POKOK)}`}
             jenis="kedua"
@@ -91,7 +93,7 @@ export default function Gulung() {
             onPress={() => setPokok(Math.max(KELIPATAN_POKOK, pokok - KELIPATAN_POKOK))}
           />
         </View>
-        <View className="flex-1">
+        <View style={g.isi}>
           <Tombol
             judul={`+ ${rupiah(KELIPATAN_POKOK)}`}
             jenis="kedua"
@@ -117,7 +119,7 @@ export default function Gulung() {
             label="Tunai ke nasabah"
             nilai={rupiah(rencana.hasil.pencairan)}
             tebal
-            warna="text-emerald-700"
+            warna={WARNA.utama}
           />
           <Baris label="Angsuran baru" nilai={rupiah(rencana.hasil.syarat.angsuran)} />
         </Kartu>

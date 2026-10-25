@@ -1,9 +1,10 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ikon, Judul, Keterangan, Merek, PesanGalat, Tombol, WARNA } from "../komponen/ui";
+import { BAYANGAN, HURUF, RUANG, SUDUT, TEBAL } from "../komponen/tema";
+import { g, Ikon, Judul, Keterangan, Merek, PesanGalat, Tombol, WARNA } from "../komponen/ui";
 import { api, panggil } from "../lib/api";
 import { infoPerangkat } from "../lib/perangkat";
 import { sesi } from "../lib/sesi";
@@ -27,13 +28,13 @@ const LANGKAH = [
 
 function Langkah() {
   return (
-    <View className="gap-3">
+    <View style={g.tumpuk3}>
       {LANGKAH.map((teks, i) => (
-        <View key={teks} className="flex-row items-start gap-3">
-          <View className="h-7 w-7 items-center justify-center rounded-full bg-emerald-100">
-            <Text className="text-sm font-bold text-emerald-800">{i + 1}</Text>
+        <View key={teks} style={[g.baris3, gaya.langkah]}>
+          <View style={gaya.nomor}>
+            <Text style={gaya.nomorTeks}>{i + 1}</Text>
           </View>
-          <Text className="flex-1 pt-0.5 text-base leading-6 text-slate-700">{teks}</Text>
+          <Text style={gaya.langkahTeks}>{teks}</Text>
         </View>
       ))}
     </View>
@@ -132,10 +133,10 @@ export default function Tautkan() {
   const detik = String(sisaDetik % 60).padStart(2, "0");
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50">
-      <ScrollView contentContainerClassName="gap-6 px-5 pt-4 pb-10">
+    <SafeAreaView style={g.layar}>
+      <ScrollView contentContainerStyle={gaya.gulir}>
         <Merek />
-        <View className="gap-2">
+        <View style={g.tumpuk2}>
           <Judul>Tautkan HP ini</Judul>
           <Keterangan>
             HP kasir, pengawas, dan kolektor masuk tanpa kata sandi — cukup disetujui bos.
@@ -143,55 +144,50 @@ export default function Tautkan() {
         </View>
         <Langkah />
 
-        <View className="items-center gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200">
+        <View style={gaya.panel}>
           {status === "menunggu" && tautan ? (
             <>
-              <View className="rounded-2xl bg-white p-3">
+              <View style={gaya.qr}>
                 <QRCode value={tautan.qr} size={208} />
               </View>
-              <View className="items-center gap-1">
-                <Text className="text-xs font-medium tracking-wider text-slate-500">
-                  ATAU KETIK KODE
-                </Text>
-                <Text
-                  selectable
-                  className="font-mono text-3xl font-bold tracking-[4px] text-slate-900"
-                >
+              <View style={gaya.tengah}>
+                <Text style={gaya.kodeLabel}>ATAU KETIK KODE</Text>
+                <Text selectable style={gaya.kode}>
                   {tautan.kode}
                 </Text>
               </View>
-              <View className="flex-row items-center gap-2 rounded-full bg-emerald-50 px-4 py-2">
+              <View style={[g.baris2, gaya.menunggu]}>
                 <ActivityIndicator size="small" color={WARNA.utama} />
-                <Text className="text-sm font-medium text-emerald-800">
+                <Text style={gaya.menungguTeks}>
                   Menunggu persetujuan bos · {menit}:{detik}
                 </Text>
               </View>
               {sinyalPutus ? (
-                <View className="flex-row items-center gap-2">
-                  <Ikon nama="cloud-offline-outline" ukuran={16} warna="#b45309" />
-                  <Text className="text-sm text-amber-700">Sinyal terputus — terus mencoba…</Text>
+                <View style={g.baris2}>
+                  <Ikon nama="cloud-offline-outline" ukuran={16} warna={WARNA.waspada} />
+                  <Text style={gaya.sinyalPutus}>Sinyal terputus — terus mencoba…</Text>
                 </View>
               ) : null}
             </>
           ) : status === "memuat" ? (
-            <View className="h-64 items-center justify-center gap-3">
+            <View style={gaya.memuat}>
               <ActivityIndicator color={WARNA.utama} />
-              <Text className="text-sm text-slate-500">Meminta kode…</Text>
+              <Text style={g.teksRedup}>Meminta kode…</Text>
             </View>
           ) : (
-            <View className="w-full items-center gap-4 py-4">
-              <View className="h-14 w-14 items-center justify-center rounded-full bg-slate-100">
+            <View style={gaya.habis}>
+              <View style={gaya.ikonHabis}>
                 <Ikon nama="time-outline" ukuran={28} warna={WARNA.redup} />
               </View>
-              <View className="items-center gap-1">
-                <Text className="text-lg font-bold text-slate-900">
+              <View style={gaya.tengah}>
+                <Text style={g.subjudul}>
                   {galat ? "Kode tidak bisa diminta" : "Kode sudah tidak berlaku"}
                 </Text>
-                <Text className="text-center text-sm text-slate-600">
+                <Text style={[g.teksKecil, gaya.rataTengah]}>
                   Minta kode baru, lalu tunjukkan ke bos.
                 </Text>
               </View>
-              <View className="w-full">
+              <View style={gaya.penuh}>
                 <Tombol judul="Minta kode baru" ikon="refresh" onPress={() => void minta()} />
               </View>
             </View>
@@ -203,3 +199,63 @@ export default function Tautkan() {
     </SafeAreaView>
   );
 }
+
+const gaya = StyleSheet.create({
+  gulir: {
+    gap: RUANG[6],
+    paddingHorizontal: RUANG[5],
+    paddingTop: RUANG[4],
+    paddingBottom: RUANG[10],
+  },
+  langkah: { alignItems: "flex-start" },
+  nomor: {
+    width: 28,
+    height: 28,
+    borderRadius: SUDUT.bulat,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: WARNA.utamaMuda,
+  },
+  nomorTeks: { ...HURUF.sm, fontWeight: TEBAL.tebal, color: WARNA.utamaTua },
+  langkahTeks: { ...HURUF.base, flex: 1, paddingTop: RUANG[0.5], color: WARNA.teksLabel },
+  panel: {
+    alignItems: "center",
+    gap: RUANG[4],
+    borderRadius: SUDUT.lebar,
+    borderWidth: 1,
+    borderColor: WARNA.garis,
+    backgroundColor: WARNA.permukaan,
+    padding: RUANG[6],
+    boxShadow: BAYANGAN.kecil,
+  },
+  qr: { borderRadius: SUDUT.besar, backgroundColor: WARNA.putih, padding: RUANG[3] },
+  tengah: { alignItems: "center", gap: RUANG[1] },
+  kodeLabel: { ...HURUF.xs, fontWeight: TEBAL.sedang, letterSpacing: 0.6, color: WARNA.redup },
+  kode: {
+    ...HURUF["3xl"],
+    fontFamily: Platform.select({ ios: "Menlo", default: "monospace" }),
+    fontWeight: TEBAL.tebal,
+    letterSpacing: 4,
+    color: WARNA.teks,
+  },
+  menunggu: {
+    borderRadius: SUDUT.bulat,
+    backgroundColor: WARNA.utamaLembut,
+    paddingHorizontal: RUANG[4],
+    paddingVertical: RUANG[2],
+  },
+  menungguTeks: { ...HURUF.sm, fontWeight: TEBAL.sedang, color: WARNA.utamaTua },
+  sinyalPutus: { ...HURUF.sm, color: WARNA.waspada },
+  memuat: { height: 256, alignItems: "center", justifyContent: "center", gap: RUANG[3] },
+  habis: { width: "100%", alignItems: "center", gap: RUANG[4], paddingVertical: RUANG[4] },
+  ikonHabis: {
+    width: 56,
+    height: 56,
+    borderRadius: SUDUT.bulat,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: WARNA.abu,
+  },
+  rataTengah: { textAlign: "center" },
+  penuh: { width: "100%" },
+});

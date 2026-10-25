@@ -11,6 +11,7 @@ import {
 import {
   Baris,
   Gulir,
+  g,
   Isian,
   IsianUang,
   Kartu,
@@ -171,7 +172,7 @@ export default function Akad() {
             label="Tunai ke nasabah"
             nilai={rupiah(syarat.hasil.pencairan)}
             tebal
-            warna="text-emerald-700"
+            warna={WARNA.utama}
           />
           <Baris label="Total kembali" nilai={rupiah(syarat.hasil.totalKembali)} />
           <Baris
@@ -211,7 +212,7 @@ function PilihKampung(props: {
   }, [kampung.data, props.teks]);
 
   return (
-    <View className="gap-2">
+    <View style={g.tumpuk2}>
       <Isian
         label="Kampung"
         value={props.teks}
@@ -221,14 +222,14 @@ function PilihKampung(props: {
         autoCapitalize="words"
       />
       {props.terpilih ? null : (
-        <View className="flex-row flex-wrap gap-2">
+        <View style={g.bungkus}>
           {saran.map((k) => (
             <Pressable
               key={k.id}
               onPress={() => props.onUbah(k.nama, k.id)}
-              className="min-h-10 justify-center rounded-full border border-slate-300 bg-white px-3 active:opacity-70"
+              style={({ pressed }) => [g.chip, pressed ? g.ditekan : null]}
             >
-              <Text className="text-sm text-slate-800">{k.nama}</Text>
+              <Text style={g.teksKecil}>{k.nama}</Text>
             </Pressable>
           ))}
         </View>
@@ -254,8 +255,8 @@ function PilihNasabahLama(props: {
     const n = props.terpilih;
     return (
       <Kartu>
-        <Text className="text-base font-semibold text-slate-900">{n.nama}</Text>
-        <Text className="text-sm text-slate-600">{n.kampung}</Text>
+        <Text style={g.teksTebal}>{n.nama}</Text>
+        <Text style={g.teksKecil}>{n.kampung}</Text>
         {n.terakhir ? (
           <Baris
             label={`Terakhir: ${NAMA_JENIS[n.terakhir.jenis]} ke-${n.terakhir.pinjamanKe}`}
@@ -269,7 +270,7 @@ function PilihNasabahLama(props: {
   }
 
   return (
-    <View className="gap-2">
+    <View style={g.tumpuk2}>
       <Isian
         label="Cari nasabah lama"
         ikon="search"
@@ -287,10 +288,10 @@ function PilihNasabahLama(props: {
         <Pressable
           key={n.id}
           onPress={() => props.onPilih(n)}
-          className="rounded-2xl border border-slate-200 bg-white px-4 py-3 active:bg-slate-100"
+          style={({ pressed }) => [g.butirDaftar, pressed ? g.butirDitekan : null]}
         >
-          <Text className="text-base font-semibold text-slate-900">{n.nama}</Text>
-          <Text className="text-sm text-slate-600">
+          <Text style={g.teksTebal}>{n.nama}</Text>
+          <Text style={g.teksKecil}>
             {n.kampung}
             {n.terakhir
               ? ` · terakhir ${NAMA_JENIS[n.terakhir.jenis]} ${rupiah(n.terakhir.pokok)}`
