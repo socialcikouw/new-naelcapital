@@ -85,7 +85,7 @@ Tetap seperti sekarang; field berganti nama mengikuti rilis aplikasi.
 
 | Metode & jalur | Peran | Isi |
 |---|---|---|
-| `POST /transaksi/libur` | kolektor | `{ pinjamanId, alasan? }` (field lama `keterangan` diterima sampai aplikasi beralih). |
+| `POST /lapangan/libur` | kolektor | `{ pinjamanId, alasan? }` (field lama `keterangan` diterima sampai aplikasi beralih). |
 | `POST /transaksi/libur/:id/hapus` | bos | `{ alasan }` — hanya hari itu. |
 | `GET /transaksi/peristiwa`, grid bulanan, `GET /nasabah/:id/buku` | sesuai peran | Libur ikut sebagai peristiwa bernominal nol. |
 

@@ -188,7 +188,7 @@ pengaman; service memeriksanya lebih dulu. *(Ditambahkan saat pembangunan,
 
 | Metode & jalur | Peran | Isi |
 |---|---|---|
-| `POST /pinjaman/baru` | kolektor | Akad: nasabah lama (`nasabahId`) atau orang baru (`nasabah`), `jenis`, `pokok`, `tenor`, **`fotoSerahTerimaId`** (wajib; diunggah lebih dulu lewat `POST /foto`), `fotoKtpId` (opsional). Angka akad dihitung server. Wajib kunci idempoten. |
+| `POST /lapangan/akad` | kolektor | Akad: nasabah lama (`nasabahId`) atau orang baru (`nasabah`), `jenis`, `pokok`, `tenor`, **`fotoSerahTerimaId`** (wajib; diunggah lebih dulu lewat `POST /foto`), `fotoKtpId` (opsional). Angka akad dihitung server. Wajib kunci idempoten. |
 | `POST /pinjaman/migrasi` | bos | Salin pinjaman berjalan dari pembukuan lama ([aturan-usaha A10](../aturan-usaha.md)): `{ nasabah: { nasabahId } \| { nama, kampung, nomorHp?, nik? }, kolektorId?, jenis, tenor, pokok, tanggalAkad, saldo, tabungan, pinjamanKe?, macet? }`. Orang baru wajib `kolektorId` (pemegang & `pencair_id`); nasabah lama tetap pada pemegangnya. `pinjamanKe` bawaan nomor berikutnya — boleh diisi sesuai buku, tidak boleh mundur. Pemeriksaan orang baru sama dengan akad lapangan (NIK terdaftar, mirip nasabah diblokir). |
 | `GET /pinjaman` | bos, pengawas: semua; kolektor: pegangannya | Kartu: pinjaman + identitas nasabah + pemegang + posisi tagih hari ini (`tagih` = `{ tertinggal, tunggakan }` menurut [aturan-usaha B5](../aturan-usaha.md); `null` bila tidak aktif) + kunci gulung yang berlaku (`kunciGulung` = `{ gulung, naik, alasan }`, gabungan lapis kantor, pemegang, dan nasabah). Saringan: `status` = `aktif` (bawaan: berjalan & macet) · `selesai` · `semua`; `nasabahId`; `kolektorId` (pemegang; bos & pengawas). Urut nama nasabah, lalu `pinjamanKe` menurun; paling banyak 500. |
 | `GET /pinjaman/:id` | sama | Kartu + kolom akad lengkap (asal, gulung, droping, tanggal selesai/macet, pemutihan, batal) + angka aturan macet (`aturanMacet`): jendela 30 hari yang berakhir **hari ini** — `setoranJendela`, `ambang`, `hariTagih` — dan status yang akan diberikan sapuan malam ini bila tak ada setoran lagi (`statusMalamIni`). Tempoan: `batasTempoan` (jatuh tempo + 7). `null` bila tidak aktif. |
@@ -196,7 +196,7 @@ pengaman; service memeriksanya lebih dulu. *(Ditambahkan saat pembangunan,
 | `POST /pinjaman/:id/batal` | bos | `{ alasan }` — batal akad salah input: hanya hari akad, sebelum ada peristiwa, dan **sebelum kas pencairnya diterima** (`KAS_SUDAH_DITERIMA`). Salinan migrasi: hanya **hari disalin**, sebelum ada peristiwa (boleh berstatus macet; tanpa pemeriksaan kas). |
 | `POST /pinjaman/:id/putihkan` | bos | `{ alasan, keterangan }` |
 | `POST /pinjaman/:id/putihkan/batal` | bos | `{ alasan }` |
-| `POST /transaksi/bayar` · `/lunas` · `/gulung` | kolektor | Mengubah `saldo`/`status` di transaksi yang sama dengan baris `transaksi` penyebabnya. Gulung wajib membawa `fotoSerahTerimaId` untuk pinjaman penerusnya. |
+| `POST /lapangan/bayar` · `/lunas` · `/gulung` | kolektor | Mengubah `saldo`/`status` di transaksi yang sama dengan baris `transaksi` penyebabnya. Gulung wajib membawa `fotoSerahTerimaId` untuk pinjaman penerusnya. |
 
 Field API lama (`collectorId`, `admin`, `tabunganAwal`, `macetSejak`,
 `catatanPemutihan`) dipertahankan sampai aplikasi beralih.

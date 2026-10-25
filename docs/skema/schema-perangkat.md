@@ -86,8 +86,8 @@ Tidak ada `diubah_at`: satu-satunya perubahan rutin (refresh) sudah tercatat di
 
 | Metode & jalur | Peran | Isi |
 |---|---|---|
-| `GET /auth/perangkat` | semua | Bos: perangkat aktif seluruh kantor. Peran lain: perangkat aktif miliknya. `?termasukDiputus=true` (bos): riwayat dengan `diputusAt`, `diputusOleh`, `alasanPutus`. |
-| `DELETE /auth/perangkat/:id` | bos (perangkat mana pun di kantornya); pengguna (miliknya sendiri) | Alasan `diputus` (bos) atau `keluar` (milik sendiri). |
+| `GET /auth/perangkat` | semua | Bos: perangkat aktif seluruh kantor. Peran lain: perangkat aktif miliknya. `?termasukDiputus=true` (bos): riwayat juga. Tiap baris: `{ id, pengguna: { id, nama, peran }, nama, platform, terakhirAktifAt, kedaluwarsaAt, dibuatAt, sedangDipakai, diputus: { at, oleh, alasan } \| null }`, urut terakhir aktif. |
+| `DELETE /auth/perangkat/:id` | bos (perangkat mana pun di kantornya); pengguna (miliknya sendiri) | Alasan `keluar` bila milik sendiri, selain itu `diputus` (bos). Perangkat orang lain bagi selain bos → 403; sudah diputus → `PERANGKAT_SUDAH_DIPUTUS` (409). Token akses yang sudah terbit tetap berlaku sampai habis (≤ 15 menit); token segarnya langsung ditolak. |
 | `POST /auth/keluar` | semua | Memutus perangkat yang sedang dipakai, alasan `keluar`. |
 | `POST /auth/refresh` | — | Rotasi token perangkat. |
 

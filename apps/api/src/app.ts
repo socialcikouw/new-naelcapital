@@ -29,6 +29,8 @@ import { buatLayananPengaturan } from "./modul/pengaturan/layanan";
 import { rutePengaturan } from "./modul/pengaturan/rute";
 import { buatLayananPengguna } from "./modul/pengguna/layanan";
 import { rutePengguna } from "./modul/pengguna/rute";
+import { buatLayananPerangkat } from "./modul/perangkat/layanan";
+import { rutePerangkat } from "./modul/perangkat/rute";
 import { buatLayananPeristiwa } from "./modul/peristiwa/layanan";
 import { rutePeristiwa } from "./modul/peristiwa/rute";
 import { buatLayananPinjaman } from "./modul/pinjaman/layanan";
@@ -94,6 +96,7 @@ export function buatApp(deps: AppDeps) {
   const nasabahKantor = buatLayananNasabah({ db: deps.db });
   const pinjamanKantor = buatLayananPinjaman({ db: deps.db, sekarang: deps.sekarang });
   const kampung = buatLayananWilayah({ db: deps.db, sekarang: deps.sekarang });
+  const perangkatMasuk = buatLayananPerangkat({ db: deps.db, sekarang: deps.sekarang });
   const peristiwa = buatLayananPeristiwa({
     db: deps.db,
     nasabah: nasabahKantor,
@@ -131,6 +134,7 @@ export function buatApp(deps: AppDeps) {
     .route("/", rutePinjaman(pinjamanKantor, auth))
     .route("/", rutePeristiwa(peristiwa, auth))
     .route("/", ruteWilayah(kampung, auth))
+    .route("/", rutePerangkat(perangkatMasuk, auth))
     .route("/", rutePengaturan(pengaturan, auth))
     .route("/", ruteRuteKolektor(rute, auth))
     .route("/", ruteRingkasan(ringkasan, auth))

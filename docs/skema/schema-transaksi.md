@@ -102,9 +102,9 @@ bertambah (halaman cepat ditandai "terlihat semua" oleh autovacuum). Biaya:
 
 | Metode & jalur | Peran | Isi |
 |---|---|---|
-| `POST /transaksi/bayar` | kolektor | `{ pinjamanId, setoranMurni, setoranPelunasan }` — angsuran. Kunci idempoten. |
-| `POST /transaksi/lunas` | kolektor | `{ pinjamanId }` — nominal dihitung server (tabungan menutup saldo lebih dulu). |
-| `POST /transaksi/gulung` | kolektor | `{ pinjamanId, pokok, tenor?, fotoSerahTerimaId }` |
+| `POST /lapangan/bayar` | kolektor | `{ pinjamanId, setoranMurni, setoranPelunasan }` — angsuran. Kunci idempoten. |
+| `POST /lapangan/lunas` | kolektor | `{ pinjamanId }` — nominal dihitung server (tabungan menutup saldo lebih dulu). |
+| `POST /lapangan/gulung` | kolektor | `{ pinjamanId, pokok, tenor?, fotoSerahTerimaId }` |
 | `POST /transaksi/:id/batal` | bos | `{ alasan }` — hanya hari dicatatnya. |
 | `GET /transaksi` | bos, pengawas, kasir | Setoran berlaku satu hari per kolektor beserta transfernya (`?kolektorId=&tanggal=`) — pilihan transfer kasir. |
 | `GET /transaksi/:id` | bos, pengawas; kolektor: pinjaman pegangannya | Satu transaksi lengkap, termasuk yang dibatalkan (`dibatalkan: { at, oleh, alasan }`) dan pencatatnya. |
