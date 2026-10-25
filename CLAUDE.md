@@ -88,7 +88,7 @@ isi berkas, ukuran, SHA-256).
 |---|---|
 | **Expo** (SDK terbaru) + **Expo Router** | Aplikasi Android/iOS. |
 | **EAS Build + EAS Update** | APK & pembaruan OTA. |
-| **`StyleSheet`** bawaan React Native + token `src/komponen/tema.ts` | Gaya, tanpa NativeWind (keputusan 25 Okt 2026). Warna = palet Tailwind web, jarak kelipatan 4 pt, huruf skala Tailwind dalam pt. Layar merangkai komponen dasar `src/komponen/ui.tsx` dan gaya bersama `g`; warna (`"#…"`), ukuran huruf, dan jarak selalu dari token. Ukuran khusus satu elemen (lebar avatar, tombol rana) boleh di `StyleSheet` lokal layar itu. |
+| **`StyleSheet`** bawaan React Native + token `src/komponen/tema.ts` | Gaya. **Tidak pernah NativeWind, Tailwind, atau pustaka gaya berbasis kelas lain di HP** (keputusan final pemilik, 25 Okt 2026) — jangan diusulkan lagi. Nilai warna disalin dari palet Tailwind web, jarak kelipatan 4 pt, huruf dalam pt. Layar merangkai komponen dasar `src/komponen/ui.tsx` dan gaya bersama `g`; warna (`"#…"`), ukuran huruf, dan jarak selalu dari token. Ukuran khusus satu elemen (lebar avatar, tombol rana) boleh di `StyleSheet` lokal layar itu. |
 | Klien RPC Hono (`hc`) per modul + **TanStack Query** | Data. Kiriman gagal diulang otomatis dengan **kunci idempoten** yang sama — tanpa mode offline penuh (sinyal buruk jarang). |
 | **react-hook-form** + Zod | Formulir dengan skema dari `contracts`. |
 | **expo-camera** | Foto serah terima (kamera saja, bukan galeri) & pemindai QR. |
