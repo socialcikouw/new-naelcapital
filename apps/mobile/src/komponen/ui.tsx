@@ -16,6 +16,16 @@ import { BAYANGAN, HURUF, RUANG, SENTUH, SUDUT, TEBAL, WARNA } from "./tema";
 
 export { WARNA };
 
+/** Header Stack baku layar-layar peran (kolektor, kasir, pengawas). */
+export const OPSI_STACK = {
+  headerTintColor: WARNA.utama,
+  headerTitleStyle: { color: WARNA.teks, fontWeight: TEBAL.tebal },
+  headerStyle: { backgroundColor: WARNA.latar },
+  headerShadowVisible: false,
+  headerBackButtonDisplayMode: "minimal",
+  contentStyle: { backgroundColor: WARNA.latar },
+} as const;
+
 /**
  * KOMPONEN DASAR HP — satu gaya untuk semua layar: latar abu muda, kartu
  * putih, hijau Nael untuk aksi utama. Sentuhan minimal 44 pt (pedoman iOS),

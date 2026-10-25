@@ -12,6 +12,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { TombolKeluar } from "../../komponen/keluar";
 import { HURUF, RUANG, SUDUT, TEBAL } from "../../komponen/tema";
 import {
   g,
@@ -29,10 +30,9 @@ import {
   Tombol,
   WARNA,
 } from "../../komponen/ui";
-import { api } from "../../lib/api";
 import { NAMA_JENIS, rupiah, tanggalPanjang } from "../../lib/format";
 import { bacaGerbang, tulis, useHariIni, useTagihan, useTulis } from "../../lib/lapangan";
-import { sesi, useSesi } from "../../lib/sesi";
+import { useSesi } from "../../lib/sesi";
 
 /**
  * KERJA HARIAN KOLEKTOR — absen pagi, lalu daftar tagih pegangan per kampung.
@@ -271,7 +271,6 @@ function FormulirAbsen() {
 
 function KakiKerja({ laporanBisa }: { laporanBisa: boolean }) {
   const laporan = useTulis(tulis.laporan);
-  const [keluarBerjalan, setKeluarBerjalan] = useState(false);
 
   const bukaLaporan = () =>
     Alert.alert(
@@ -282,13 +281,6 @@ function KakiKerja({ laporanBisa }: { laporanBisa: boolean }) {
         { text: "Buka laporan", style: "destructive", onPress: () => laporan.mutate() },
       ],
     );
-
-  const keluar = async () => {
-    setKeluarBerjalan(true);
-    await api.auth.keluar.$post().catch(() => null);
-    await sesi.hapus();
-    router.replace("/tautkan");
-  };
 
   return (
     <View style={gaya.kaki}>
@@ -304,18 +296,7 @@ function KakiKerja({ laporanBisa }: { laporanBisa: boolean }) {
           />
         </>
       ) : null}
-      <Tombol
-        judul="Keluar dari HP ini"
-        jenis="bahaya"
-        ikon="log-out-outline"
-        memuat={keluarBerjalan}
-        onPress={() =>
-          Alert.alert("Keluar?", "HP ini perlu ditautkan ulang oleh bos untuk masuk lagi.", [
-            { text: "Batal", style: "cancel" },
-            { text: "Keluar", style: "destructive", onPress: () => void keluar() },
-          ])
-        }
-      />
+      <TombolKeluar />
     </View>
   );
 }

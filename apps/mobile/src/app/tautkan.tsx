@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BAYANGAN, HURUF, RUANG, SUDUT, TEBAL } from "../komponen/tema";
 import { g, Ikon, Judul, Keterangan, Merek, PesanGalat, Tombol, WARNA } from "../komponen/ui";
 import { api, panggil } from "../lib/api";
+import { layarAwal } from "../lib/peran";
 import { infoPerangkat } from "../lib/perangkat";
 import { sesi } from "../lib/sesi";
 
@@ -113,7 +114,7 @@ export default function Tautkan() {
             tokenSegar: hasil.tokenSegar,
             pengguna: hasil.pengguna,
           });
-          router.replace(hasil.pengguna.peran === "kolektor" ? "/kolektor" : "/beranda");
+          router.replace(layarAwal(hasil.pengguna.peran));
         } else if (hasil.status === "kedaluwarsa") {
           setStatus("kedaluwarsa");
         }

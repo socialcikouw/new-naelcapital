@@ -1,0 +1,87 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api, panggil } from "./api";
+
+/**
+ * DATA SETORAN SORE — hari kolektor hari ini (absen, laporan, serah terima),
+ * setoran per kolektor (pilihan transfer), biaya tak terduga. Dipakai kasir
+ * (mencatat) dan pengawas (membaca). Setiap tulisan menyegarkan semua kueri
+ * `setoran`. Hitung buta: rincian tunai seharusnya baru dijawab server
+ * sesudah kas diterima.
+ */
+const KUNCI = ["setoran"] as const;
+
+/** Semua kolektor hari ini; dimuat ulang tiap 30 detik (kolektor membuka laporan). */
+export function useHariKolektor() {
+  return useQuery({
+    queryKey: [...KUNCI, "hari"],
+    queryFn: async () => (await panggil(() => api["hari-kolektor"].$get({ query: {} }))).json(),
+    refetchInterval: 30_000,
+  });
+}
+
+export type HariKolektor = NonNullable<ReturnType<typeof useHariKolektor>["data"]>[number];
+
+/** Setoran berlaku satu kolektor hari ini, beserta transfernya. */
+export function useSetoranKolektor(kolektorId: string) {
+  return useQuery({
+    queryKey: [...KUNCI, "transaksi", kolektorId],
+    queryFn: async () =>
+      (await panggil(() => api.transaksi.$get({ query: { kolektorId } }))).json(),
+  });
+}
+
+/** Biaya tak terduga satu kolektor pada `tanggal` (yang berlaku). */
+export function useBiayaKolektor(kolektorId: string, tanggal: string | undefined) {
+  return useQuery({
+    queryKey: [...KUNCI, "biaya", kolektorId, tanggal],
+    queryFn: async () =>
+      (
+        await panggil(() =>
+          api["biaya-tak-terduga"].$get({
+            query: { kolektorId, tanggalMulai: tanggal, tanggalSelesai: tanggal },
+          }),
+        )
+      ).json(),
+    enabled: tanggal !== undefined,
+  });
+}
+
+/** Tulisan kasir; galat server (hari terkunci, batas transfer) menjadi `error.message`. */
+export function useTulisSetoran<I, O>(kirim: (input: I) => Promise<O>) {
+  const klien = useQueryClient();
+  return useMutation({
+    mutationFn: kirim,
+    onSettled: () => klien.invalidateQueries({ queryKey: KUNCI }),
+  });
+}
+
+export const tulisSetoran = {
+  terimaKas: async (isi: { kolektorId: string; tunaiDiterima: number }) =>
+    (
+      await panggil(() =>
+        api["hari-kolektor"][":kolektorId"]["terima-kas"].$post({
+          param: { kolektorId: isi.kolektorId },
+          json: { tunaiDiterima: isi.tunaiDiterima },
+        }),
+      )
+    ).json(),
+  transfer: async (json: Parameters<(typeof api)["transfer-setoran"]["$post"]>[0]["json"]) =>
+    (await panggil(() => api["transfer-setoran"].$post({ json }))).json(),
+  biaya: async (json: Parameters<(typeof api)["biaya-tak-terduga"]["$post"]>[0]["json"]) =>
+    (await panggil(() => api["biaya-tak-terduga"].$post({ json }))).json(),
+};
+
+/** Keadaan satu hari kolektor untuk lencana daftar. */
+export function keadaanHari(h: HariKolektor): {
+  teks: string;
+  warna: "hijau" | "kuning" | "merah" | "abu";
+} {
+  if (h.absensi === "tidak_kerja") return { teks: "Tidak kerja", warna: "abu" };
+  if (h.serahTerima) {
+    const s = h.serahTerima.selisihSetor;
+    if (s < 0) return { teks: "Kas diterima · tekor", warna: "merah" };
+    return { teks: s > 0 ? "Kas diterima · lebih" : "Kas diterima", warna: "hijau" };
+  }
+  if (h.laporanDibukaAt) return { teks: "Siap diterima", warna: "kuning" };
+  return { teks: "Di lapangan", warna: "abu" };
+}

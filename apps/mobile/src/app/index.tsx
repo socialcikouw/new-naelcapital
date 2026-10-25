@@ -3,6 +3,7 @@ import { ActivityIndicator, View } from "react-native";
 import { RUANG } from "../komponen/tema";
 import { g, Judul, Keterangan, Layar, Merek, Spanduk, WARNA } from "../komponen/ui";
 import { ALAMAT_API } from "../lib/api";
+import { layarAwal } from "../lib/peran";
 import { useSesi } from "../lib/sesi";
 
 /**
@@ -34,5 +35,5 @@ export default function Pintu() {
     );
   }
   if (!s) return <Redirect href="/tautkan" />;
-  return <Redirect href={s.pengguna.peran === "kolektor" ? "/kolektor" : "/beranda"} />;
+  return <Redirect href={layarAwal(s.pengguna.peran)} />;
 }
