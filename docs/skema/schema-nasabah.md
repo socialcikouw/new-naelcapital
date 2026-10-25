@@ -115,6 +115,7 @@ riwayat tabungan (keputusan pemilik usaha).
 | `PUT /nasabah/:id/lokasi` | bos, kolektor pemegang | `{ latitude, longitude, akurasiMeter }` |
 | `POST /nasabah/:id/pindah` | bos | `{ kolektorId }` — pindah pemegang. |
 | `GET /nasabah/:id/neraca` | bos, pengawas | Arus kas, tabungan, piutang — bahan menimbang pemutihan. |
+| `GET /nasabah/:id/buku` | bos, pengawas; kolektor: pegangannya | Identitas + semua pinjaman + semua peristiwa — lihat [schema-transaksi.md](schema-transaksi.md). |
 | `POST /nasabah/:id/buka-blokir` | bos | `{ alasan }` |
 
 Kartu pinjaman tetap membawa identitas nasabah (`nama`, `alamat` = nama

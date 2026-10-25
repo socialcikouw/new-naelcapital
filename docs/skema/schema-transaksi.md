@@ -106,7 +106,15 @@ bertambah (halaman cepat ditandai "terlihat semua" oleh autovacuum). Biaya:
 | `POST /transaksi/lunas` | kolektor | `{ pinjamanId }` — nominal dihitung server (tabungan menutup saldo lebih dulu). |
 | `POST /transaksi/gulung` | kolektor | `{ pinjamanId, pokok, tenor?, fotoSerahTerimaId }` |
 | `POST /transaksi/:id/batal` | bos | `{ alasan }` — hanya hari dicatatnya. |
-| `GET /transaksi` · `/transaksi/:id` · `/transaksi/peristiwa` · `/transaksi/rekap-bulanan` · `/nasabah/:id/buku` | bos, pengawas: semua; kolektor: miliknya; kasir: setoran hari itu per kolektor (memilih nasabah transfer) | Baca. |
+| `GET /transaksi` | bos, pengawas, kasir | Setoran berlaku satu hari per kolektor beserta transfernya (`?kolektorId=&tanggal=`) — pilihan transfer kasir. |
+| `GET /transaksi/:id` | bos, pengawas; kolektor: pinjaman pegangannya | Satu transaksi lengkap, termasuk yang dibatalkan (`dibatalkan: { at, oleh, alasan }`) dan pencatatnya. |
+| `GET /transaksi/peristiwa` | bos, pengawas: semua; kolektor: pinjaman pegangannya | Transaksi **berlaku** + libur nasabah dalam satu bentuk (`kategori` = `angsuran` · `pelunasan` · `gulung` · `libur`; libur bernominal nol, `saldoSesudah` kosong), urut tanggal lalu waktu catat. Saringan: `pinjamanId`, `kolektorId` (pemegang), `jenis` (jenis pinjaman), `tanggal` atau `tanggalMulai`+`tanggalSelesai`. Tanpa `pinjamanId` wajib bertanggal, rentang paling panjang 62 hari (`RENTANG_TIDAK_SAH`). |
+| `GET /transaksi/rekap-bulanan` | sama | Isi grid kartu satu bulan: `?bulan=YYYY-MM&kolektorId=` → `[{ pinjamanId, tanggal, kategori }]` untuk pinjaman yang dipegang (pemegang saat ini). |
+| `GET /nasabah/:id/buku` | bos, pengawas; kolektor: pegangannya | Buku nasabah: `{ nasabah, pinjaman, peristiwa }` — identitas (bentuk `GET /nasabah`), semua pinjaman termasuk yang batal urut `pinjamanKe` (bentuk kartu `GET /pinjaman`), dan semua peristiwa berlaku pinjaman-pinjaman itu urut tanggal. |
+
+"Pegangan" = `nasabah.kolektor_id` saat ini, bukan pencatat transaksinya —
+riwayat ikut pindah bersama nasabah saat pemegang diganti (sama dengan
+`GET /pinjaman` dan `GET /nasabah`).
 
 Field API lama (`murni`, `pelunasan`, `tabKeluar`, `collectorId`)
 dipertahankan sampai aplikasi beralih.

@@ -120,6 +120,16 @@ export function buatLayananNasabah(deps: NasabahDeps) {
   }
 
   return {
+    /** Satu nasabah (bos, pengawas; kolektor: pegangannya) — dipakai Buku nasabah. */
+    async baca(aktor: Aktor, id: string): Promise<NasabahJawaban> {
+      wajibPeran(aktor, "bos", "pengawas", "kolektor");
+      const b = await satu(deps.db, aktor, id);
+      if (aktor.peran === "kolektor" && b.kolektorId !== aktor.penggunaId) {
+        throw dilarang("BUKAN_PEGANGAN_ANDA", "Nasabah ini dipegang kolektor lain");
+      }
+      return keJawaban(aktor, b);
+    },
+
     /** Daftar & cari nasabah, urut nama (paling banyak 200). */
     async daftar(aktor: Aktor, saring: { cari?: string; kolektorId?: string; bebas?: "ya" }) {
       let kolektorId = saring.kolektorId;
