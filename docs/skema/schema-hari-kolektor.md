@@ -118,8 +118,8 @@ serah terima (kurang setor), bukan masukan.
 |---|---|---|
 | `POST /hari-kolektor` | kolektor | Absen: `{ absensi: masuk_kerja, kasLapangan, uangJalan }` atau `{ absensi: tidak_kerja, alasan }`. |
 | `POST /hari-kolektor/laporan` | kolektor | Membuka laporan (tanpa angka transfer lagi). Idempoten. |
-| `PATCH /hari-kolektor/:kolektorId/hari-ini` | bos | `{ kasLapangan?, uangJalan? }` — sebelum kas diterima. |
-| `POST /hari-kolektor/:kolektorId/laporan/batal` | bos | Membuka kembali hari kolektor (mis. nasabah libur datang membayar sore). |
+| `PATCH /hari-kolektor/:kolektorId/hari-ini` | bos | `{ kasLapangan?, uangJalan? }` (minimal satu) — hari ini, kolektor masuk kerja (`BELUM_ABSEN`, `TIDAK_KERJA_HARI_INI`), sebelum kas diterima (`KAS_SUDAH_DITERIMA`). Jejak `perbaiki_hari_kolektor`. |
+| `POST /hari-kolektor/:kolektorId/laporan/batal` | bos | `{ alasan }` — membuka kembali hari kolektor (mis. nasabah libur datang membayar sore): hari ini, laporan sudah dibuka (`LAPORAN_BELUM_DIBUKA`), sebelum kas diterima. Jejak `batal_laporan` beserta alasannya. |
 | `GET /hari-kolektor` | bos, kasir, pengawas: semua; kolektor: miliknya | `?kolektorId=&tanggalMulai=&tanggalSelesai=` — beserta total transfer & serah terima yang berlaku. |
 
 Serah terima kas: lihat [schema-serah-terima-kas.md](schema-serah-terima-kas.md).

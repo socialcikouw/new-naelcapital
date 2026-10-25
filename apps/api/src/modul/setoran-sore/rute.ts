@@ -12,6 +12,7 @@ import {
   transaksiHariSchema,
   transferInputSchema,
   transferSchema,
+  ubahHariIniSchema,
 } from "@naelcapital/contracts";
 import type { ZodObject, ZodType } from "zod";
 import { buatRouter, jawabanGalat } from "../../router";
@@ -94,6 +95,25 @@ const terimaKas = createRoute({
   },
   responses: { 201: { description: "Kas diterima", ...json(hariKasSchema) }, ...galat },
 });
+const kolektorParam = z.object({ kolektorId: z.uuid() });
+const ubahHariIni = createRoute({
+  method: "patch",
+  path: "/hari-kolektor/{kolektorId}/hari-ini",
+  tags: tag,
+  summary: "Betulkan kas lapangan / uang jalan hari ini (bos, sebelum kas diterima)",
+  security: aman,
+  request: { params: kolektorParam, body: { ...json(ubahHariIniSchema), required: true } },
+  responses: { 200: { description: "Tersimpan", ...json(hariKasSchema) }, ...galat },
+});
+const batalLaporan = createRoute({
+  method: "post",
+  path: "/hari-kolektor/{kolektorId}/laporan/batal",
+  tags: tag,
+  summary: "Buka kembali hari kolektor yang sudah lapor (bos, sebelum kas diterima)",
+  security: aman,
+  request: { params: kolektorParam, body: { ...json(batalSchema), required: true } },
+  responses: { 200: { description: "Laporan dibatalkan", ...json(hariKasSchema) }, ...galat },
+});
 const batalSerahTerima = batal(
   "/serah-terima-kas/{id}/batal",
   "Batal penerimaan kas (bos, hari yang sama)",
@@ -166,6 +186,26 @@ export function ruteSetoranSore(layanan: LayananSetoranSore, auth: LayananAuth) 
           c.req.valid("json"),
         ),
         201,
+      ),
+    )
+    .openapi(ubahHariIni, async (c) =>
+      c.json(
+        await layanan.ubahHariIni(
+          c.get("aktor"),
+          c.req.valid("param").kolektorId,
+          c.req.valid("json"),
+        ),
+        200,
+      ),
+    )
+    .openapi(batalLaporan, async (c) =>
+      c.json(
+        await layanan.batalLaporan(
+          c.get("aktor"),
+          c.req.valid("param").kolektorId,
+          c.req.valid("json"),
+        ),
+        200,
       ),
     )
     .openapi(batalSerahTerima, async (c) =>

@@ -17,6 +17,7 @@ import {
   tidakDitemukan,
 } from "../../galat";
 import { wajibPeran } from "../../peran";
+import { catatRiwayat } from "../../riwayat";
 import type { Aktor } from "../auth/token";
 import { bacaKalender } from "../lapangan/gerbang";
 import { kasSudahDiterima } from "../setoran-sore/kunci-hari";
@@ -252,6 +253,43 @@ export function buatLayananPembatalan(deps: PembatalanDeps) {
           alasanBatal: input.alasan,
           tabunganDitarik: p.tabunganMasuk,
         };
+      });
+    },
+
+    /**
+     * Hapus tanda libur salah (bos, hari yang sama). Libur bukan uang: baris
+     * dihapus dan isinya + alasan dicatat di riwayat — sesudahnya kolektor
+     * bisa mencatat setoran pinjaman itu hari ini.
+     */
+    async hapusLibur(aktor: Aktor, id: string, input: BatalInput) {
+      wajibPeran(aktor, "bos");
+      const tanggalIni = await hariIni(aktor);
+      return deps.db.transaction(async (tx) => {
+        const [l] = await tx
+          .select({
+            id: liburNasabah.id,
+            pinjamanId: liburNasabah.pinjamanId,
+            pencatatId: liburNasabah.pencatatId,
+            tanggal: liburNasabah.tanggal,
+            alasanLibur: liburNasabah.alasanLibur,
+          })
+          .from(liburNasabah)
+          .where(and(eq(liburNasabah.id, id), eq(liburNasabah.kantorId, aktor.kantorId)))
+          .for("update");
+        if (!l) throw tidakDitemukan("LIBUR_TIDAK_DITEMUKAN", "Tanda libur tidak ditemukan");
+        if (l.tanggal !== tanggalIni) throw batalHanyaHariIni();
+        await tx.delete(liburNasabah).where(eq(liburNasabah.id, l.id));
+        await catatRiwayat(tx, {
+          kantorId: aktor.kantorId,
+          tabel: "libur_nasabah",
+          barisId: l.id,
+          aksi: "hapus_libur",
+          sebelum: l,
+          alasan: input.alasan,
+          pelakuId: aktor.penggunaId,
+        });
+        const { pencatatId: _, ...libur } = l;
+        return libur;
       });
     },
   };

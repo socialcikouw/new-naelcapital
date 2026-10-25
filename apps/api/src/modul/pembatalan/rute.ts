@@ -3,6 +3,7 @@ import {
   batalSchema,
   hasilBatalAkadSchema,
   hasilBatalTransaksiSchema,
+  liburTercatatSchema,
 } from "@naelcapital/contracts";
 import type { ZodType } from "zod";
 import { buatRouter, jawabanGalat } from "../../router";
@@ -45,6 +46,11 @@ const batalAkad = batal(
   "Batal akad salah input (bos, hari akad — salinan migrasi: hari disalin — sebelum ada peristiwa)",
   hasilBatalAkadSchema,
 );
+const hapusLibur = batal(
+  "/transaksi/libur/{id}/hapus",
+  "Hapus tanda libur nasabah yang salah (bos, hari yang sama)",
+  liburTercatatSchema,
+);
 
 export function rutePembatalan(layanan: LayananPembatalan, auth: LayananAuth) {
   const router = buatRouter();
@@ -60,6 +66,12 @@ export function rutePembatalan(layanan: LayananPembatalan, auth: LayananAuth) {
     .openapi(batalAkad, async (c) =>
       c.json(
         await layanan.batalAkad(c.get("aktor"), c.req.valid("param").id, c.req.valid("json")),
+        200,
+      ),
+    )
+    .openapi(hapusLibur, async (c) =>
+      c.json(
+        await layanan.hapusLibur(c.get("aktor"), c.req.valid("param").id, c.req.valid("json")),
         200,
       ),
     );

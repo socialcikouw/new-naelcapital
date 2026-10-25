@@ -5,6 +5,7 @@ import type {
   RincianKasJawaban,
   TerimaKasInput,
   TransferInput,
+  UbahHariIniInput,
 } from "@naelcapital/contracts";
 import { batasTransfer, tekorDanLebih, tunaiSeharusnya } from "@naelcapital/domain";
 import { type AnyColumn, and, asc, eq, gte, isNull, lte, ne, sql } from "drizzle-orm";
@@ -30,6 +31,7 @@ import {
   tidakDitemukan,
 } from "../../galat";
 import { wajibPeran } from "../../peran";
+import { catatRiwayat } from "../../riwayat";
 import type { Aktor } from "../auth/token";
 import { bacaKalender } from "../lapangan/gerbang";
 import { kasSudahDiterima } from "./kunci-hari";
@@ -216,6 +218,27 @@ export function buatLayananSetoranSore(deps: SetoranSoreDeps) {
       .orderBy(asc(kolektor.nama));
   }
 
+  /** Kunci hari kolektor hari ini untuk pembetulan bos: masuk kerja & kas belum diterima. */
+  async function kunciHariMasukKerja(tx: Db, kolektorId: string, tanggal: string) {
+    const [h] = await tx
+      .select({
+        id: hariKolektor.id,
+        absensi: hariKolektor.absensi,
+        kasLapangan: hariKolektor.kasLapangan,
+        uangJalan: hariKolektor.uangJalan,
+        laporanDibukaAt: hariKolektor.laporanDibukaAt,
+      })
+      .from(hariKolektor)
+      .where(and(eq(hariKolektor.kolektorId, kolektorId), eq(hariKolektor.tanggal, tanggal)))
+      .for("update");
+    if (!h) throw melanggar("BELUM_ABSEN", "Kolektor ini belum absen hari ini");
+    if (h.absensi !== "masuk_kerja") {
+      throw melanggar("TIDAK_KERJA_HARI_INI", "Kolektor ini tercatat tidak kerja hari ini");
+    }
+    if (await kasSudahDiterima(tx, kolektorId, tanggal)) throw kasSudahDiterimaGalat();
+    return h;
+  }
+
   async function satuHari(db: Db, aktor: Aktor, kolektorId: string, tanggal: string) {
     const [h] = await bacaHari(db, aktor, tanggal, kolektorId);
     if (!h) throw new Error("hari kolektor hilang");
@@ -379,6 +402,67 @@ export function buatLayananSetoranSore(deps: SetoranSoreDeps) {
           })
           .where(eq(serahTerimaKas.id, id));
         return satuHari(tx, aktor, st.kolektorId, st.tanggal);
+      });
+    },
+
+    /** Pembetulan kas lapangan / uang jalan (bos, hari ini, sebelum kas diterima). */
+    async ubahHariIni(aktor: Aktor, kolektorId: string, input: UbahHariIniInput) {
+      wajibPeran(aktor, "bos");
+      const tanggal = await hariIni(aktor);
+      await namaKolektor(deps.db, aktor, kolektorId);
+      return deps.db.transaction(async (tx) => {
+        const h = await kunciHariMasukKerja(tx, kolektorId, tanggal);
+        const sebelum: Record<string, number> = {};
+        const sesudah: Record<string, number> = {};
+        for (const k of ["kasLapangan", "uangJalan"] as const) {
+          const baru = input[k];
+          if (baru !== undefined && baru !== h[k]) {
+            sebelum[k] = h[k];
+            sesudah[k] = baru;
+          }
+        }
+        if (Object.keys(sesudah).length === 0) {
+          throw melanggar("TIDAK_ADA_PERUBAHAN", "Angkanya sudah sama");
+        }
+        await tx.update(hariKolektor).set(sesudah).where(eq(hariKolektor.id, h.id));
+        await catatRiwayat(tx, {
+          kantorId: aktor.kantorId,
+          tabel: "hari_kolektor",
+          barisId: h.id,
+          aksi: "perbaiki_hari_kolektor",
+          sebelum,
+          sesudah,
+          pelakuId: aktor.penggunaId,
+        });
+        return satuHari(tx, aktor, kolektorId, tanggal);
+      });
+    },
+
+    /** Buka kembali hari kolektor yang sudah lapor (bos, hari ini, sebelum kas diterima). */
+    async batalLaporan(aktor: Aktor, kolektorId: string, input: BatalInput) {
+      wajibPeran(aktor, "bos");
+      const tanggal = await hariIni(aktor);
+      await namaKolektor(deps.db, aktor, kolektorId);
+      return deps.db.transaction(async (tx) => {
+        const h = await kunciHariMasukKerja(tx, kolektorId, tanggal);
+        if (!h.laporanDibukaAt) {
+          throw melanggar("LAPORAN_BELUM_DIBUKA", "Kolektor belum membuka laporan hari ini");
+        }
+        await tx
+          .update(hariKolektor)
+          .set({ laporanDibukaAt: null })
+          .where(eq(hariKolektor.id, h.id));
+        await catatRiwayat(tx, {
+          kantorId: aktor.kantorId,
+          tabel: "hari_kolektor",
+          barisId: h.id,
+          aksi: "batal_laporan",
+          sebelum: { laporanDibukaAt: h.laporanDibukaAt.toISOString() },
+          sesudah: { laporanDibukaAt: null },
+          alasan: input.alasan,
+          pelakuId: aktor.penggunaId,
+        });
+        return satuHari(tx, aktor, kolektorId, tanggal);
       });
     },
 

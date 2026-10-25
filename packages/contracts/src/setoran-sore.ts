@@ -72,6 +72,17 @@ export type HariKas = z.infer<typeof hariKasSchema>;
 export const terimaKasSchema = z.object({ tunaiDiterima: z.number().int().min(0) });
 export type TerimaKasInput = z.infer<typeof terimaKasSchema>;
 
+/** `PATCH /hari-kolektor/:kolektorId/hari-ini` — pembetulan angka pagi oleh bos. */
+export const ubahHariIniSchema = z
+  .object({
+    kasLapangan: z.number().int().min(0).optional(),
+    uangJalan: z.number().int().min(0).optional(),
+  })
+  .refine((v) => v.kasLapangan !== undefined || v.uangJalan !== undefined, {
+    message: "Isi kas lapangan atau uang jalan",
+  });
+export type UbahHariIniInput = z.infer<typeof ubahHariIniSchema>;
+
 // ---- setoran hari itu (pilihan transfer) -------------------------------------
 
 export const transaksiHariSchema = z.object({
